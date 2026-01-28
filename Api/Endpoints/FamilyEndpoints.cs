@@ -1,4 +1,5 @@
 using Application.Families.UseCases.AddMember;
+using Application.Families.UseCases.CreateFamily;
 using Application.Families.UseCases.GetFamilyById;
 using Api.Extensions;
 using Mediator;
@@ -14,6 +15,13 @@ public static class FamilyEndpoints
     {
         var group = app.MapGroup("api/v1/families")
             .WithTags("Families");
+
+        group.MapPost("/", async (CreateFamilyCommand command, IMediator mediator) =>
+        {
+            var result = await mediator.Send(command);
+            return result.ToResult();
+        })
+        .WithName("CreateFamily");
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
         {

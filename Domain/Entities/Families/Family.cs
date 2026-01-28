@@ -5,6 +5,12 @@ namespace Domain.Entities.Families;
 
 public class Family : Entity, IAggregateRoot
 {
+    public Family(string name)
+    {
+        Name = name;
+        NumberMember = 0;
+    }
+
     public string Name { get; private set; }
     public short NumberMember { get; private set; }
     
@@ -14,6 +20,9 @@ public class Family : Entity, IAggregateRoot
     {
         var memberExist = Members.Any(m => m.Id == member.Id || m.Document == member.Document);
         if (!memberExist)
+        {
             Members.Add(member);
+            NumberMember++;
+        }
     }
 }

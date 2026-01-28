@@ -1,4 +1,6 @@
+using System.Linq;
 using Application.Shared.Results;
+using Microsoft.AspNetCore.Http;
 using static Application.Shared.Results.ErrorType;
 
 namespace Api.Extensions;
@@ -38,9 +40,11 @@ public static class ResultExtensions
         }
 
         return Results.ValidationProblem(
-            errors: errors.ToDictionary(
-                e => e.Code,
-                e => new[] { e.Description }),
+            errors: errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.Description).ToArray()),
             title: "Ocorreu um ou mais erros de validação.",
             statusCode: StatusCodes.Status400BadRequest
         );

@@ -14,6 +14,16 @@ public static class ServiceCollectionExtensions
 
         services.AddOpenApi();
 
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
+
         // Application and Infrastructure layers
         services.AddApplication();
         services.AddInfrastructure(configuration);

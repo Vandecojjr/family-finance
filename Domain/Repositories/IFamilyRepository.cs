@@ -18,7 +18,7 @@ public interface IFamilyRepository : IRepository<Family>
     Task<Member?> GetMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default);
     Task<bool> ExistsMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default);
 
-    Task AddMemberAsync(Guid familyId, Member member, CancellationToken cancellationToken = default);
+    Task AddMemberAsync(Family family, CancellationToken cancellationToken = default);
     Task UpdateMemberAsync(Guid familyId, Member member, CancellationToken cancellationToken = default);
     Task RemoveMemberAsync(Guid familyId, Guid memberId, CancellationToken cancellationToken = default);
 }

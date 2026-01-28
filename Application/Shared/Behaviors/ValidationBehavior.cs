@@ -11,7 +11,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IValidat
 {
     private readonly IEnumerable<IValidator<TMessage>> _validators = validators;
 
-    public ValueTask<TResponse> Handle(
+    public async ValueTask<TResponse> Handle(
         TMessage message,
         MessageHandlerDelegate<TMessage, TResponse> next,
         CancellationToken cancellationToken)
@@ -19,8 +19,11 @@ public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IValidat
         if (_validators.Any())
         {
             var context = new ValidationContext<TMessage>(message);
-            var failures = _validators
-                .Select(v => v.Validate(context))
+            
+            var validationResults = await Task.WhenAll(
+                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+                
+            var failures = validationResults
                 .SelectMany(r => r.Errors)
                 .Where(f => f is not null)
                 .ToArray();
@@ -31,10 +34,10 @@ public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IValidat
                     .Select(f => Error.Validation(f.ErrorCode ?? f.PropertyName, f.ErrorMessage))
                     .ToArray();
 
-                return new ValueTask<TResponse>(ResultFactory.Failure<TResponse>(errors));
+                return ResultFactory.Failure<TResponse>(errors);
             }
         }
 
-        return next(message, cancellationToken);
+        return await next(message, cancellationToken);
     }
 }
