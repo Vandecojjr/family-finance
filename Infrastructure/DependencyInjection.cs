@@ -2,6 +2,8 @@
 using Infrastructure.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Infrastructure.Data;
 
 namespace Infrastructure;
 
@@ -15,6 +17,10 @@ public static class DependencyInjection
         // Auth services
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<IAuthTokenService, JwtAuthTokenService>();
+
+        // DbContext
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseInMemoryDatabase("FamilyFinanceDb"));
 
         return services;
     }
