@@ -25,13 +25,13 @@ public sealed class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCom
         var account = await _accountRepository.GetByIdAsync(command.AccountId, cancellationToken);
         if (account is null)
         {
-            return Result<TokenPairResponse>.Failure(new Error("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
+            return Result<TokenPairResponse>.Failure(Error.NotFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
         }
 
         var storedToken = await _accountRepository.GetRefreshTokenAsync(command.RefreshToken, cancellationToken);
         if (storedToken is null || !storedToken.IsActive)
         {
-            return Result<TokenPairResponse>.Failure(new Error("INVALID_REFRESH_TOKEN", "Refresh token inválido ou expirado."));
+            return Result<TokenPairResponse>.Failure(Error.Failure("INVALID_REFRESH_TOKEN", "Refresh token inválido ou expirado."));
         }
 
         await _accountRepository.RevokeRefreshTokenAsync(account.Id, command.RefreshToken, cancellationToken);

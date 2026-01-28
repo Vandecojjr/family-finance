@@ -19,7 +19,7 @@ public sealed class AddMemberHandler : ICommandHandler<AddMemberCommand, Result<
         var family = await _familyRepository.GetByIdAsync(command.FamilyId, cancellationToken);
         if (family is null)
         {
-            return Result<Guid>.Failure(new Error("FAMILY_NOT_FOUND", "Família não encontrada."));
+            return Result<Guid>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
         }
 
         var member = new Member(command.Name, command.Email, command.Document);

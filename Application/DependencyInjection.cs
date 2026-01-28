@@ -12,6 +12,10 @@ public static class DependencyInjection
     {
         var assembly = Assembly.GetExecutingAssembly();
         
+        services.AddMediator(o =>
+        {
+            o.ServiceLifetime = ServiceLifetime.Scoped;
+        });
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 

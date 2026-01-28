@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Api.Endpoints;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
 
@@ -15,6 +16,9 @@ public static class ApplicationBuilderExtensions
         }
 
         app.UseHttpsRedirection();
+
+        app.MapAccountEndpoints();
+        app.MapFamilyEndpoints();
 
         return app;
     }

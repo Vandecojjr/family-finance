@@ -18,7 +18,7 @@ public sealed class GetFamilyByIdHandler : IQueryHandler<GetFamilyByIdQuery, Res
         var family = await _familyRepository.GetByIdAsync(query.Id, cancellationToken);
         if (family is null)
         {
-            return Result<FamilyDto>.Failure(new Error("FAMILY_NOT_FOUND", "Família não encontrada."));
+            return Result<FamilyDto>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
         }
 
         var members = family.Members

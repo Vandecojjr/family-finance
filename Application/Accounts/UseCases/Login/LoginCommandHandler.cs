@@ -33,22 +33,22 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<T
 
         if (account is null)
         {
-            return Result<TokenPairResponse>.Failure(new Error("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
+            return Result<TokenPairResponse>.Failure(Error.NotFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
         }
 
         if (!_passwordHasher.Verify(command.Password, account.PasswordHash))
         {
-            return Result<TokenPairResponse>.Failure(new Error("INVALID_CREDENTIALS", "Credenciais inválidas."));
+            return Result<TokenPairResponse>.Failure(Error.Failure("INVALID_CREDENTIALS", "Credenciais inválidas."));
         }
 
         if (account.Status == AccountStatus.Blocked)
         {
-            return Result<TokenPairResponse>.Failure(new Error("ACCOUNT_BLOCKED", "Conta bloqueada."));
+            return Result<TokenPairResponse>.Failure(Error.Failure("ACCOUNT_BLOCKED", "Conta bloqueada."));
         }
 
         if (account.Status == AccountStatus.Inactive)
         {
-            return Result<TokenPairResponse>.Failure(new Error("ACCOUNT_INACTIVE", "Conta inativa."));
+            return Result<TokenPairResponse>.Failure(Error.Failure("ACCOUNT_INACTIVE", "Conta inativa."));
         }
 
         var (accessToken, accessExpiresAt) = _authTokenService.GenerateAccessToken(account);

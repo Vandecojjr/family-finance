@@ -18,7 +18,7 @@ public sealed class GetAccountByIdHandler : IQueryHandler<GetAccountByIdQuery, R
         var account = await _accountRepository.GetByIdAsync(query.Id, cancellationToken);
         if (account is null)
         {
-            return Result<AccountDto>.Failure(new Error("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
+            return Result<AccountDto>.Failure(Error.NotFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
         }
 
         var dto = new AccountDto(

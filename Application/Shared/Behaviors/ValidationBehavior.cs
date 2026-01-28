@@ -28,7 +28,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IValidat
             if (failures.Length > 0)
             {
                 var errors = failures
-                    .Select(f => new Error(f.ErrorCode ?? f.PropertyName, f.ErrorMessage))
+                    .Select(f => Error.Validation(f.ErrorCode ?? f.PropertyName, f.ErrorMessage))
                     .ToArray();
 
                 return new ValueTask<TResponse>(ResultFactory.Failure<TResponse>(errors));
