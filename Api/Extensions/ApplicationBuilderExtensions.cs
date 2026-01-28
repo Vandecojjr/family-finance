@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
+using Scalar.AspNetCore;
 
 namespace Api.Extensions;
 
@@ -9,8 +10,8 @@ public static class ApplicationBuilderExtensions
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.MapOpenApi();
+            app.MapScalarApiReference();
         }
 
         app.UseHttpsRedirection();

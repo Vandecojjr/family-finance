@@ -11,7 +11,8 @@ public static class ServiceCollectionExtensions
     {
         // Swagger & API explorer
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+
+        services.AddOpenApi();
 
         // Application and Infrastructure layers
         services.AddApplication();
