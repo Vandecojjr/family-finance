@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastru
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{B1EAD0DB-9270-4591-ABF1-7EDC62F134C0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9B833D33-8D23-4CD5-9268-F0EA2A09221F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{B1EAD0DB-9270-4591-ABF1-7EDC62F134C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1EAD0DB-9270-4591-ABF1-7EDC62F134C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1EAD0DB-9270-4591-ABF1-7EDC62F134C0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E5E6CC20-6C39-4A7D-A0F8-3D8E7C5B2B9A} = {9B833D33-8D23-4CD5-9268-F0EA2A09221F}
+		{6B4C0A85-5D3B-4E2F-A3C5-93E2B6E3C1A9} = {9B833D33-8D23-4CD5-9268-F0EA2A09221F}
 	EndGlobalSection
 EndGlobal

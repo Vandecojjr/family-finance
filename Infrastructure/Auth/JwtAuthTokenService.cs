@@ -33,7 +33,6 @@ public sealed class JwtAuthTokenService : IAuthTokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, account.Username),
             new(JwtRegisteredClaimNames.Email, account.Email),
             new("accountId", account.Id.ToString())
         };

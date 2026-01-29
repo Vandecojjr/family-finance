@@ -13,10 +13,6 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Username)
-            .IsRequired()
-            .HasMaxLength(100);
-
         builder.Property(x => x.Email)
             .IsRequired()
             .HasMaxLength(255);

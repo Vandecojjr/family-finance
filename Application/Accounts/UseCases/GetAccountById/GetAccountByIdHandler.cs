@@ -23,7 +23,6 @@ public sealed class GetAccountByIdHandler : IQueryHandler<GetAccountByIdQuery, R
 
         var dto = new AccountDto(
             account.Id,
-            account.Username,
             account.Email,
             account.Status.ToString(),
             account.MemberId == Guid.Empty ? null : account.MemberId

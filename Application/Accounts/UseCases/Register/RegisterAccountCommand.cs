@@ -4,7 +4,7 @@ using Mediator;
 namespace Application.Accounts.UseCases.Register;
 
 public sealed record RegisterAccountCommand(
-    string Username,
+    string Name,
     string Email,
     string Password,
     string FamilyName,

@@ -12,7 +12,7 @@ const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
-        usernameOrEmail: '',
+        email: '',
         password: '',
     });
 
@@ -32,7 +32,7 @@ const Login: React.FC = () => {
             localStorage.setItem('token', response.data.accessToken);
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Usuário ou senha inválidos.');
+            setError(err.response?.data?.detail || 'E-mail ou senha inválidos.');
         } finally {
             setLoading(false);
         }
@@ -74,16 +74,16 @@ const Login: React.FC = () => {
                     )}
 
                     <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Usuário ou E-mail</label>
+                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>E-mail</label>
                         <div style={{ position: 'relative' }}>
                             <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
-                                type="text"
-                                name="usernameOrEmail"
-                                value={formData.usernameOrEmail}
+                                type="email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
                                 required
-                                placeholder="seuusuario ou email@exemplo.com"
+                                placeholder="exemplo@email.com"
                                 style={{
                                     width: '100%',
                                     padding: '0.75rem 1rem 0.75rem 2.5rem',

@@ -14,13 +14,6 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<Account?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
-    {
-        return await context.Set<Account>()
-            .Include(x => x.RefreshTokens)
-            .Include(x => x.Member)
-            .FirstOrDefaultAsync(x => x.Username == username, cancellationToken);
-    }
 
     public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
@@ -37,11 +30,6 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .FirstOrDefaultAsync(x => x.MemberId == memberId, cancellationToken);
     }
 
-    public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
-    {
-        return await context.Set<Account>()
-            .AnyAsync(x => x.Username == username, cancellationToken);
-    }
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {

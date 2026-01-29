@@ -7,7 +7,6 @@ namespace Domain.Entities.Accounts;
 
 public class Account : Entity, IAggregateRoot
 {
-    public string Username { get; private set; }
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
@@ -17,15 +16,14 @@ public class Account : Entity, IAggregateRoot
 
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
 
-    public Account(string username, string email, string passwordHash)
+    public Account(string email, string passwordHash)
     {
-        Username = username;
         Email = email;
         PasswordHash = passwordHash;
     }
 
-    public Account(string username, string email, string passwordHash, Guid memberId)
-        : this(username, email, passwordHash)
+    public Account(string email, string passwordHash, Guid memberId)
+        : this(email, passwordHash)
     {
         MemberId = memberId;
     }

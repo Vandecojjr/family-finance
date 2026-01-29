@@ -7,11 +7,9 @@ public sealed class RegisterAccountValidator : AbstractValidator<RegisterAccount
 {
     public RegisterAccountValidator(IAccountRepository accountRepository, IFamilyRepository familyRepository)
     {
-        RuleFor(x => x.Username)
-            .NotEmpty().WithMessage("O nome de usuário é obrigatório.")
-            .MaximumLength(100).WithMessage("O nome de usuário deve ter no máximo 100 caracteres.")
-            .MustAsync(async (username, ct) => !await accountRepository.ExistsByUsernameAsync(username, ct))
-            .WithMessage("Este nome de usuário já está em uso.");
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("O nome é obrigatório.")
+            .MaximumLength(100).WithMessage("O nome deve ter no máximo 100 caracteres.");
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("O e-mail é obrigatório.")

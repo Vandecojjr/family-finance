@@ -9,7 +9,7 @@ const Register: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
-        username: '',
+        name: '',
         email: '',
         password: '',
         familyName: '',
@@ -60,16 +60,16 @@ const Register: React.FC = () => {
                     )}
 
                     <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Usuário</label>
+                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Seu Nome</label>
                         <div style={{ position: 'relative' }}>
                             <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
                                 type="text"
-                                name="username"
-                                value={formData.username}
+                                name="name"
+                                value={formData.name}
                                 onChange={handleChange}
                                 required
-                                placeholder="Ex: joaosilva"
+                                placeholder="Ex: João Silva"
                                 style={{
                                     width: '100%',
                                     padding: '0.75rem 1rem 0.75rem 2.5rem',

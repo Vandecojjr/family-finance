@@ -26,10 +26,8 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<T
 
     public async ValueTask<Result<TokenPairResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var identifier = command.UsernameOrEmail.Trim();
-        var account = identifier.Contains('@')
-            ? await _accountRepository.GetByEmailAsync(identifier, cancellationToken)
-            : await _accountRepository.GetByUsernameAsync(identifier, cancellationToken);
+        var email = command.Email.Trim();
+        var account = await _accountRepository.GetByEmailAsync(email, cancellationToken);
 
         if (account is null)
         {

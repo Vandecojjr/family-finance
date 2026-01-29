@@ -10,13 +10,13 @@ public class LoginCommandValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Should_Fail_When_UsernameOrEmail_Is_Empty(string? usernameOrEmail)
+    public void Should_Fail_When_Email_Is_Empty(string? email)
     {
         var validator = new LoginCommandValidator();
-        var result = validator.Validate(new LoginCommand(usernameOrEmail ?? string.Empty, "123456"));
+        var result = validator.Validate(new LoginCommand(email ?? string.Empty, "123456"));
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(LoginCommand.UsernameOrEmail));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(LoginCommand.Email));
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class LoginCommandValidatorTests
     public void Should_Fail_When_Password_Is_Invalid(string? password)
     {
         var validator = new LoginCommandValidator();
-        var result = validator.Validate(new LoginCommand("user", password ?? string.Empty));
+        var result = validator.Validate(new LoginCommand("user@mail.com", password ?? string.Empty));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == nameof(LoginCommand.Password));

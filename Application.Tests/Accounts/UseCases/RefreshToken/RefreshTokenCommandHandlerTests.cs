@@ -21,7 +21,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_Should_Return_New_Tokens_And_Revoke_Old_When_Refresh_Is_Valid()
     {
         // Arrange
-        var account = new Account("john", "john@mail.com", "hash");
+        var account = new Account("john@mail.com", "hash");
         var existingRt = new Domain.Entities.Accounts.RefreshToken(account.Id, "old-rt", DateTime.UtcNow.AddHours(1));
         account.AddRefreshToken(existingRt);
 
@@ -54,7 +54,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_Should_Fail_When_Refresh_Token_Not_Found()
     {
         // Arrange
-        var account = new Account("mary", "mary@mail.com", "hash");
+        var account = new Account("mary@mail.com", "hash");
         _accountRepo.Setup(r => r.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 

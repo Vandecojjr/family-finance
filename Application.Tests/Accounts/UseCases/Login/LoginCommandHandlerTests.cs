@@ -19,10 +19,10 @@ public class LoginCommandHandlerTests
     public async Task Handle_Should_Return_Success_With_Tokens_When_Credentials_Are_Valid()
     {
         // Arrange
-        var account = new Account("john", "john@mail.com", "hash")
+        var account = new Account("john@mail.com", "hash")
         {
         };
-        _accountRepo.Setup(r => r.GetByUsernameAsync("john", It.IsAny<CancellationToken>()))
+        _accountRepo.Setup(r => r.GetByEmailAsync("john@mail.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _passwordHasher.Setup(h => h.Verify("plain", "hash")).Returns(true);
         _authTokenService.Setup(s => s.GenerateAccessToken(It.IsAny<Account>()))
@@ -31,7 +31,7 @@ public class LoginCommandHandlerTests
             .Returns(("refresh-token", DateTime.UtcNow.AddDays(7)));
 
         var handler = new LoginCommandHandler(_accountRepo.Object, _passwordHasher.Object, _authTokenService.Object);
-        var cmd = new LoginCommand("john", "plain");
+        var cmd = new LoginCommand("john@mail.com", "plain");
 
         // Act
         var result = await handler.Handle(cmd, CancellationToken.None);
@@ -49,13 +49,13 @@ public class LoginCommandHandlerTests
     public async Task Handle_Should_Fail_When_Password_Is_Invalid()
     {
         // Arrange
-        var account = new Account("john", "john@mail.com", "hash");
-        _accountRepo.Setup(r => r.GetByUsernameAsync("john", It.IsAny<CancellationToken>()))
+        var account = new Account("john@mail.com", "hash");
+        _accountRepo.Setup(r => r.GetByEmailAsync("john@mail.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _passwordHasher.Setup(h => h.Verify("wrong", "hash")).Returns(false);
 
         var handler = new LoginCommandHandler(_accountRepo.Object, _passwordHasher.Object, _authTokenService.Object);
-        var cmd = new LoginCommand("john", "wrong");
+        var cmd = new LoginCommand("john@mail.com", "wrong");
 
         // Act
         var result = await handler.Handle(cmd, CancellationToken.None);
@@ -70,14 +70,14 @@ public class LoginCommandHandlerTests
     public async Task Handle_Should_Fail_When_Account_Is_Blocked()
     {
         // Arrange
-        var account = new Account("john", "john@mail.com", "hash");
+        var account = new Account("john@mail.com", "hash");
         account.Block();
-        _accountRepo.Setup(r => r.GetByUsernameAsync("john", It.IsAny<CancellationToken>()))
+        _accountRepo.Setup(r => r.GetByEmailAsync("john@mail.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
         _passwordHasher.Setup(h => h.Verify("plain", "hash")).Returns(true);
 
         var handler = new LoginCommandHandler(_accountRepo.Object, _passwordHasher.Object, _authTokenService.Object);
-        var cmd = new LoginCommand("john", "plain");
+        var cmd = new LoginCommand("john@mail.com", "plain");
 
         // Act
         var result = await handler.Handle(cmd, CancellationToken.None);

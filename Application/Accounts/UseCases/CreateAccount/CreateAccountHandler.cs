@@ -17,8 +17,8 @@ public sealed class CreateAccountHandler : ICommandHandler<CreateAccountCommand,
     public async ValueTask<Result<Guid>> Handle(CreateAccountCommand command, CancellationToken cancellationToken)
     {
         var account = command.MemberId.HasValue
-            ? new Account(command.Username, command.Email, command.PasswordHash, command.MemberId.Value)
-            : new Account(command.Username, command.Email, command.PasswordHash);
+            ? new Account(command.Email, command.PasswordHash, command.MemberId.Value)
+            : new Account(command.Email, command.PasswordHash);
 
         await _accountRepository.AddAsync(account, cancellationToken);
 
