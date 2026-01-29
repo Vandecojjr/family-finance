@@ -4,6 +4,11 @@ namespace Infrastructure.Auth;
 
 public sealed class BcryptPasswordHasher : IPasswordHasher
 {
+    public string Hash(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
     public bool Verify(string plainTextPassword, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(passwordHash))

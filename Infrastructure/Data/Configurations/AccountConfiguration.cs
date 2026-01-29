@@ -40,6 +40,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.HasMany(x => x.RefreshTokens)
             .WithOne()
+            .HasForeignKey(x => x.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

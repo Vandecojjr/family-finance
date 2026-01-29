@@ -22,7 +22,7 @@ public class RefreshTokenCommandHandlerTests
     {
         // Arrange
         var account = new Account("john", "john@mail.com", "hash");
-        var existingRt = new Domain.Entities.Accounts.RefreshToken("old-rt", DateTime.UtcNow.AddHours(1));
+        var existingRt = new Domain.Entities.Accounts.RefreshToken(account.Id, "old-rt", DateTime.UtcNow.AddHours(1));
         account.AddRefreshToken(existingRt);
 
         _accountRepo.Setup(r => r.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))

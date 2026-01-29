@@ -2,6 +2,7 @@ using Application.Accounts.UseCases.CreateAccount;
 using Application.Accounts.UseCases.GetAccountById;
 using Application.Accounts.UseCases.Login;
 using Application.Accounts.UseCases.RefreshToken;
+using Application.Accounts.UseCases.Register;
 using Api.Extensions;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +17,13 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("api/v1/accounts")
             .WithTags("Accounts");
+
+        group.MapPost("/register", async (RegisterAccountCommand command, IMediator mediator) =>
+        {
+            var result = await mediator.Send(command);
+            return result.ToResult();
+        })
+        .WithName("RegisterAccount");
 
         group.MapPost("/", async (CreateAccountCommand command, IMediator mediator) =>
         {

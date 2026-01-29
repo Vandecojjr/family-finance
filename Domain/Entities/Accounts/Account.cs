@@ -65,6 +65,15 @@ public class Account : Entity, IAggregateRoot
             RefreshTokens.Add(token);
     }
 
+    public void ClearExpiredRefreshTokens()
+    {
+        var inactive = RefreshTokens.Where(t => !t.IsActive).ToList();
+        foreach (var token in inactive)
+        {
+            RefreshTokens.Remove(token);
+        }
+    }
+
     public void RevokeRefreshToken(string token)
     {
         var t = RefreshTokens.FirstOrDefault(x => x.Token == token);

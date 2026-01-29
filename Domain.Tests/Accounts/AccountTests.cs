@@ -63,8 +63,9 @@ public class AccountTests
     public void AddRefreshToken_Should_Add_And_Not_Duplicate_By_Token()
     {
         var acc = new Account("user", "u@mail.com", "hash");
-        var t1 = new RefreshToken("token-1", DateTime.UtcNow.AddHours(1));
-        var duplicate = new RefreshToken("token-1", DateTime.UtcNow.AddHours(2));
+        var accountId = Guid.NewGuid();
+        var t1 = new RefreshToken(accountId, "token-1", DateTime.UtcNow.AddHours(1));
+        var duplicate = new RefreshToken(accountId, "token-1", DateTime.UtcNow.AddHours(2));
 
         acc.AddRefreshToken(t1);
         acc.AddRefreshToken(duplicate);
@@ -77,7 +78,7 @@ public class AccountTests
     public void RevokeRefreshToken_Should_Set_RevokedAt()
     {
         var acc = new Account("user", "u@mail.com", "hash");
-        var t1 = new RefreshToken("token-1", DateTime.UtcNow.AddHours(1));
+        var t1 = new RefreshToken(acc.Id, "token-1", DateTime.UtcNow.AddHours(1));
         acc.AddRefreshToken(t1);
 
         acc.RevokeRefreshToken("token-1");

@@ -42,8 +42,7 @@ public class LoginCommandHandlerTests
         result.Value.Should().BeOfType<TokenPairResponse>();
         result.Value!.AccessToken.Should().Be("access-token");
         result.Value!.RefreshToken.Should().Be("refresh-token");
-        _accountRepo.Verify(r => r.RemoveExpiredRefreshTokensAsync(account.Id, It.IsAny<CancellationToken>()), Times.Once());
-        _accountRepo.Verify(r => r.AddRefreshTokenAsync(account.Id, It.IsAny<Domain.Entities.Accounts.RefreshToken>(), It.IsAny<CancellationToken>()), Times.Once());
+        _accountRepo.Verify(r => r.UpdateAsync(account, It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [Fact]

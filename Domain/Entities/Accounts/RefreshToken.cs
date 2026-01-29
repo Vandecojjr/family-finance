@@ -4,14 +4,16 @@ namespace Domain.Entities.Accounts;
 
 public class RefreshToken : Entity
 {
+    public Guid AccountId { get; private set; }
     public string Token { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime? RevokedAt { get; private set; }
 
     public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
 
-    public RefreshToken(string token, DateTime expiresAt)
+    public RefreshToken(Guid accountId, string token, DateTime expiresAt)
     {
+        AccountId = accountId;
         Token = token;
         ExpiresAt = expiresAt;
     }

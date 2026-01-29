@@ -19,7 +19,7 @@ public class AddMemberHandlerTests
     public async Task Handle_Should_Add_Member_And_Return_Id_When_Family_Exists()
     {
         // Arrange
-        var family = new Family();
+        var family = new Family("Test Family");
         _familyRepo.Setup(r => r.GetByIdAsync(family.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(family);
 
@@ -32,7 +32,7 @@ public class AddMemberHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBe(Guid.Empty);
-        _familyRepo.Verify(r => r.AddMemberAsync(family.Id, It.IsAny<Member>(), It.IsAny<CancellationToken>()), Times.Once());
+        _familyRepo.Verify(r => r.AddMemberAsync(family, It.IsAny<CancellationToken>()), Times.Once());
     }
 
     [Fact]

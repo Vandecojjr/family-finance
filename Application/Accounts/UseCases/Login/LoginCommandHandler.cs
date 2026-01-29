@@ -54,9 +54,12 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, Result<T
         var (accessToken, accessExpiresAt) = _authTokenService.GenerateAccessToken(account);
         var (refreshTokenStr, refreshExpiresAt) = _authTokenService.GenerateRefreshToken();
 
-        var refresh = new Domain.Entities.Accounts.RefreshToken(refreshTokenStr, refreshExpiresAt);
-        await _accountRepository.RemoveExpiredRefreshTokensAsync(account.Id, cancellationToken);
-        await _accountRepository.AddRefreshTokenAsync(account.Id, refresh, cancellationToken);
+        var refresh = new Domain.Entities.Accounts.RefreshToken(account.Id, refreshTokenStr, refreshExpiresAt);
+        
+        account.ClearExpiredRefreshTokens();
+        account.AddRefreshToken(refresh);
+        
+        await _accountRepository.UpdateAsync(account, cancellationToken);
 
         var dto = new TokenPairResponse(accessToken, accessExpiresAt, refreshTokenStr, refreshExpiresAt);
         return Result<TokenPairResponse>.Success(dto);

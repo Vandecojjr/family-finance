@@ -20,7 +20,7 @@ public class GetFamilyByIdHandlerTests
     public async Task Handle_Should_Return_FamilyDto_When_Found()
     {
         // Arrange
-        var family = new Family();
+        var family = new Family("Smith family");
         var member = new Member("Alice", "alice@mail.com", "DOC-1");
         family.AddMember(member);
         _familyRepo.Setup(r => r.GetByIdAsync(family.Id, It.IsAny<CancellationToken>()))
