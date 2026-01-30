@@ -40,6 +40,15 @@ public sealed class JwtAuthTokenService : IAuthTokenService
         if (account.MemberId != Guid.Empty)
             claims.Add(new Claim("memberId", account.MemberId.ToString()));
 
+        foreach (var role in account.Roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            foreach (var permission in role.Permissions)
+            {
+                claims.Add(new Claim("permission", permission.ToString()));
+            }
+        }
+
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),

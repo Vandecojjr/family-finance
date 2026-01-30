@@ -2,6 +2,9 @@
 using Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
+using Infrastructure.Auth.Authorization;
+using Domain.Enums;
 
 namespace Api.Extensions;
 
@@ -22,6 +25,18 @@ public static class ServiceCollectionExtensions
                       .AllowAnyMethod()
                       .AllowAnyHeader();
             });
+        });
+
+        services.AddAuthorization();
+        services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+
+        services.AddAuthorization(options =>
+        {
+            foreach (Permission permission in Enum.GetValues(typeof(Permission)))
+            {
+                options.AddPolicy(permission.ToString(), policy =>
+                    policy.Requirements.Add(new PermissionRequirement(permission)));
+            }
         });
 
         // Application and Infrastructure layers

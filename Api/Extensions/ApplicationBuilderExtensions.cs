@@ -11,6 +11,9 @@ public static class ApplicationBuilderExtensions
     {
         app.UseCors();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();

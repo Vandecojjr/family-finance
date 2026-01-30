@@ -14,6 +14,7 @@ public class Account : Entity, IAggregateRoot
     public Guid MemberId { get; private set; }
     public Member Member { get; private set; }
 
+    public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
 
     public Account(string email, string passwordHash)
@@ -76,5 +77,23 @@ public class Account : Entity, IAggregateRoot
     {
         var t = RefreshTokens.FirstOrDefault(x => x.Token == token);
         t?.Revoke();
+    }
+
+    public void AddRole(Role role)
+    {
+        if (Roles.All(r => r.Id != role.Id))
+            Roles.Add(role);
+    }
+
+    public void RemoveRole(Guid roleId)
+    {
+        var role = Roles.FirstOrDefault(r => r.Id == roleId);
+        if (role != null)
+            Roles.Remove(role);
+    }
+
+    public bool HasPermission(Permission permission)
+    {
+        return Roles.Any(r => r.Permissions.Contains(permission));
     }
 }
