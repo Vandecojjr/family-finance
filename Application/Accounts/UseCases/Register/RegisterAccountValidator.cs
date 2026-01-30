@@ -1,3 +1,4 @@
+using Application.Shared.Validation;
 using Domain.Repositories;
 using FluentValidation;
 
@@ -28,6 +29,7 @@ public sealed class RegisterAccountValidator : AbstractValidator<RegisterAccount
             .WithMessage("Já existe uma família com este nome.");
 
         RuleFor(x => x.Document)
-            .NotEmpty().WithMessage("O documento (CPF/CNPJ) é obrigatório.");
+            .NotEmpty().WithMessage("O CPF é obrigatório.")
+            .MustBeCpf();
     }
 }

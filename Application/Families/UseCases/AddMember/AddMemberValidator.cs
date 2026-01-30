@@ -1,4 +1,5 @@
-﻿using Domain.Repositories;
+﻿using Application.Shared.Validation;
+using Domain.Repositories;
 using FluentValidation;
 
 namespace Application.Families.UseCases.AddMember;
@@ -21,11 +22,12 @@ public sealed class AddMemberValidator : AbstractValidator<AddMemberCommand>
 
         RuleFor(x => x.Document)
             .NotEmpty()
+            .MustBeCpf()
             .MustAsync(async (cmd, document, ct) =>
             {
                 var exists = await familyRepository.ExistsMemberByDocumentAsync(cmd.FamilyId, document, ct);
                 return !exists;
             })
-            .WithMessage("Documento já cadastrado para a família.");
+            .WithMessage("CPF já cadastrado para a família.");
     }
 }

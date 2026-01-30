@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Home, FileText, Loader2 } from 'lucide-react';
 import api from '../../services/api';
+import { maskCpf, validateCpf } from '../../utils/validation';
 
 const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -18,11 +19,24 @@ const Register: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+
+        if (name === 'document') {
+            setFormData(prev => ({ ...prev, [name]: maskCpf(value) }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateCpf(formData.document)) {
+            setError('O CPF informado é inválido. Por favor, verifique os números.');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -155,7 +169,7 @@ const Register: React.FC = () => {
                     </div>
 
                     <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Documento (CPF/CNPJ)</label>
+                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>CPF</label>
                         <div style={{ position: 'relative' }}>
                             <FileText size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                             <input
