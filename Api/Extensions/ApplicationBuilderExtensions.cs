@@ -24,6 +24,8 @@ public static class ApplicationBuilderExtensions
 
         app.MapAccountEndpoints();
         app.MapFamilyEndpoints();
+        app.MapWalletEndpoints();
+        app.MapCategoryEndpoints();
 
         return app;
     }
