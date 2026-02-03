@@ -10,7 +10,7 @@ public class FamilyTests
     public void AddMember_Should_Add_When_Not_Exists()
     {
         var family = new Family("Test Family");
-        var member = new Member("Alice", "alice@mail.com", "DOC-1");
+        var member = new Member("Alice", "alice@mail.com", "DOC-1", family.Id);
 
         family.AddMember(member);
 
@@ -22,7 +22,7 @@ public class FamilyTests
     public void AddMember_Should_Not_Duplicate_By_Id()
     {
         var family = new Family("Test Family");
-        var member1 = new Member("Bob", "bob@mail.com", "DOC-2");
+        var member1 = new Member("Bob", "bob@mail.com", "DOC-2", family.Id);
 
         family.AddMember(member1);
         family.AddMember(member1);
@@ -35,8 +35,8 @@ public class FamilyTests
     public void AddMember_Should_Not_Duplicate_By_Document()
     {
         var family = new Family("Test Family");
-        var member1 = new Member("Carol", "carol@mail.com", "DOC-4");
-        var duplicateByDocument = new Member("Caroline", "caroline@mail.com", "DOC-4");
+        var member1 = new Member("Carol", "carol@mail.com", "DOC-4", family.Id);
+        var duplicateByDocument = new Member("Caroline", "caroline@mail.com", "DOC-4", family.Id);
 
         family.AddMember(member1);
         family.AddMember(duplicateByDocument);

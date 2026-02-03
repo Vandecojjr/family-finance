@@ -9,7 +9,7 @@ public class MemberTests
     [Fact]
     public void Constructor_Should_Set_Properties()
     {
-        var m = new Member("Alice", "alice@mail.com", "DOC-1");
+        var m = new Member("Alice", "alice@mail.com", "DOC-1", Guid.NewGuid());
 
         Assert.Equal("Alice", m.Name);
         Assert.Equal("alice@mail.com", m.Email);
@@ -20,7 +20,7 @@ public class MemberTests
     [Fact]
     public void LinkAccount_Should_Set_AccountId_First_Time()
     {
-        var m = new Member("Bob", "bob@mail.com", "DOC-2");
+        var m = new Member("Bob", "bob@mail.com", "DOC-2", Guid.NewGuid());
         var id = Guid.NewGuid();
 
         m.LinkAccount(id);
@@ -31,7 +31,7 @@ public class MemberTests
     [Fact]
     public void LinkAccount_Should_Allow_Same_Id_And_Throw_If_Different()
     {
-        var m = new Member("Carol", "carol@mail.com", "DOC-3");
+        var m = new Member("Carol", "carol@mail.com", "DOC-3", Guid.NewGuid());
         var id = Guid.NewGuid();
         m.LinkAccount(id);
 

@@ -75,8 +75,8 @@ public class Account : Entity, IAggregateRoot
 
     public void RevokeRefreshToken(string token)
     {
-        var t = RefreshTokens.FirstOrDefault(x => x.Token == token);
-        t?.Revoke();
+        var refreshToken = RefreshTokens.FirstOrDefault(x => x.Token == token);
+        refreshToken?.Revoke();
     }
 
     public void AddRole(Role role)

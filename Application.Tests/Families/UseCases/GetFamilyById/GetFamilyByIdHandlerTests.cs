@@ -21,7 +21,7 @@ public class GetFamilyByIdHandlerTests
     {
         // Arrange
         var family = new Family("Smith family");
-        var member = new Member("Alice", "alice@mail.com", "DOC-1");
+        var member = new Member("Alice", "alice@mail.com", "DOC-1", family.Id);
         family.AddMember(member);
         _familyRepo.Setup(r => r.GetByIdAsync(family.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(family);

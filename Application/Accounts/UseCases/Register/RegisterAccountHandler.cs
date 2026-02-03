@@ -21,7 +21,7 @@ public sealed class RegisterAccountHandler(
         await familyRepository.AddAsync(family, cancellationToken);
 
         // 2. Create Member
-        var member = new Member(command.Name, command.Email, command.Document);
+        var member = new Member(command.Name, command.Email, command.Document, family.Id);
         family.AddMember(member);
         
         // Use the reinforced AddMemberAsync that handles Detached state correctly (from previous fix)

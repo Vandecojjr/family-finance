@@ -6,6 +6,7 @@ using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Domain.Enums;
 
 namespace Api.Endpoints;
 
@@ -21,6 +22,7 @@ public static class FamilyEndpoints
             var result = await mediator.Send(command);
             return result.ToResult();
         })
+        .RequirePermission(Permission.FamilyManage)
         .WithName("CreateFamily");
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
@@ -28,6 +30,7 @@ public static class FamilyEndpoints
             var result = await mediator.Send(new GetFamilyByIdQuery(id));
             return result.ToResult();
         })
+        .RequirePermission(Permission.FamilyView)
         .WithName("GetFamilyById");
 
         group.MapPost("/{id:guid}/members", async (Guid id, AddMemberCommand command, IMediator mediator) =>
@@ -36,6 +39,7 @@ public static class FamilyEndpoints
             var result = await mediator.Send(commandWithId);
             return result.ToResult();
         })
+        .RequirePermission(Permission.FamilyManage)
         .WithName("AddMember");
     }
 }

@@ -27,5 +27,9 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
 
         builder.Property(x => x.AccountId)
             .IsRequired(false);
+
+        builder.HasOne(x => x.Family)
+            .WithMany(x => x.Members)
+            .HasForeignKey(x => x.FamilyId);
     }
 }

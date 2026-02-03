@@ -5,9 +5,6 @@ using Application.Accounts.UseCases.RefreshToken;
 using Application.Accounts.UseCases.Register;
 using Api.Extensions;
 using Mediator;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 
 namespace Api.Endpoints;
 

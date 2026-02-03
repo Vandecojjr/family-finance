@@ -20,7 +20,8 @@ public class FamilyConfiguration : IEntityTypeConfiguration<Family>
             .IsRequired();
 
         builder.HasMany(x => x.Members)
-            .WithOne()
+            .WithOne(x => x.Family)
+            .HasForeignKey(x => x.FamilyId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

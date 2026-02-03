@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Application.Shared.Behaviors;
+using Application.Shared.Authorization;
 using FluentValidation;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ public static class DependencyInjection
             o.ServiceLifetime = ServiceLifetime.Scoped;
         });
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         return services;

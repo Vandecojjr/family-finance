@@ -13,8 +13,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .Include(x => x.RefreshTokens)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
-
-
+    
     public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
@@ -29,8 +28,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .Include(x => x.RefreshTokens)
             .FirstOrDefaultAsync(x => x.MemberId == memberId, cancellationToken);
     }
-
-
+    
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
@@ -79,7 +77,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     public async Task AddRefreshTokenAsync(Guid accountId, RefreshToken token, CancellationToken cancellationToken = default)
     {
          var account = await GetByIdAsync(accountId, cancellationToken);
-         if (account is null) return; // Or throw
+         if (account is null) return;
 
          account.AddRefreshToken(token);
          await context.SaveChangesAsync(cancellationToken);
@@ -111,9 +109,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         var account = await GetByIdAsync(accountId, cancellationToken);
         if (account is null) return;
 
-        var expired = account.RefreshTokens.Where(t => !t.IsActive && t.ExpiresAt <= DateTime.UtcNow).ToList();
         var toRemove = account.RefreshTokens.Where(t => t.ExpiresAt <= DateTime.UtcNow).ToList();
-        
         if (toRemove.Count != 0)
         {
              context.Set<RefreshToken>().RemoveRange(toRemove);
