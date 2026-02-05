@@ -21,7 +21,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.Property(x => x.Document)
+        builder.Property(x => x.Cpf)
             .IsRequired()
             .HasMaxLength(20);
 

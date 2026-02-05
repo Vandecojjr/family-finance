@@ -9,15 +9,12 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
 {
     public async Task<Family?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await context.Set<Family>()
-            .Include(x => x.Members)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return await context.Set<Family>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public async Task<Family?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         return await context.Set<Family>()
-            .Include(x => x.Members)
             .FirstOrDefaultAsync(x => x.Name == name, cancellationToken);
     }
 
@@ -55,13 +52,13 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
     public async Task<Member?> GetMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default)
     {
         var family = await GetByIdAsync(familyId, cancellationToken);
-        return family?.Members.FirstOrDefault(m => m.Document == document);
+        return family?.Members.FirstOrDefault(m => m.Cpf == document);
     }
 
     public async Task<bool> ExistsMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default)
     {
         return await context.Set<Member>()
-            .AnyAsync(m => m.Document == document && EF.Property<Guid>(m, "FamilyId") == familyId, cancellationToken);
+            .AnyAsync(m => m.Cpf == document && EF.Property<Guid>(m, "FamilyId") == familyId, cancellationToken);
     }
 
     public async Task AddMemberAsync(Family family, CancellationToken cancellationToken = default)

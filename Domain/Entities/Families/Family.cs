@@ -18,11 +18,10 @@ public class Family : Entity, IAggregateRoot
 
     public void AddMember(Member member)
     {
-        var memberExist = Members.Any(m => m.Id == member.Id || m.Document == member.Document);
-        if (!memberExist)
-        {
-            Members.Add(member);
-            NumberMember++;
-        }
+        var memberExist = Members.Any(m => m.Id == member.Id || m.Cpf == member.Cpf);
+        if (memberExist) return;
+        
+        Members.Add(member);
+        NumberMember++;
     }
 }

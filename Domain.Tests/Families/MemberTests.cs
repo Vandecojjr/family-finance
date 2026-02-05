@@ -13,7 +13,7 @@ public class MemberTests
 
         Assert.Equal("Alice", m.Name);
         Assert.Equal("alice@mail.com", m.Email);
-        Assert.Equal("DOC-1", m.Document);
+        Assert.Equal("DOC-1", m.Cpf);
         Assert.Null(m.AccountId);
     }
 

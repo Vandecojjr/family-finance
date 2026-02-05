@@ -14,7 +14,6 @@ public class AuthorizationBehavior<TRequest, TResponse>(ICurrentUser currentUser
         {
             if (!currentUser.IsAuthenticated)
             {
-                // Return unauthorized result if possible, or throw
                 throw new UnauthorizedAccessException("Usuário não autenticado.");
             }
 

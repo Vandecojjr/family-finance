@@ -17,21 +17,9 @@ public sealed class GetFamilyByIdHandler : IQueryHandler<GetFamilyByIdQuery, Res
     {
         var family = await _familyRepository.GetByIdAsync(query.Id, cancellationToken);
         if (family is null)
-        {
             return Result<FamilyDto>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
-        }
-
-        var members = family.Members
-            .Select(m => new MemberDto(
-                m.Id,
-                m.Name,
-                m.Email,
-                m.Document,
-                m.AccountId
-            ))
-            .ToArray();
-
-        var dto = new FamilyDto(family.Id, family.Name, family.NumberMember, members);
+        
+        var dto = new FamilyDto(family.Id, family.Name, family.NumberMember);
         return Result<FamilyDto>.Success(dto);
     }
 }
