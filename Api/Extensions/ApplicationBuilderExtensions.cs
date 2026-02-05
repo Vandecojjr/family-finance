@@ -18,6 +18,20 @@ public static class ApplicationBuilderExtensions
         {
             app.MapOpenApi();
             app.MapScalarApiReference();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var seeder = scope.ServiceProvider.GetRequiredService<Infrastructure.Data.DataSeeder>();
+                try
+                {
+                    seeder.SeedAsync().Wait();
+                }
+                catch (Exception ex)
+                {
+                    // Log error or ignore for now if DB not ready
+                    Console.WriteLine($"Seeding failed: {ex.Message}");
+                }
+            }
         }
 
         // app.UseHttpsRedirection(); // Potential cause for NetworkError if certs are not trusted

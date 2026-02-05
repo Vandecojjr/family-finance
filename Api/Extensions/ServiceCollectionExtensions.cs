@@ -22,8 +22,8 @@ public static class ServiceCollectionExtensions
             options.AddDefaultPolicy(policy =>
             {
                 policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
             });
         });
 
@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         // Application and Infrastructure layers
         services.AddApplication();
         services.AddInfrastructure(configuration);
+        services.AddScoped<Infrastructure.Data.DataSeeder>();
 
         return services;
     }
