@@ -3,9 +3,6 @@ using Application.Families.UseCases.CreateFamily;
 using Application.Families.UseCases.GetFamilyById;
 using Api.Extensions;
 using Mediator;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Domain.Enums;
 
 namespace Api.Endpoints;

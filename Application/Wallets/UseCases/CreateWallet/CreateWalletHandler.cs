@@ -14,20 +14,17 @@ public sealed class CreateWalletHandler(
 {
     public async ValueTask<Result<Guid>> Handle(CreateWalletCommand command, CancellationToken cancellationToken)
     {
-        // 1. Get Current User's Family
         var family = await familyRepository.GetByMemberIdAsync(currentUser.Id, cancellationToken);
         if (family is null)
         {
-            return Result<Guid>.Failure("User is not associated with any family.");
+            return Result<Guid>.Failure(Error.None);
         }
 
         Guid? ownerId = null;
 
-        // 2. Determine Owner
         if (command.IsShared)
         {
             // TODO: Optional - Check permission if only Admins can create shared wallets
-            // if (!currentUser.HasPermission(Permission.FamilyManage)) ...
             ownerId = null; 
         }
         else
@@ -35,7 +32,6 @@ public sealed class CreateWalletHandler(
             ownerId = currentUser.Id;
         }
 
-        // 3. Create Wallet
         var wallet = new Wallet(
             command.Name,
             family.Id,
@@ -44,7 +40,6 @@ public sealed class CreateWalletHandler(
             command.InitialBalance
         );
 
-        // 4. Persist
         await walletRepository.AddAsync(wallet, cancellationToken);
 
         return Result<Guid>.Success(wallet.Id);

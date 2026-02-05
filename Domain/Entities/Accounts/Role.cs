@@ -10,8 +10,6 @@ public class Role : Entity
     public ICollection<Permission> Permissions { get; private set; } = [];
     public ICollection<Account> Accounts { get; private set; } = [];
 
-    private Role() { }
-
     public Role(string name, string description)
     {
         Name = name;

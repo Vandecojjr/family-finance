@@ -1,7 +1,6 @@
 using Application.Categories.UseCases.GetCategories;
 using Api.Extensions;
 using Mediator;
-using Domain.Enums;
 
 namespace Api.Endpoints;
 

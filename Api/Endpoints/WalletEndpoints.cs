@@ -3,7 +3,6 @@ using Application.Wallets.UseCases.GetMyWallets;
 using Api.Extensions;
 using Mediator;
 using Domain.Enums;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Endpoints;
 
@@ -13,7 +12,7 @@ public static class WalletEndpoints
     {
         var group = app.MapGroup("api/v1/wallets")
             .WithTags("Wallets")
-            .RequireAuthorization(); // Ensure user is logged in at minimum
+            .RequireAuthorization();
 
         group.MapPost("/", async (CreateWalletCommand command, IMediator mediator) =>
         {

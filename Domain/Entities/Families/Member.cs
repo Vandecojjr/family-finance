@@ -18,10 +18,10 @@ public class Member : Entity
     public string Document { get; private set; }
 
     public Guid FamilyId { get; private set; }
-    public Family Family { get; private set; }
+    public Family? Family { get; private set; }
 
     public Guid? AccountId { get; private set; }
-    public Account Account { get; private set; }
+    public Account? Account { get; private set; }
 
     public void LinkAccount(Guid accountId)
     {
