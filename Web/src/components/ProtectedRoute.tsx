@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 import { usePermissions } from '../hooks/usePermissions';
 import { Permission } from '../types/permissions';
 
@@ -15,9 +16,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     permissions,
     roles
 }) => {
-    const { signed } = useAuth();
+    const { signed, loading } = useAuth();
     const { hasPermission, hasRole } = usePermissions();
     const location = useLocation();
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Loader2 className="animate-spin" size={32} />
+            </div>
+        );
+    }
 
     if (!signed) {
         return <Navigate to="/login" state={{ from: location }} replace />;

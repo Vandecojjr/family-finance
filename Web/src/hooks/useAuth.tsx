@@ -11,21 +11,24 @@ interface User {
 
 interface AuthContextData {
     user: User | null;
-    signIn: (token: string) => void;
+    signIn: (accessToken: string, refreshToken: string) => void;
     signOut: () => void;
     signed: boolean;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const savedToken = localStorage.getItem('@FamilyFinance:token');
         if (savedToken) {
             decodeAndSetUser(savedToken);
         }
+        setLoading(false);
     }, []);
 
     function decodeAndSetUser(token: string) {
@@ -48,17 +51,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }
 
-    function signIn(token: string) {
-        decodeAndSetUser(token);
+    function signIn(accessToken: string, refreshToken: string) {
+        localStorage.setItem('@FamilyFinance:refreshToken', refreshToken);
+        decodeAndSetUser(accessToken);
     }
 
     function signOut() {
         setUser(null);
         localStorage.removeItem('@FamilyFinance:token');
+        localStorage.removeItem('@FamilyFinance:refreshToken');
     }
 
     return (
-        <AuthContext.Provider value={{ user, signIn, signOut, signed: !!user }}>
+        <AuthContext.Provider value={{ user, signIn, signOut, signed: !!user, loading }}>
             {children}
         </AuthContext.Provider>
     );

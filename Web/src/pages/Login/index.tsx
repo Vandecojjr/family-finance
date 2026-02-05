@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, Loader2, LogIn } from 'lucide-react';
 import api from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -16,6 +17,8 @@ const Login: React.FC = () => {
         password: '',
     });
 
+    const { signIn } = useAuth();
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -28,8 +31,7 @@ const Login: React.FC = () => {
 
         try {
             const response = await api.post('/accounts/login', formData);
-            // Save token (placeholder logic)
-            localStorage.setItem('token', response.data.accessToken);
+            signIn(response.data.accessToken, response.data.refreshToken);
             navigate('/dashboard');
         } catch (err: any) {
             setError(err.response?.data?.detail || 'E-mail ou senha inválidos.');
