@@ -39,8 +39,6 @@ public sealed class GetCategoriesHandler(
             category.Id,
             category.Name,
             category.Type,
-            category.Icon,
-            category.Color,
             category.ParentId,
             IsCustom: category.FamilyId != null,
             SubCategories: children

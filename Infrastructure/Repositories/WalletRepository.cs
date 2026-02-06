@@ -27,11 +27,10 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<Wallet>> GetWalletsForUserAsync(Guid familyId, Guid userId, CancellationToken cancellationToken = default)
+    public async Task<List<Wallet>> GetWalletsForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        // Rule: FamilyId matches AND (OwnerId is NULL [Family Wallet] OR OwnerId is User [Personal Wallet])
         return await context.Set<Wallet>()
-            .Where(w => w.FamilyId == familyId && (w.OwnerId == null || w.OwnerId == userId))
+            .Where(w =>  w.OwnerId == userId)
             .ToListAsync(cancellationToken);
     }
 }

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Accounts.UseCases.RefreshToken;
 using Application.Shared.Auth;
+using Application.Shared.Responses;
 using Domain.Entities.Accounts;
 using Domain.Repositories;
 using FluentAssertions;
@@ -21,7 +22,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_Should_Return_New_Tokens_And_Revoke_Old_When_Refresh_Is_Valid()
     {
         // Arrange
-        var account = new Account("john@mail.com", "hash");
+        var account = new Account("john@mail.com", "hash", Guid.NewGuid());
         var existingRt = new Domain.Entities.Accounts.RefreshToken(account.Id, "old-rt", DateTime.UtcNow.AddHours(1));
         account.AddRefreshToken(existingRt);
 
@@ -44,7 +45,7 @@ public class RefreshTokenCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Should().NotBeNull();
+        result.Value.Should().BeOfType<TokenPairResponse>();
         _accountRepo.Verify(r => r.RevokeRefreshTokenAsync(account.Id, "old-rt", It.IsAny<CancellationToken>()), Times.Once);
         _accountRepo.Verify(r => r.RemoveExpiredRefreshTokensAsync(account.Id, It.IsAny<CancellationToken>()), Times.Once);
         _accountRepo.Verify(r => r.AddRefreshTokenAsync(account.Id, It.IsAny<Domain.Entities.Accounts.RefreshToken>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -54,7 +55,7 @@ public class RefreshTokenCommandHandlerTests
     public async Task Handle_Should_Fail_When_Refresh_Token_Not_Found()
     {
         // Arrange
-        var account = new Account("mary@mail.com", "hash");
+        var account = new Account("mary@mail.com", "hash", Guid.NewGuid());
         _accountRepo.Setup(r => r.GetByIdAsync(account.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(account);
 

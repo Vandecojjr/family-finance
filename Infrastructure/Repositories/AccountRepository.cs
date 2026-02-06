@@ -10,7 +10,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     public async Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
-            .Include(x => x.RefreshTokens)
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
     

@@ -9,7 +9,14 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
 {
     public async Task<Family?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await context.Set<Family>().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return await context.Set<Family>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<Family?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Family>()
+            .Include(f => f.Members)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public async Task<Family?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
@@ -59,38 +66,5 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
     {
         return await context.Set<Member>()
             .AnyAsync(m => m.Cpf == document && EF.Property<Guid>(m, "FamilyId") == familyId, cancellationToken);
-    }
-
-    public async Task AddMemberAsync(Family family, CancellationToken cancellationToken = default)
-    {
-        foreach (var member in family.Members)
-        {
-            var entry = context.Entry(member);
-            if (entry.State == EntityState.Detached)
-            {
-                await context.Set<Member>().AddAsync(member, cancellationToken);
-            }
-        }
-
-        await context.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task UpdateMemberAsync(Guid familyId, Member member, CancellationToken cancellationToken = default)
-    {
-        context.Set<Member>().Update(member);
-        await context.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task RemoveMemberAsync(Guid familyId, Guid memberId, CancellationToken cancellationToken = default)
-    {
-        var family = await GetByIdAsync(familyId, cancellationToken);
-        if (family is null) return;
-
-        var memberStr = family.Members.FirstOrDefault(m => m.Id == memberId);
-        if (memberStr != null)
-        {
-            family.Members.Remove(memberStr);
-            await context.SaveChangesAsync(cancellationToken);
-        }
     }
 }

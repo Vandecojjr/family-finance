@@ -16,32 +16,15 @@ public sealed class CreateWalletHandler(
     {
         var family = await familyRepository.GetByMemberIdAsync(currentUser.Id, cancellationToken);
         if (family is null)
-        {
-            return Result<Guid>.Failure(Error.None);
-        }
-
+            return Result<Guid>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
+        
         Guid? ownerId = null;
 
-        if (command.IsShared)
-        {
-            // TODO: Optional - Check permission if only Admins can create shared wallets
-            ownerId = null; 
-        }
-        else
-        {
+        if (!command.IsShared)
             ownerId = currentUser.Id;
-        }
-
-        var wallet = new Wallet(
-            command.Name,
-            family.Id,
-            command.Type,
-            ownerId,
-            command.InitialBalance
-        );
-
+        
+        var wallet = new Wallet(command.Name, family.Id, command.Type, ownerId, command.InitialBalance);
         await walletRepository.AddAsync(wallet, cancellationToken);
-
         return Result<Guid>.Success(wallet.Id);
     }
 }

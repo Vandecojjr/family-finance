@@ -8,7 +8,7 @@ public class CreateWalletValidator : AbstractValidator<CreateWalletCommand>
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .MaximumLength(150);
+            .MaximumLength(80);
 
         RuleFor(x => x.Type)
             .IsInEnum();

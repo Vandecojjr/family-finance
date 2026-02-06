@@ -16,21 +16,10 @@ public sealed class GetMyWalletsHandler(
     {
         var family = await familyRepository.GetByMemberIdAsync(currentUser.Id, cancellationToken);
         if (family is null)
-        {
             return Result<List<WalletResponseDto>>.Failure(Error.None);
-        }
-
-        var wallets = await walletRepository.GetWalletsForUserAsync(family.Id, currentUser.Id, cancellationToken);
-
-        var dtos = wallets.Select(w => new WalletResponseDto(
-            w.Id,
-            w.Name,
-            w.Type,
-            w.CurrentBalance,
-            IsShared: w.OwnerId == null,
-            w.OwnerId
-        )).ToList();
-
+        
+        var wallets = await walletRepository.GetWalletsForUserAsync(currentUser.Id, cancellationToken);
+        var dtos = WalletResponseDto.ToDto(wallets);
         return Result<List<WalletResponseDto>>.Success(dtos);
     }
 }

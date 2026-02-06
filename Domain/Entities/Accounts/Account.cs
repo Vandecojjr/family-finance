@@ -16,17 +16,13 @@ public class Account : Entity, IAggregateRoot
 
     public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
-
-    public Account(string email, string passwordHash)
-    {
-        Email = email;
-        PasswordHash = passwordHash;
-    }
+    
 
     public Account(string email, string passwordHash, Guid memberId)
-        : this(email, passwordHash)
     {
         MemberId = memberId;
+        Email = email;
+        PasswordHash = passwordHash;
     }
 
     public void Activate()

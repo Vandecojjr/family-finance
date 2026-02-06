@@ -6,6 +6,7 @@ namespace Domain.Repositories;
 public interface IFamilyRepository : IRepository<Family>
 {
     Task<Family?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Family?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Family?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken = default);
@@ -17,8 +18,4 @@ public interface IFamilyRepository : IRepository<Family>
     Task<Member?> GetMemberByIdAsync(Guid familyId, Guid memberId, CancellationToken cancellationToken = default);
     Task<Member?> GetMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default);
     Task<bool> ExistsMemberByDocumentAsync(Guid familyId, string document, CancellationToken cancellationToken = default);
-
-    Task AddMemberAsync(Family family, CancellationToken cancellationToken = default);
-    Task UpdateMemberAsync(Guid familyId, Member member, CancellationToken cancellationToken = default);
-    Task RemoveMemberAsync(Guid familyId, Guid memberId, CancellationToken cancellationToken = default);
 }
