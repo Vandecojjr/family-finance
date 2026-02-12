@@ -11,14 +11,16 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     {
         return await context.Set<Account>()
             .AsNoTracking()
+            .Include(x => x.Roles)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
-    
+
     public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
             .Include(x => x.RefreshTokens)
             .Include(x => x.Member)
+            .Include(x => x.Roles)
             .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
 
@@ -28,7 +30,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .Include(x => x.RefreshTokens)
             .FirstOrDefaultAsync(x => x.MemberId == memberId, cancellationToken);
     }
-    
+
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
@@ -74,16 +76,18 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             .AnyAsync(x => x.Token == token, cancellationToken);
     }
 
-    public async Task AddRefreshTokenAsync(Guid accountId, RefreshToken token, CancellationToken cancellationToken = default)
+    public async Task AddRefreshTokenAsync(Guid accountId, RefreshToken token,
+        CancellationToken cancellationToken = default)
     {
-         var account = await GetByIdAsync(accountId, cancellationToken);
-         if (account is null) return;
+        var account = await GetByIdAsync(accountId, cancellationToken);
+        if (account is null) return;
 
-         account.AddRefreshToken(token);
-         await context.SaveChangesAsync(cancellationToken);
+        account.AddRefreshToken(token);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RevokeRefreshTokenAsync(Guid accountId, string token, CancellationToken cancellationToken = default)
+    public async Task RevokeRefreshTokenAsync(Guid accountId, string token,
+        CancellationToken cancellationToken = default)
     {
         var account = await GetByIdAsync(accountId, cancellationToken);
         if (account is null) return;
@@ -101,6 +105,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         {
             token.Revoke();
         }
+
         await context.SaveChangesAsync(cancellationToken);
     }
 
@@ -112,8 +117,8 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         var toRemove = account.RefreshTokens.Where(t => t.ExpiresAt <= DateTime.UtcNow).ToList();
         if (toRemove.Count != 0)
         {
-             context.Set<RefreshToken>().RemoveRange(toRemove);
-             await context.SaveChangesAsync(cancellationToken);
+            context.Set<RefreshToken>().RemoveRange(toRemove);
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 }

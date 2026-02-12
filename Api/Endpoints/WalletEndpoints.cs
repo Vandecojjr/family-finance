@@ -15,19 +15,19 @@ public static class WalletEndpoints
             .RequireAuthorization();
 
         group.MapPost("/", async (CreateWalletCommand command, IMediator mediator) =>
-        {
-            var result = await mediator.Send(command);
-            return result.ToResult();
-        })
-        .WithName("CreateWallet")
-        .RequirePermission(Permission.WalletCreate);
+            {
+                var result = await mediator.Send(command);
+                return result.ToResult();
+            })
+            .WithName("CreateWallet")
+            .RequirePermission(Permission.WalletCreate);
 
         group.MapGet("/", async (IMediator mediator) =>
-        {
-            var result = await mediator.Send(new GetMyWalletsQuery());
-            return result.ToResult();
-        })
-        .WithName("GetMyWallets")
-        .RequirePermission(Permission.WalletView);
+            {
+                var result = await mediator.Send(new GetMyWalletsQuery());
+                return result.ToResult();
+            })
+            .WithName("GetMyWallets")
+            .RequirePermission(Permission.WalletView);
     }
 }
