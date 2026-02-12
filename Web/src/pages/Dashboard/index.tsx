@@ -9,7 +9,7 @@ import {
     Euro
 } from 'lucide-react';
 
-import { MyWallets } from './components/MyWallets';
+import { MyWallets } from '../../features/wallets/components/MyWallets';
 
 const Dashboard: React.FC = () => {
     return (

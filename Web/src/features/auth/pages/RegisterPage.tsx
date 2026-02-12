@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Home, FileText, Loader2 } from 'lucide-react';
-import api from '../../services/api';
-import { maskCpf, validateCpf } from '../../utils/validation';
+import api from '../../../services/api';
+import { maskCpf, validateCpf } from '../../../utils/validation';
 
 const Register: React.FC = () => {
     const navigate = useNavigate();

@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Register from './pages/Register';
-import Login from './pages/Login';
+import Register from './features/auth/pages/RegisterPage';
+import Login from './features/auth/pages/LoginPage';
 import Dashboard from './pages/Dashboard';
-import Wallets from './pages/Wallets';
+import WalletsPage from './features/wallets/pages/WalletsPage';
 import { MainLayout } from './components/Layout/MainLayout';
 
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider } from './features/auth/hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <Wallets />
+                  <WalletsPage />
                 </MainLayout>
               </ProtectedRoute>
             }

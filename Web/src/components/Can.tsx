@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { usePermissions } from '../hooks/usePermissions';
+import { usePermissions } from '../features/auth/hooks/usePermissions';
 import { Permission } from '../types/permissions';
 
 interface CanProps {

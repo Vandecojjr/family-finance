@@ -1,5 +1,5 @@
 import { useAuth } from './useAuth';
-import { Permission } from '../types/permissions';
+import { Permission } from '../../../types/permissions';
 
 export function usePermissions() {
     const { user } = useAuth();

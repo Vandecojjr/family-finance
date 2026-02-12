@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, Wallet as WalletIcon, MoreVertical, CreditCard, Banknote, PiggyBank, TrendingUp } from 'lucide-react';
-import { WalletService } from '../../services/WalletService';
-import { Wallet } from '../../types';
-import { CreateWalletModal } from '../../components/Modals/CreateWalletModal';
+import { WalletService } from '../services/walletService';
+import { Wallet } from '../types';
+import { CreateWalletModal } from '../components/CreateWalletModal';
 
-const Wallets: React.FC = () => {
+const WalletsPage: React.FC = () => {
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -181,4 +181,4 @@ const Wallets: React.FC = () => {
     );
 };
 
-export default Wallets;
+export default WalletsPage;

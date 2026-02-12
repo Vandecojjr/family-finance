@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Wallet } from '../../../types';
-import { WalletService } from '../../../services/WalletService';
+import { Wallet } from '../types';
+import { WalletService } from '../services/walletService';
 
 export function MyWallets() {
     const [wallets, setWallets] = useState<Wallet[]>([]);

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, Loader2, LogIn } from 'lucide-react';
-import api from '../../services/api';
-import { useAuth } from '../../hooks/useAuth';
+import api from '../../../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -17,7 +17,14 @@ const Login: React.FC = () => {
         password: '',
     });
 
-    const { signIn } = useAuth();
+    const { signIn, signed } = useAuth(); // Get signed state
+
+    // Redirect when signed becomes true
+    React.useEffect(() => {
+        if (signed) {
+            navigate('/dashboard');
+        }
+    }, [signed, navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -31,11 +38,18 @@ const Login: React.FC = () => {
 
         try {
             const response = await api.post('/accounts/login', formData);
-            signIn(response.data.accessToken, response.data.refreshToken);
-            navigate('/dashboard');
+            const result = response.data;
+
+            if (result.isSuccess && result.value) {
+                signIn(result.value.accessToken, result.value.refreshToken);
+                // Navigation handled by useEffect
+            } else {
+                setError(result.errors?.[0]?.message || 'Erro ao realizar login.');
+                setLoading(false);
+            }
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'E-mail ou senha inválidos.');
-        } finally {
+            const errorMsg = err.response?.data?.errors?.[0]?.message || err.response?.data?.detail || 'E-mail ou senha inválidos.';
+            setError(errorMsg);
             setLoading(false);
         }
     };

@@ -1,5 +1,6 @@
-import api from './api';
-import { ApiResponse, Wallet } from '../types';
+import api from '../../../services/api';
+import { ApiResponse } from '../../../types';
+import { Wallet } from '../types';
 
 export const WalletService = {
     getMyWallets: async (): Promise<ApiResponse<Wallet[]>> => {

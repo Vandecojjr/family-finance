@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { WalletService } from '../../services/WalletService';
+import { WalletService } from '../services/walletService';
 
 interface CreateWalletModalProps {
     isOpen: boolean;
