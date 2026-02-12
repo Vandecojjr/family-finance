@@ -15,7 +15,7 @@ public sealed class GetCategoriesHandler(
 {
     public async ValueTask<Result<List<CategoryResponseDto>>> Handle(GetCategoriesQuery query, CancellationToken cancellationToken)
     {
-        var family = await familyRepository.GetByMemberIdAsync(currentUser.Id, cancellationToken);
+        var family = await familyRepository.GetByMemberIdAsync(currentUser.AccountId, cancellationToken);
         if (family is null)
         {
             return Result<List<CategoryResponseDto>>.Failure(Error.None);

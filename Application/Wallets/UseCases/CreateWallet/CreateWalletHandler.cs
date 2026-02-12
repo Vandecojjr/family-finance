@@ -14,14 +14,14 @@ public sealed class CreateWalletHandler(
 {
     public async ValueTask<Result<Guid>> Handle(CreateWalletCommand command, CancellationToken cancellationToken)
     {
-        var family = await familyRepository.GetByMemberIdAsync(currentUser.Id, cancellationToken);
+        var family = await familyRepository.GetByMemberIdAsync(currentUser.AccountId, cancellationToken);
         if (family is null)
             return Result<Guid>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
         
         Guid? ownerId = null;
 
         if (!command.IsShared)
-            ownerId = currentUser.Id;
+            ownerId = currentUser.AccountId;
         
         var wallet = new Wallet(command.Name, family.Id, command.Type, ownerId, command.InitialBalance);
         await walletRepository.AddAsync(wallet, cancellationToken);

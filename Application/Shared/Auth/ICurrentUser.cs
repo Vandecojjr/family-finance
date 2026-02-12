@@ -4,7 +4,8 @@ namespace Application.Shared.Auth;
 
 public interface ICurrentUser
 {
-    Guid Id { get; }
+    Guid AccountId { get; }
+    Guid MemberId { get; }
     string Email { get; }
     IReadOnlyCollection<string> Roles { get; }
     IReadOnlyCollection<Permission> Permissions { get; }
