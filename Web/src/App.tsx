@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Wallets from './pages/Wallets';
+import { MainLayout } from './components/Layout/MainLayout';
 
 import { AuthProvider } from './hooks/useAuth';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -17,7 +19,19 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wallets"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Wallets />
+                </MainLayout>
               </ProtectedRoute>
             }
           />

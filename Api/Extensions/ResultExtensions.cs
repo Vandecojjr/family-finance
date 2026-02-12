@@ -10,14 +10,14 @@ public static class ResultExtensions
     public static Microsoft.AspNetCore.Http.IResult ToResult(this Result result)
     {
         return result.IsSuccess
-            ? Results.Ok()
+            ? Results.Ok(result)
             : CreateProblemResult(result.Errors);
     }
 
     public static Microsoft.AspNetCore.Http.IResult ToResult<T>(this Result<T> result)
     {
         return result.IsSuccess
-            ? Results.Ok(result.Value)
+            ? Results.Ok(result)
             : CreateProblemResult(result.Errors);
     }
 
