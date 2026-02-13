@@ -1,6 +1,5 @@
 ﻿using Api.Endpoints;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
+using Api.Endpoints.Wallets;
 using Scalar.AspNetCore;
 
 namespace Api.Extensions;
@@ -28,17 +27,15 @@ public static class ApplicationBuilderExtensions
                 }
                 catch (Exception ex)
                 {
-                    // Log error or ignore for now if DB not ready
                     Console.WriteLine($"Seeding failed: {ex.Message}");
                 }
             }
         }
 
-        // app.UseHttpsRedirection(); // Potential cause for NetworkError if certs are not trusted
-
         app.MapAccountEndpoints();
         app.MapFamilyEndpoints();
-        app.MapWalletEndpoints();
+        app.MapPersonalWalletEndpoints();
+        app.MapFamilyWalletEndpoints();
         app.MapCategoryEndpoints();
 
         return app;

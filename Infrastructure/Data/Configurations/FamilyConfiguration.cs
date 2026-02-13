@@ -8,7 +8,7 @@ public class FamilyConfiguration : IEntityTypeConfiguration<Family>
 {
     public void Configure(EntityTypeBuilder<Family> builder)
     {
-        // builder.ToTable("Families");
+        builder.ToTable("Families");
 
         builder.HasKey(x => x.Id);
 

@@ -12,9 +12,9 @@ public static class CategoryEndpoints
             .WithTags("Categories")
             .RequireAuthorization();
 
-        group.MapGet("/", async (IMediator mediator) =>
+        group.MapGet("/", async (CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(new GetCategoriesQuery());
+            var result = await mediator.Send(new GetCategoriesQuery(), cancellationToken);
             return result.ToResult();
         })
         .WithName("GetCategories");

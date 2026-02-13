@@ -10,6 +10,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)
     {
+        builder.ToTable("Roles");
+
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name)
@@ -30,6 +32,5 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 
         builder.HasMany(x => x.Accounts)
             .WithMany(x => x.Roles);
-        // .UsingEntity(j => j.ToTable("AccountRoles"));
     }
 }

@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16.2
+    container_name: family-finance-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: family_finance_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - family-finance-postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+
+volumes:
+  family-finance-postgres-data:
+    name: family-finance-postgres-data

@@ -14,26 +14,26 @@ public static class FamilyEndpoints
         var group = app.MapGroup("api/v1/families")
             .WithTags("Families");
 
-        group.MapPost("/", async (CreateFamilyCommand command, IMediator mediator) =>
+        group.MapPost("/", async (CreateFamilyCommand command, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return result.ToResult();
         })
         .RequirePermission(Permission.FamilyManage)
         .WithName("CreateFamily");
 
-        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
+        group.MapGet("/{id:guid}", async (Guid id, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(new GetFamilyByIdQuery(id));
+            var result = await mediator.Send(new GetFamilyByIdQuery(id), cancellationToken);
             return result.ToResult();
         })
         .RequirePermission(Permission.FamilyView)
         .WithName("GetFamilyById");
 
-        group.MapPost("/{id:guid}/members", async (Guid id, AddMemberCommand command, IMediator mediator) =>
+        group.MapPost("/{id:guid}/members", async (Guid id, CancellationToken cancellationToken, AddMemberCommand command, IMediator mediator) =>
         {
             var commandWithId = command with { FamilyId = id };
-            var result = await mediator.Send(commandWithId);
+            var result = await mediator.Send(commandWithId, cancellationToken);
             return result.ToResult();
         })
         .RequirePermission(Permission.FamilyManage)

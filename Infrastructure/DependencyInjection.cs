@@ -3,6 +3,7 @@ using Infrastructure.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Domain.Repositories;
@@ -19,7 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IAuthTokenService, JwtAuthTokenService>();
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseInMemoryDatabase("FamilyFinanceDb"));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IFamilyRepository, FamilyRepository>();

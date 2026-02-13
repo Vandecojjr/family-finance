@@ -15,37 +15,37 @@ public static class AccountEndpoints
         var group = app.MapGroup("api/v1/accounts")
             .WithTags("Accounts");
 
-        group.MapPost("/register", async (RegisterAccountCommand command, IMediator mediator) =>
+        group.MapPost("/register", async (RegisterAccountCommand command, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return result.ToResult();
         })
         .WithName("RegisterAccount");
 
-        group.MapPost("/", async (CreateAccountCommand command, IMediator mediator) =>
+        group.MapPost("/", async (CreateAccountCommand command, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return result.ToResult();
         })
         .WithName("CreateAccount");
 
-        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
+        group.MapGet("/{id:guid}", async (Guid id, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(new GetAccountByIdQuery(id));
+            var result = await mediator.Send(new GetAccountByIdQuery(id), cancellationToken);
             return result.ToResult();
         })
         .WithName("GetAccountById");
 
-        group.MapPost("/login", async (LoginCommand command, IMediator mediator) =>
+        group.MapPost("/login", async (LoginCommand command, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return result.ToResult();
         })
         .WithName("Login");
 
-        group.MapPost("/refresh-token", async (RefreshTokenCommand command, IMediator mediator) =>
+        group.MapPost("/refresh-token", async (RefreshTokenCommand command, CancellationToken cancellationToken, IMediator mediator) =>
         {
-            var result = await mediator.Send(command);
+            var result = await mediator.Send(command, cancellationToken);
             return result.ToResult();
         })
         .WithName("RefreshToken");

@@ -45,23 +45,13 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
 
     public async Task UpdateAsync(Account account, CancellationToken cancellationToken = default)
     {
-        try
+        var entry = context.Entry(account);
+        if (entry.State == EntityState.Detached)
         {
-            var entry = context.Entry(account);
-            if (entry.State == EntityState.Detached)
-            {
-                context.Set<Account>().Update(account);
-            }
+            context.Set<Account>().Update(account);
+        }
 
-            await context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException) when (context.Database.IsInMemory())
-        {
-            // InMemory provider is flaky with collection removals. 
-            // If it complains that an entity doesn't exist in the store during a delete/update,
-            // we can often ignore it as the end state (entity gone) is what we wanted anyway.
-            // This prevents the login flow from breaking due to transient tracking issues.
-        }
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token, CancellationToken cancellationToken = default)

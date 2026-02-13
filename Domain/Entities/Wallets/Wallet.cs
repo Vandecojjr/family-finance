@@ -29,4 +29,13 @@ public class Wallet : Entity, IAggregateRoot
         CurrentBalance = initialBalance;
     }
     
+    public static Wallet CreatePersonal(string name, Guid familyId, WalletType type, Guid? ownerId = null, decimal initialBalance = 0)
+    {
+        return new Wallet(name, familyId, type, ownerId, initialBalance);
+    }
+    
+    public static Wallet CreateFamily(string name, Guid familyId, WalletType type, decimal initialBalance = 0)
+    {
+        return new Wallet(name, familyId, type, null, initialBalance);
+    }
 }

@@ -1,10 +1,11 @@
+using Application.Wallets.UseCases.CreatePersonalWallet;
 using FluentValidation;
 
-namespace Application.Wallets.UseCases.CreateWallet;
+namespace Application.Wallets.UseCases.CreateFamilyWallet;
 
-public class CreateWalletValidator : AbstractValidator<CreateWalletCommand>
+public class CreateFamilyWalletValidator : AbstractValidator<CreatePersonalWalletCommand>
 {
-    public CreateWalletValidator()
+    public CreateFamilyWalletValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty()

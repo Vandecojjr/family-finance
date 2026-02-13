@@ -9,7 +9,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     public void Configure(EntityTypeBuilder<Account> builder)
     {
-        // builder.ToTable("Accounts");
+        builder.ToTable("Accounts");
         
         builder.HasKey(x => x.Id);
 
@@ -28,7 +28,6 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.MemberId)
             .IsRequired();
 
-        // Relationships
         builder.HasOne(x => x.Member)
             .WithOne(x => x.Account)
             .HasForeignKey<Account>(x => x.MemberId)
