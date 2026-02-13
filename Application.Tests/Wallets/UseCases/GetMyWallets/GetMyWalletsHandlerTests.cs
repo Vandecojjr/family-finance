@@ -3,6 +3,7 @@ using Application.Wallets.UseCases.GetMyWallets;
 using Domain.Entities.Wallets;
 using Domain.Enums;
 using Domain.Repositories;
+using FluentAssertions;
 using Moq;
 using Xunit;
 
@@ -26,11 +27,10 @@ public class GetMyWalletsHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnWallets_WhenWalletsExist()
     {
-        var accountId = Guid.NewGuid();
         var memberId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
 
-        _currentUserMock.Setup(x => x.AccountId).Returns(accountId);
+        _currentUserMock.Setup(x => x.MemberId).Returns(memberId);
 
         var wallets = new List<Wallet>
         {
@@ -38,24 +38,24 @@ public class GetMyWalletsHandlerTests
             new("Carteira 2", familyId, WalletType.Checking, memberId, 200)
         };
 
-        _walletRepositoryMock.Setup(x => x.GetWalletsForUserAsync(accountId, It.IsAny<CancellationToken>()))
+        _walletRepositoryMock.Setup(x => x.GetWalletsForUserAsync(memberId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(wallets);
 
         var query = new GetMyWalletsQuery();
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Equal(2, result.Value.Count);
-        Assert.Equal("Carteira 1", result.Value[0].Name);
-        Assert.Equal("Carteira 2", result.Value[1].Name);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value.Should().HaveCount(2);
+        result.Value![0].Name.Should().Be("Carteira 1");
+        result.Value![1].Name.Should().Be("Carteira 2");
     }
 
     [Fact]
     public async Task Handle_ShouldReturnEmptyList_WhenNoWalletsExist()
     {
         var memberId = Guid.NewGuid();
-        _currentUserMock.Setup(x => x.AccountId).Returns(memberId);
+        _currentUserMock.Setup(x => x.MemberId).Returns(memberId);
 
         _walletRepositoryMock
             .Setup(x => x.GetWalletsForUserAsync(memberId, It.IsAny<CancellationToken>()))
@@ -64,8 +64,8 @@ public class GetMyWalletsHandlerTests
         var query = new GetMyWalletsQuery();
         var result = await _handler.Handle(query, CancellationToken.None);
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Value);
-        Assert.Empty(result.Value);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value.Should().BeEmpty();
     }
 }
