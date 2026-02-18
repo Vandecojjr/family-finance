@@ -36,7 +36,7 @@ public class GetCategoriesHandlerTests
         var categories = new List<Category>
         {
             new Category("Alimentação", CategoryType.Expense, family.Id),
-            new Category("Salário", CategoryType.Income)
+            new Category("Salário", CategoryType.Income, family.Id)
         };
 
         _currentUserMock.Setup(x => x.AccountId).Returns(accountId);

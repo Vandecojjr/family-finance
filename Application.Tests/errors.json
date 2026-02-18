@@ -1,0 +1,309 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Compilador do Microsoft (R) Visual C#",
+        "version": "5.0.0.0",
+        "fileVersion": "5.0.0-2.25523.111 (b0f34d51)",
+        "semanticVersion": "5.0.0",
+        "language": "pt-BR"
+      },
+      "results": [
+        {
+          "ruleId": "CS1729",
+          "level": "error",
+          "message": "\"CreateCategoryHandler\" não contém um construtor que aceita 3 argumentos",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 25,
+                  "startColumn": 24,
+                  "endLine": 25,
+                  "endColumn": 45
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS7036",
+          "level": "error",
+          "message": "Não há nenhum argumento fornecido que corresponda ao parâmetro necessário 'FamilyId' de 'CreateCategoryCommand.CreateCategoryCommand(string, CategoryType, Guid, Guid?)'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryValidatorTests.cs",
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 27,
+                  "endLine": 15,
+                  "endColumn": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS7036",
+          "level": "error",
+          "message": "Não há nenhum argumento fornecido que corresponda ao parâmetro necessário 'FamilyId' de 'CreateCategoryCommand.CreateCategoryCommand(string, CategoryType, Guid, Guid?)'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryValidatorTests.cs",
+                "region": {
+                  "startLine": 23,
+                  "startColumn": 27,
+                  "endLine": 23,
+                  "endColumn": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS7036",
+          "level": "error",
+          "message": "Não há nenhum argumento fornecido que corresponda ao parâmetro necessário 'FamilyId' de 'CreateCategoryCommand.CreateCategoryCommand(string, CategoryType, Guid, Guid?)'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryValidatorTests.cs",
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 27,
+                  "endLine": 31,
+                  "endColumn": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/DeleteCategory/DeleteCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 46,
+                  "endLine": 45,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS7036",
+          "level": "error",
+          "message": "Não há nenhum argumento fornecido que corresponda ao parâmetro necessário 'FamilyId' de 'CreateCategoryCommand.CreateCategoryCommand(string, CategoryType, Guid, Guid?)'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 37,
+                  "startColumn": 27,
+                  "endLine": 37,
+                  "endColumn": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/UpdateCategory/UpdateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 48,
+                  "startColumn": 46,
+                  "endLine": 48,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS7036",
+          "level": "error",
+          "message": "Não há nenhum argumento fornecido que corresponda ao parâmetro necessário 'familyId' de 'Category.Category(string, CategoryType, Guid, Guid?)'",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/GetCategories/GetCategoriesHandlerTests.cs",
+                "region": {
+                  "startLine": 39,
+                  "startColumn": 17,
+                  "endLine": 39,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/DeleteCategory/DeleteCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 73,
+                  "startColumn": 46,
+                  "endLine": 73,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 66,
+                  "startColumn": 46,
+                  "endLine": 66,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1503",
+          "level": "error",
+          "message": "Argumento 3: não é possível converter de \"<nulo>\" para \"System.Guid\"",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/UpdateCategory/UpdateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 67,
+                  "startColumn": 78,
+                  "endLine": 67,
+                  "endColumn": 82
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/UpdateCategory/UpdateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 74,
+                  "startColumn": 46,
+                  "endLine": 74,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘ICategoryRepository’ não contém uma definição para \"GetByIdAsync\" e não foi possível encontrar nenhum método de extensão \"GetByIdAsync\" que aceite um primeiro argumento do tipo ‘ICategoryRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application.Tests/Categories/UseCases/CreateCategory/CreateCategoryHandlerTests.cs",
+                "region": {
+                  "startLine": 91,
+                  "startColumn": 46,
+                  "endLine": 91,
+                  "endColumn": 58
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "rules": {
+        "CS1061": {
+          "id": "CS1061",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS1061)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "CS1503": {
+          "id": "CS1503",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS1503)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "CS1729": {
+          "id": "CS1729",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS1729)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "CS7036": {
+          "id": "CS7036",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS7036)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
