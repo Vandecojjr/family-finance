@@ -15,19 +15,34 @@ public class CategoryRepository(AppDbContext context) : ICategoryRepository
 
     public async Task<List<Category>> GetAllForFamilyAsync(Guid familyId, CancellationToken cancellationToken = default)
     {
-        // System defaults (FamilyId == null) OR Custom for this family
         return await context.Set<Category>()
             .Where(c => c.FamilyId == null || c.FamilyId == familyId)
-            .Include(c => c.SubCategories) // Load hierarchy? 
-            // Note: EF Core might not load multilevel recursive automatically without explicit loading or max depth configuration or lazy loading.
-            // For now, let's include direct children. If unlimited depth is needed, we might need CTEs or loading all and assembling in memory.
+            .Include(c => c.SubCategories)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Category?> GetByIdAsyncWithSubCategories(Guid id, CancellationToken cancellationToken = default)
     {
-         return await context.Set<Category>()
+        return await context.Set<Category>()
             .Include(c => c.SubCategories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
+    public async Task UpdateAsync(Category category, CancellationToken cancellationToken = default)
+    {
+        context.Set<Category>().Update(category);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RemoveAsync(Category category, CancellationToken cancellationToken = default)
+    {
+        context.Set<Category>().Remove(category);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<bool> ExistParentCategoryByNameAsync(string name, Guid familyId, CancellationToken cancellationToken = default)
+    {
+        return context.Set<Category>()
+            .AnyAsync(c => c.Name == name && c.FamilyId == familyId && c.IsSubcategory == false, cancellationToken);
     }
 }

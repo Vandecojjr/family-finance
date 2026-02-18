@@ -1,4 +1,7 @@
 using Application.Categories.UseCases.GetCategories;
+using Application.Categories.UseCases.CreateCategory;
+using Application.Categories.UseCases.UpdateCategory;
+using Application.Categories.UseCases.DeleteCategory;
 using Api.Extensions;
 using Mediator;
 
@@ -13,10 +16,35 @@ public static class CategoryEndpoints
             .RequireAuthorization();
 
         group.MapGet("/", async (CancellationToken cancellationToken, IMediator mediator) =>
-        {
-            var result = await mediator.Send(new GetCategoriesQuery(), cancellationToken);
-            return result.ToResult();
-        })
-        .WithName("GetCategories");
+            {
+                var result = await mediator.Send(new GetCategoriesQuery(), cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("GetCategories");
+
+        group.MapPost("/",
+                async (CreateCategoryCommand command, CancellationToken cancellationToken, IMediator mediator) =>
+                {
+                    var result = await mediator.Send(command, cancellationToken);
+                    return result.ToResult();
+                })
+            .WithName("CreateCategory");
+
+        group.MapPut("/{id:guid}",
+                async (Guid id, UpdateCategoryCommand command, CancellationToken cancellationToken,
+                    IMediator mediator) =>
+                {
+                    if (id != command.Id) return Results.BadRequest();
+                    var result = await mediator.Send(command, cancellationToken);
+                    return result.ToResult();
+                })
+            .WithName("UpdateCategory");
+
+        group.MapDelete("/{id:guid}", async (Guid id, CancellationToken cancellationToken, IMediator mediator) =>
+            {
+                var result = await mediator.Send(new DeleteCategoryCommand(id), cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("DeleteCategory");
     }
 }

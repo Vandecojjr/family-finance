@@ -13,13 +13,12 @@ public sealed class GetCategoriesHandler(
     ICurrentUser currentUser
 ) : IQueryHandler<GetCategoriesQuery, Result<List<CategoryResponseDto>>>
 {
-    public async ValueTask<Result<List<CategoryResponseDto>>> Handle(GetCategoriesQuery query, CancellationToken cancellationToken)
+    public async ValueTask<Result<List<CategoryResponseDto>>> Handle(GetCategoriesQuery query,
+        CancellationToken cancellationToken)
     {
         var family = await familyRepository.GetByMemberIdAsync(currentUser.AccountId, cancellationToken);
         if (family is null)
-        {
-            return Result<List<CategoryResponseDto>>.Failure(Error.None);
-        }
+            return Result<List<CategoryResponseDto>>.Failure(Error.NotFound("FAMILY_NOT_FOUND", "Família não encontrada."));
 
         var allCategories = await categoryRepository.GetAllForFamilyAsync(family.Id, cancellationToken);
         var rootCategories = allCategories.Where(c => c.ParentId == null).ToList();
@@ -32,7 +31,7 @@ public sealed class GetCategoriesHandler(
     {
         var children = allCategories
             .Where(c => c.ParentId == category.Id)
-            .Select(c => MapToDto(c, allCategories)) // Recursion
+            .Select(c => MapToDto(c, allCategories))
             .ToList();
 
         return new CategoryResponseDto(
