@@ -19,7 +19,7 @@ namespace Infrastructure.Migrations
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FamilyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FamilyId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

@@ -21,7 +21,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasForeignKey(x => x.ParentId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
-        
-        builder.Property(x => x.FamilyId).IsRequired(false);
+
+        builder.Property(x => x.FamilyId)
+            .IsRequired();
     }
 }

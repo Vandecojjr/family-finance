@@ -45,12 +45,6 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
 
     public async Task UpdateAsync(Account account, CancellationToken cancellationToken = default)
     {
-        var entry = context.Entry(account);
-        if (entry.State == EntityState.Detached)
-        {
-            context.Set<Account>().Update(account);
-        }
-
         await context.SaveChangesAsync(cancellationToken);
     }
 

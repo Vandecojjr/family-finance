@@ -10,13 +10,13 @@ public class Account : Entity, IAggregateRoot
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
-    
+
     public Guid MemberId { get; private set; }
     public Member? Member { get; private set; }
 
     public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
-    
+
 
     public Account(string email, string passwordHash, Guid memberId)
     {

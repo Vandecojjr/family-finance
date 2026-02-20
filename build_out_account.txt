@@ -1,0 +1,18 @@
+  Determinando os projetos a serem restaurados...
+  Todos os projetos est??o atualizados para restaura????o.
+  Domain -> C:\dev\Projetos_pessoais\family-finance\Domain\bin\Debug\net10.0\Domain.dll
+C:\dev\Projetos_pessoais\family-finance\Application\Wallets\UseCases\GetFamilyWallets\GetFamilyWalletsHandler.cs(11,18): warning CS9113: O par??metro "currentUser" n??o est?? lido. [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\DeleteCategory\DeleteCategoryHandler.cs(16,49): error CS1061: ???ICategoryRepository??? n??o cont??m uma defini????o para "GetByIdAsync" e n??o foi poss??vel encontrar nenhum m??todo de extens??o "GetByIdAsync" que aceite um primeiro argumento do tipo ???ICategoryRepository??? (voc?? est?? se esquecendo de usar uma diretiva ou uma refer??ncia de assembly?) [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\CreateCategory\CreateCategoryHandler.cs(23,51): error CS1061: ???ICategoryRepository??? n??o cont??m uma defini????o para "GetByIdAsync" e n??o foi poss??vel encontrar nenhum m??todo de extens??o "GetByIdAsync" que aceite um primeiro argumento do tipo ???ICategoryRepository??? (voc?? est?? se esquecendo de usar uma diretiva ou uma refer??ncia de assembly?) [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\GetCategories\GetCategoriesHandler.cs(42,23): warning CS8073: O resultado da express??o ?? sempre 'true', pois um valor do tipo 'Guid' nunca ?? igual a "null" do tipo 'Guid?' [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+
+FALHA da compila????o.
+
+C:\dev\Projetos_pessoais\family-finance\Application\Wallets\UseCases\GetFamilyWallets\GetFamilyWalletsHandler.cs(11,18): warning CS9113: O par??metro "currentUser" n??o est?? lido. [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\GetCategories\GetCategoriesHandler.cs(42,23): warning CS8073: O resultado da express??o ?? sempre 'true', pois um valor do tipo 'Guid' nunca ?? igual a "null" do tipo 'Guid?' [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\DeleteCategory\DeleteCategoryHandler.cs(16,49): error CS1061: ???ICategoryRepository??? n??o cont??m uma defini????o para "GetByIdAsync" e n??o foi poss??vel encontrar nenhum m??todo de extens??o "GetByIdAsync" que aceite um primeiro argumento do tipo ???ICategoryRepository??? (voc?? est?? se esquecendo de usar uma diretiva ou uma refer??ncia de assembly?) [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+C:\dev\Projetos_pessoais\family-finance\Application\Categories\UseCases\CreateCategory\CreateCategoryHandler.cs(23,51): error CS1061: ???ICategoryRepository??? n??o cont??m uma defini????o para "GetByIdAsync" e n??o foi poss??vel encontrar nenhum m??todo de extens??o "GetByIdAsync" que aceite um primeiro argumento do tipo ???ICategoryRepository??? (voc?? est?? se esquecendo de usar uma diretiva ou uma refer??ncia de assembly?) [C:\dev\Projetos_pessoais\family-finance\Application\Application.csproj]
+    2 Aviso(s)
+    2 Erro(s)
+
+Tempo Decorrido 00:00:01.89
