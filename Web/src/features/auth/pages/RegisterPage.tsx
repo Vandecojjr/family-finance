@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, Home, FileText, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
 import { maskCpf, validateCpf } from '../../../utils/validation';
 
@@ -52,171 +51,150 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <h1 style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Criar Conta</h1>
-                    <p style={{ color: 'var(--text-muted)' }}>Comece sua jornada financeira familiar</p>
+        <div className="bg-bg-main text-slate-800 min-h-screen flex flex-col font-display">
+            {/* Header */}
+            <header className="flex items-center justify-between px-6 py-4 lg:px-12 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 text-brand-blue">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <h1 className="text-xl font-extrabold tracking-tight text-slate-900">FamilyFinance</h1>
                 </div>
+                <div className="hidden md:flex items-center gap-8">
+                    <Link className="text-sm font-medium text-slate-600 hover:text-primary transition-colors" to="#">Segurança</Link>
+                    <Link className="text-sm font-medium text-slate-600 hover:text-primary transition-colors" to="#">Preços</Link>
+                    <Link className="text-sm font-medium text-slate-600 hover:text-primary transition-colors" to="#">Suporte</Link>
+                </div>
+            </header>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    {error && (
-                        <div style={{
-                            padding: '0.75rem',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            color: 'var(--danger)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.875rem',
-                            border: '1px solid rgba(239, 68, 68, 0.2)'
-                        }}>
-                            {error}
+            {/* Main Section */}
+            <main className="flex-1 flex items-center justify-center p-6 bg-soft-gradient">
+                <div className="w-full max-w-[440px]">
+                    <div className="bg-card-bg border border-slate-200 rounded-xl shadow-xl shadow-slate-200/60 overflow-hidden">
+                        <div className="p-8 pb-4 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-6 shadow-md shadow-primary/30">
+                                <span className="material-symbols-outlined text-white text-3xl">payments</span>
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900 mb-1">Family Finance</h2>
+                            <p className="text-slate-500 text-sm">Crie sua conta para começar a gerenciar</p>
                         </div>
-                    )}
+                        <div className="p-8 pt-4">
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+                                {error && (
+                                    <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200">
+                                        {error}
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-slate-700">Seu Nome</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+                                        <input
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                            placeholder="Ex: João Silva"
+                                            type="text"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-slate-700">E-mail</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">mail</span>
+                                        <input
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                            placeholder="Ex: joao@email.com"
+                                            type="email"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-slate-700">Senha</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+                                        <input
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                            placeholder="No mínimo 6 caracteres"
+                                            type="password"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-slate-700">Nome da Família</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">home</span>
+                                        <input
+                                            name="familyName"
+                                            value={formData.familyName}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                            placeholder="Ex: Família Silva"
+                                            type="text"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2 text-slate-700">CPF</label>
+                                    <div className="relative">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">description</span>
+                                        <input
+                                            name="document"
+                                            value={formData.document}
+                                            onChange={handleChange}
+                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                            placeholder="Ex: 000.000.000-00"
+                                            type="text"
+                                            required
+                                        />
+                                    </div>
+                                </div>
 
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Seu Nome</label>
-                        <div style={{ position: 'relative' }}>
-                            <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ex: João Silva"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-color)',
-                                    outline: 'none',
-                                    fontSize: '1rem',
-                                    transition: 'var(--transition)'
-                                }}
-                            />
+                                <button disabled={loading} className="w-full bg-primary hover:bg-primary-dark text-slate-900 font-bold py-3.5 rounded-lg shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-2 mt-6" type="submit">
+                                    {loading ? (
+                                        <span>Criando...</span>
+                                    ) : (
+                                        <span>Criar Conta</span>
+                                    )}
+                                </button>
+                            </form>
+
                         </div>
-                    </div>
 
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>E-mail</label>
-                        <div style={{ position: 'relative' }}>
-                            <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ex: joao@email.com"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-color)',
-                                    outline: 'none',
-                                    fontSize: '1rem'
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Senha</label>
-                        <div style={{ position: 'relative' }}>
-                            <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                placeholder="No mínimo 6 caracteres"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-color)',
-                                    outline: 'none',
-                                    fontSize: '1rem'
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <hr style={{ border: '0', borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
-
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nome da Família</label>
-                        <div style={{ position: 'relative' }}>
-                            <Home size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="text"
-                                name="familyName"
-                                value={formData.familyName}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ex: Família Silva"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-color)',
-                                    outline: 'none',
-                                    fontSize: '1rem'
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>CPF</label>
-                        <div style={{ position: 'relative' }}>
-                            <FileText size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                            <input
-                                type="text"
-                                name="document"
-                                value={formData.document}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ex: 000.000.000-00"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                    borderRadius: 'var(--radius-md)',
-                                    border: '1px solid var(--border-color)',
-                                    outline: 'none',
-                                    fontSize: '1rem'
-                                }}
-                            />
+                        <div className="bg-slate-50/80 p-6 text-center border-t border-slate-200">
+                            <p className="text-sm text-slate-600">
+                                Já tem uma conta?
+                                <Link className="text-primary-dark font-bold hover:underline ml-1" to="/login">Entrar</Link>
+                            </p>
                         </div>
                     </div>
+                </div>
+            </main>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            backgroundColor: 'var(--primary)',
-                            color: 'var(--text-on-primary)',
-                            padding: '0.875rem',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            marginTop: '1rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            boxShadow: '0 4px 6px -1px rgba(15, 23, 42, 0.2)'
-                        }}
-                    >
-                        {loading ? <Loader2 className="animate-spin" size={20} /> : 'Registrar Família'}
-                    </button>
-
-                    <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-                        Já tem uma conta? <Link to="/login" style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>Faça login</Link>
-                    </p>
-                </form>
-            </div>
+            {/* Footer */}
+            <footer className="px-6 py-6 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 bg-white">
+                <div className="text-xs text-slate-400">
+                    © 2024 FamilyFinance Inc. Todos os direitos reservados.
+                </div>
+                <div className="flex gap-6">
+                    <Link className="text-xs text-slate-400 hover:text-primary transition-colors" to="#">Política de Privacidade</Link>
+                    <Link className="text-xs text-slate-400 hover:text-primary transition-colors" to="#">Termos de Uso</Link>
+                    <Link className="text-xs text-slate-400 hover:text-primary transition-colors" to="#">Cookies</Link>
+                </div>
+            </footer>
         </div>
     );
 };
