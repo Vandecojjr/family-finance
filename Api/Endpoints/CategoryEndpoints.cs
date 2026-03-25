@@ -22,6 +22,13 @@ public static class CategoryEndpoints
             })
             .WithName("GetCategories");
 
+        group.MapGet("/{id:guid}", async (Guid id, CancellationToken cancellationToken, IMediator mediator) =>
+            {
+                var result = await mediator.Send(new Application.Categories.UseCases.GetCategoryById.GetCategoryByIdQuery(id), cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("GetCategoryById");
+
         group.MapPost("/",
                 async (CreateCategoryCommand command, CancellationToken cancellationToken, IMediator mediator) =>
                 {

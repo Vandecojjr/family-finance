@@ -30,9 +30,9 @@ public class WalletAccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(x => x.DueDay);
 
-        // Account -> Wallet relationship (assuming Wallet has many Accounts)
+        // Account -> Wallet relationship
         builder.HasOne(x => x.Wallet)
-            .WithMany()
+            .WithMany(w => w.Accounts)
             .HasForeignKey(x => x.WalletId)
             .OnDelete(DeleteBehavior.Cascade);
 

@@ -24,6 +24,8 @@ public sealed class CreateCategoryHandler(
             
             parent.AddSubCategory(category);
             await categoryRepository.UpdateAsync(parent, cancellationToken);
+            
+            return Result<Guid>.Success(category.Id);
         }
 
         var existWithName = await categoryRepository.ExistParentCategoryByNameAsync(category.Name, category.FamilyId, cancellationToken);

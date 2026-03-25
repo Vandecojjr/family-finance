@@ -13,6 +13,33 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         await context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task UpdateAsync(Wallet wallet, CancellationToken cancellationToken = default)
+    {
+        context.Set<Wallet>().Update(wallet);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Wallet?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Wallet>()
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+    }
+
+    public async Task<Wallet?> GetByIdWithAccountsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Wallet>()
+            .Include(w => w.Accounts)
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+    }
+
+    public async Task<Wallet?> GetByIdWithAccountsAndTransactionsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Wallet>()
+            .Include(w => w.Accounts)
+                .ThenInclude(a => a.Transactions)
+            .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
+    }
+
     public async Task<List<Wallet>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default)
     {
         return await context.Set<Wallet>()

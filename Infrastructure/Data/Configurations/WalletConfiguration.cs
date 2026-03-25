@@ -21,5 +21,12 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasForeignKey(x => x.MemberId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(x => x.Accounts)
+            .WithOne(x => x.Wallet)
+            .HasForeignKey(x => x.WalletId);
+
+        builder.Metadata.FindNavigation(nameof(Wallet.Accounts))
+            ?.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -53,6 +53,26 @@ public class Account : Entity
         return Type == AccountType.Credit ? -GetUsedCredit() : Balance;
     }
 
+    public void UpdateName(string name)
+    {
+        Name = name;
+    }
+
+    public void AddTransaction(Transaction transaction)
+    {
+        if (transaction.AccountId != Id) throw new ArgumentException("A transação não pertence a esta conta.");
+        
+        _transactions.Add(transaction);
+
+        if (Type != AccountType.Credit)
+        {
+            if (transaction.Type == TransactionType.Income)
+                Balance += transaction.Amount;
+            else if (transaction.Type == TransactionType.Expense || transaction.Type == TransactionType.Transfer)
+                Balance -= transaction.Amount;
+        }
+    }
+
     public decimal GetUsedCredit()
     {
         if (Type != AccountType.Credit) return 0;
