@@ -1,4 +1,4 @@
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Repositories;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

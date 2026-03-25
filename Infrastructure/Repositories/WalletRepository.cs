@@ -13,24 +13,17 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Wallet>> GetByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default)
-    {
-        return await context.Set<Wallet>()
-            .Where(x => x.FamilyId == familyId)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<List<Wallet>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default)
     {
         return await context.Set<Wallet>()
-            .Where(x => x.OwnerId == ownerId)
+            .Where(x => x.MemberId == ownerId)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<List<Wallet>> GetWalletsForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await context.Set<Wallet>()
-            .Where(w =>  w.OwnerId == userId)
+            .Where(w =>  w.MemberId == userId)
             .ToListAsync(cancellationToken);
     }
 }

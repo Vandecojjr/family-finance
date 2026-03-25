@@ -113,3 +113,12 @@ a {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.active-nav {
+  background-color: rgba(19, 236, 128, 0.1);
+  border-left: 4px solid #13ec80;
+}

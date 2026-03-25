@@ -1,5 +1,5 @@
 using Application.Shared.Auth;
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Entities.Families;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

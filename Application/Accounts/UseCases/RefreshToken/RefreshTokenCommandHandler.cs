@@ -1,7 +1,6 @@
 ﻿using Application.Shared.Auth;
 using Application.Shared.Responses;
 using Application.Shared.Results;
-using Domain.Entities.Accounts;
 using Domain.Repositories;
 using Mediator;
 
@@ -40,7 +39,7 @@ public sealed class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCom
         var (newRefreshToken, newRefreshExpiresAt) = _authTokenService.GenerateRefreshToken();
 
         await _accountRepository.RemoveExpiredRefreshTokensAsync(account.Id, cancellationToken);
-        await _accountRepository.AddRefreshTokenAsync(account.Id, new Domain.Entities.Accounts.RefreshToken(account.Id, newRefreshToken, newRefreshExpiresAt), cancellationToken);
+        await _accountRepository.AddRefreshTokenAsync(account.Id, new Domain.AccessContext.Entities.Accounts.RefreshToken(account.Id, newRefreshToken, newRefreshExpiresAt), cancellationToken);
 
         var dto = new TokenPairResponse(accessToken, accessExpiresAt, newRefreshToken, newRefreshExpiresAt);
         return Result<TokenPairResponse>.Success(dto);

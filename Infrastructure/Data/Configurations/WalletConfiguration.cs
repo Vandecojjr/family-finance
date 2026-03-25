@@ -15,18 +15,10 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(150);
-
-        builder.Property(x => x.CurrentBalance)
-            .HasPrecision(18, 2);
-
-        builder.HasOne(x => x.Family)
+        
+        builder.HasOne(x => x.Member)
             .WithMany()
-            .HasForeignKey(x => x.FamilyId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(x => x.Owner)
-            .WithMany()
-            .HasForeignKey(x => x.OwnerId)
+            .HasForeignKey(x => x.MemberId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }

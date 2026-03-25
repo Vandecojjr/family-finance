@@ -1,4 +1,4 @@
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Shared.Repositories;
 
 namespace Domain.Repositories;

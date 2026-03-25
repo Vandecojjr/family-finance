@@ -1,7 +1,7 @@
 ﻿using Application.Accounts.UseCases.Login;
 using Application.Shared.Auth;
 using Application.Shared.Responses;
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Repositories;
 using FluentAssertions;
 using Moq;

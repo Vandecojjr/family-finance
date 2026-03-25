@@ -1,5 +1,5 @@
 ﻿using Application.Shared.Results;
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Repositories;
 using Mediator;
 

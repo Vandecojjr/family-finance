@@ -5,13 +5,15 @@ namespace Domain.Entities.Families;
 
 public class Family : Entity, IAggregateRoot
 {
+    protected Family() { }
+    
     public Family(string name)
     {
         Name = name;
         NumberMember = 0;
     }
 
-    public string Name { get; private set; }
+    public string Name { get; private set; } = string.Empty;
     public short NumberMember { get; private set; }
     
     public ICollection<Member> Members { get; private set; } = [];

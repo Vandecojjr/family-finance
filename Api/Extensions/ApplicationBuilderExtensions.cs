@@ -1,5 +1,4 @@
 ﻿using Api.Endpoints;
-using Api.Endpoints.Wallets;
 using Scalar.AspNetCore;
 
 namespace Api.Extensions;
@@ -35,7 +34,6 @@ public static class ApplicationBuilderExtensions
         app.MapAccountEndpoints();
         app.MapFamilyEndpoints();
         app.MapPersonalWalletEndpoints();
-        app.MapFamilyWalletEndpoints();
         app.MapCategoryEndpoints();
 
         return app;

@@ -34,7 +34,7 @@ public sealed class LoginCommandHandler(
         var (accessToken, accessExpiresAt) = authTokenService.GenerateAccessToken(account);
         var (refreshTokenStr, refreshExpiresAt) = authTokenService.GenerateRefreshToken();
 
-        var refresh = new Domain.Entities.Accounts.RefreshToken(account.Id, refreshTokenStr, refreshExpiresAt);
+        var refresh = new Domain.AccessContext.Entities.Accounts.RefreshToken(account.Id, refreshTokenStr, refreshExpiresAt);
         
         account.ClearExpiredRefreshTokens();
         account.AddRefreshToken(refresh);

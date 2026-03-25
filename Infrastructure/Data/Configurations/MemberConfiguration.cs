@@ -1,5 +1,4 @@
 using Domain.Entities.Families;
-using Domain.Entities.Accounts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

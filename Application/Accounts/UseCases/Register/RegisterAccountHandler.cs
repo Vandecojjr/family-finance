@@ -1,6 +1,6 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
-using Domain.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
 using Domain.Entities.Families;
 using Domain.Repositories;
 using Mediator;
