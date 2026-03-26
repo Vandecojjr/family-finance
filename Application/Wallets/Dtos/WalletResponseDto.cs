@@ -5,7 +5,11 @@ namespace Application.Wallets.Dtos;
 public record WalletResponseDto(
     Guid Id,
     string Name,
-    Guid MemberId
+    Guid MemberId,
+    decimal CurrentBalance,
+    string Type,
+    bool IsShared,
+    string? OwnerName
 )
 {
     public static List<WalletResponseDto> ToDto(IEnumerable<Wallet> wallets)
@@ -13,7 +17,11 @@ public record WalletResponseDto(
         return wallets.Select(w => new WalletResponseDto(
             w.Id,
             w.Name,
-            w.MemberId
+            w.MemberId,
+            w.Accounts.Sum(a => a.GetCurrentBalance()),
+            "Personal", // TODO: Determine Type if applicable from Wallet
+            false, // TODO: Resolve IsShared
+            w.Member?.Name
         )).ToList();
     }
 }

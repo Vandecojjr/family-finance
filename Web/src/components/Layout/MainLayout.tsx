@@ -16,6 +16,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, title, headerC
     const menuItems = [
         { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
         { icon: 'account_balance_wallet', label: 'Carteiras', path: '/wallets' },
+        { icon: 'category', label: 'Categorias', path: '/categories' },
         { icon: 'trending_up', label: 'Incomes', path: '/incomes' },
         { icon: 'trending_down', label: 'Expenses', path: '/expenses' },
         { icon: 'settings', label: 'Administração', path: '/admin' },

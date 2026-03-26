@@ -39,20 +39,20 @@ public static class WalletEndpoints
 
         group.MapPost("/{walletId:guid}/accounts", async (Guid walletId, [FromBody] CreateAccountCommand command, CancellationToken cancellationToken, IMediator mediator) =>
             {
-                if (command.WalletId != walletId) return Results.BadRequest("WalletId na rota difere do corpo da requisição.");
+                command = command with { WalletId = walletId };
                 var result = await mediator.Send(command, cancellationToken);
                 return result.ToResult();
             })
-            .WithName("CreateAccount")
+            .WithName("CreatePersonalWalletAccount")
             .RequirePermission(Permission.WalletCreate);
 
         group.MapPut("/{walletId:guid}/accounts/{accountId:guid}", async (Guid walletId, Guid accountId, [FromBody] UpdateAccountCommand command, CancellationToken cancellationToken, IMediator mediator) =>
             {
-                if (command.WalletId != walletId || command.AccountId != accountId) return Results.BadRequest("Ids na rota diferem do corpo da requisição.");
+                command = command with { WalletId = walletId, AccountId = accountId };
                 var result = await mediator.Send(command, cancellationToken);
                 return result.ToResult();
             })
-            .WithName("UpdateAccount")
+            .WithName("UpdatePersonalWalletAccount")
             .RequirePermission(Permission.WalletUpdate);
 
         group.MapDelete("/{walletId:guid}/accounts/{accountId:guid}", async (Guid walletId, Guid accountId, CancellationToken cancellationToken, IMediator mediator) =>
@@ -61,7 +61,7 @@ public static class WalletEndpoints
                 var result = await mediator.Send(command, cancellationToken);
                 return result.ToResult();
             })
-            .WithName("DeleteAccount")
+            .WithName("DeletePersonalWalletAccount")
             .RequirePermission(Permission.WalletUpdate);
 
         group.MapGet("/{walletId:guid}/accounts", async (Guid walletId, CancellationToken cancellationToken, IMediator mediator) =>
@@ -69,16 +69,16 @@ public static class WalletEndpoints
                 var result = await mediator.Send(new GetAccountsByWalletQuery(walletId), cancellationToken);
                 return result.ToResult();
             })
-            .WithName("GetAccountsByWallet")
+            .WithName("GetPersonalWalletAccounts")
             .RequirePermission(Permission.WalletView);
 
         group.MapPost("/{walletId:guid}/accounts/{accountId:guid}/transactions", async (Guid walletId, Guid accountId, [FromBody] CreateTransactionCommand command, CancellationToken cancellationToken, IMediator mediator) =>
             {
-                if (command.WalletId != walletId || command.AccountId != accountId) return Results.BadRequest("Ids na rota diferem do corpo da requisição.");
+                command = command with { WalletId = walletId, AccountId = accountId };
                 var result = await mediator.Send(command, cancellationToken);
                 return result.ToResult();
             })
-            .WithName("CreateTransaction")
+            .WithName("CreatePersonalWalletTransaction")
             .RequirePermission(Permission.WalletUpdate); // Assuming creating a transaction requires WalletUpdate
 
         group.MapGet("/{walletId:guid}/accounts/{accountId:guid}/transactions", async (Guid walletId, Guid accountId, CancellationToken cancellationToken, IMediator mediator) =>
@@ -86,7 +86,15 @@ public static class WalletEndpoints
                 var result = await mediator.Send(new GetTransactionsByAccountQuery(walletId, accountId), cancellationToken);
                 return result.ToResult();
             })
-            .WithName("GetTransactionsByAccount")
+            .WithName("GetPersonalWalletTransactions")
+            .RequirePermission(Permission.WalletView);
+
+        group.MapGet("/transactions/recent", async ([FromQuery] int? limit, CancellationToken cancellationToken, IMediator mediator) =>
+            {
+                var result = await mediator.Send(new Application.Wallets.UseCases.GetMyTransactions.GetMyTransactionsQuery(limit ?? 50), cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("GetMyRecentTransactions")
             .RequirePermission(Permission.WalletView);
     }
 }

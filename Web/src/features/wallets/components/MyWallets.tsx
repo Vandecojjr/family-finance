@@ -53,6 +53,12 @@ export function MyWallets() {
                 </button>
             </div>
 
+            {error && (
+                <div style={{ padding: '1rem', color: 'red', marginBottom: '1rem', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
+                    {error}
+                </div>
+            )}
+
             {loading ? (
                 <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Carregando...</div>
             ) : wallets.length === 0 ? (
@@ -75,12 +81,12 @@ export function MyWallets() {
                             onClick={() => navigate('/wallets')}
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>{wallet.type}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>{wallet.type || 'Personal'}</span>
                                 {wallet.isShared && <span>👥</span>}
                             </div>
                             <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>{wallet.name}</h4>
                             <p style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(wallet.currentBalance)}
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(wallet.currentBalance || 0)}
                             </p>
                         </div>
                     ))}

@@ -1,5 +1,6 @@
 using Domain.Enums;
 using Domain.Shared.Entities;
+using Domain.Entities.Categories;
 
 namespace Domain.Entities.Wallets;
 
@@ -14,6 +15,7 @@ public class Transaction : Entity
     public virtual Account? Account { get; private set; }
     
     public Guid CategoryId { get; private set; }
+    public virtual Category? Category { get; private set; }
 
     public Guid? TransferId { get; private set; }
     public bool IsInternalTransfer => TransferId.HasValue;

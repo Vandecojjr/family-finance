@@ -3,6 +3,8 @@ import Register from './features/auth/pages/RegisterPage';
 import Login from './features/auth/pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import WalletsPage from './features/wallets/pages/WalletsPage';
+import WalletDetailsPage from './features/wallets/pages/WalletDetailsPage';
+import CategoriesPage from './features/categories/pages/CategoriesPage';
 import { MainLayout } from './components/Layout/MainLayout';
 
 import { AuthProvider } from './features/auth/hooks/useAuth';
@@ -31,6 +33,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <WalletsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wallets/:walletId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <WalletDetailsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/categories"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CategoriesPage />
                 </MainLayout>
               </ProtectedRoute>
             }

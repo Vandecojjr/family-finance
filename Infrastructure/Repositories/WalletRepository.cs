@@ -50,7 +50,21 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
     public async Task<List<Wallet>> GetWalletsForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await context.Set<Wallet>()
-            .Where(w =>  w.MemberId == userId)
+            .Include(w => w.Accounts)
+                .ThenInclude(a => a.Transactions)
+            .Where(w => w.MemberId == userId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Transaction>> GetRecentTransactionsAsync(Guid userId, int limit = 50, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Transaction>()
+            .Include(t => t.Account)
+                .ThenInclude(a => a.Wallet)
+            .Include(t => t.Category)
+            .Where(t => t.MemberId == userId)
+            .OrderByDescending(t => t.Date)
+            .Take(limit)
             .ToListAsync(cancellationToken);
     }
 }
