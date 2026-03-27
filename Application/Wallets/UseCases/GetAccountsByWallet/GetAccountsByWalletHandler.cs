@@ -13,9 +13,7 @@ public sealed class GetAccountsByWalletHandler(
     {
         var wallet = await walletRepository.GetByIdWithAccountsAsync(query.WalletId, cancellationToken);
         if (wallet is null)
-        {
             return Result<List<AccountResponseDto>>.Failure(Error.NotFound("WALLET_NOT_FOUND", "Carteira não encontrada."));
-        }
 
         var dtos = AccountResponseDto.ToDto(wallet.Accounts);
         return Result<List<AccountResponseDto>>.Success(dtos);

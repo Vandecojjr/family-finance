@@ -3,7 +3,6 @@ using Application.Wallets.UseCases.CreateWallet;
 using Application.Wallets.UseCases.GetMyWallets;
 using Application.Wallets.UseCases.CreateAccount;
 using Application.Wallets.UseCases.UpdateAccount;
-using Application.Wallets.UseCases.DeleteAccount;
 using Application.Wallets.UseCases.GetAccountsByWallet;
 using Application.Wallets.UseCases.CreateTransaction;
 using Application.Wallets.UseCases.GetTransactionsByAccount;
@@ -53,15 +52,6 @@ public static class WalletEndpoints
                 return result.ToResult();
             })
             .WithName("UpdatePersonalWalletAccount")
-            .RequirePermission(Permission.WalletUpdate);
-
-        group.MapDelete("/{walletId:guid}/accounts/{accountId:guid}", async (Guid walletId, Guid accountId, CancellationToken cancellationToken, IMediator mediator) =>
-            {
-                var command = new DeleteAccountCommand(walletId, accountId);
-                var result = await mediator.Send(command, cancellationToken);
-                return result.ToResult();
-            })
-            .WithName("DeletePersonalWalletAccount")
             .RequirePermission(Permission.WalletUpdate);
 
         group.MapGet("/{walletId:guid}/accounts", async (Guid walletId, CancellationToken cancellationToken, IMediator mediator) =>

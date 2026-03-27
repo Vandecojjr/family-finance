@@ -37,6 +37,8 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         return await context.Set<Wallet>()
             .Include(w => w.Accounts)
                 .ThenInclude(a => a.Transactions)
+            .Include(w => w.Member)
+                .ThenInclude(m => m!.Family)
             .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
     }
 

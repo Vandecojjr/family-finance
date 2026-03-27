@@ -12,9 +12,7 @@ public sealed class UpdateAccountHandler(
     {
         var wallet = await walletRepository.GetByIdWithAccountsAsync(command.WalletId, cancellationToken);
         if (wallet is null)
-        {
             return Result.Failure(Error.NotFound("WALLET_NOT_FOUND", "Carteira não encontrada."));
-        }
 
         try
         {
