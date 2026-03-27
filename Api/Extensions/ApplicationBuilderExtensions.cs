@@ -1,4 +1,4 @@
-﻿using Api.Endpoints;
+using Api.Endpoints;
 using Scalar.AspNetCore;
 
 namespace Api.Extensions;

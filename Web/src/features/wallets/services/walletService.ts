@@ -1,6 +1,6 @@
 import api from '../../../services/api';
 import { ApiResponse } from '../../../types';
-import { Wallet, Account, Transaction } from '../types';
+import { Wallet, Account, Transaction, PagedResult } from '../types';
 
 export const WalletService = {
     getMyWallets: async (): Promise<ApiResponse<Wallet[]>> => {
@@ -33,8 +33,8 @@ export const WalletService = {
         return response.data;
     },
 
-    getTransactions: async (walletId: string, accountId: string): Promise<ApiResponse<Transaction[]>> => {
-        const response = await api.get<ApiResponse<Transaction[]>>(`personal/wallets/${walletId}/accounts/${accountId}/transactions`);
+    getTransactions: async (walletId: string, accountId: string, page: number = 1, pageSize: number = 50): Promise<ApiResponse<PagedResult<Transaction>>> => {
+        const response = await api.get<ApiResponse<PagedResult<Transaction>>>(`personal/wallets/${walletId}/accounts/${accountId}/transactions?page=${page}&pageSize=${pageSize}`);
         return response.data;
     },
 

@@ -39,7 +39,7 @@ public sealed class GetCategoriesHandler(
             category.Name,
             category.Type,
             category.ParentId,
-            IsCustom: category.FamilyId != null,
+            IsCustom: category.FamilyId != Guid.Empty,
             SubCategories: children
         );
     }

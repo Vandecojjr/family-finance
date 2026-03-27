@@ -6,5 +6,7 @@ namespace Application.Wallets.UseCases.GetTransactionsByAccount;
 
 public record GetTransactionsByAccountQuery(
     Guid WalletId,
-    Guid AccountId
-) : IQuery<Result<List<TransactionResponseDto>>>;
+    Guid AccountId,
+    int Page = 1,
+    int PageSize = 50
+) : IQuery<Result<PagedResult<TransactionResponseDto>>>;

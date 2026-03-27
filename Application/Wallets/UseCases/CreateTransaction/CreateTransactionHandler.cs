@@ -9,8 +9,7 @@ namespace Application.Wallets.UseCases.CreateTransaction;
 
 public sealed class CreateTransactionHandler(
     IWalletRepository walletRepository,
-    ICurrentUser currentUser,
-    IFamilyRepository familyRepository
+    ICurrentUser currentUser
 ) : ICommandHandler<CreateTransactionCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(CreateTransactionCommand command, CancellationToken cancellationToken)
@@ -23,16 +22,25 @@ public sealed class CreateTransactionHandler(
         if (account is null)
             return Result<Guid>.Failure(Error.NotFound("ACCOUNT_NOT_FOUND", "Conta não encontrada na carteira informada."));
 
-        var familyId = wallet.Member!.Family!.Id;
-        var memberId = currentUser.MemberId;
+        if (wallet.Member?.Family is null)
+            return Result<Guid>.Failure(Error.Validation("MEMBER_OR_FAMILY_NOT_FOUND", "Membro ou Família não encontrados."));
 
-        Transaction transaction;
-        if (command.Type == TransactionType.Expense)
-            transaction = Transaction.CreateExpense(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId);
-        else if (command.Type == TransactionType.Income)
-            transaction = Transaction.CreateIncome(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId);
-        else
-            transaction = Transaction.CreateTransfer(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId, command.TransferId!.Value);
+        Guid familyId = wallet.Member.Family.Id;
+        Guid memberId = currentUser.MemberId;
+
+        Transaction? transaction = command.Type switch
+        {
+            TransactionType.Expense => Transaction.CreateExpense(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
+            TransactionType.Income => Transaction.CreateIncome(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
+            TransactionType.Transfer when command.TransferId is { } tid => Transaction.CreateTransfer(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId, tid),
+            _ => null
+        };
+
+        if (transaction is null)
+        {
+            var errorMsg = command.Type == TransactionType.Transfer ? "O ID da transferência é obrigatório para transferências." : "Tipo de transação inválido.";
+            return Result<Guid>.Failure(Error.Validation("INVALID_TRANSACTION", errorMsg));
+        }
 
         try
         {

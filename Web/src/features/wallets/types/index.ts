@@ -57,3 +57,12 @@ export interface RecentTransaction {
     walletName: string;
     categoryName: string;
 }
+export interface PagedResult<T> {
+    items: T[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}

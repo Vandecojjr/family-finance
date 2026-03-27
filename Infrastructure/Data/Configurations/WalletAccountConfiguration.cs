@@ -26,6 +26,9 @@ public class WalletAccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(x => x.CreditLimit)
             .HasPrecision(18, 2);
 
+        builder.Property(x => x.UsedCredit)
+            .HasPrecision(18, 2);
+
         builder.Property(x => x.ClosingDay);
 
         builder.Property(x => x.DueDay);

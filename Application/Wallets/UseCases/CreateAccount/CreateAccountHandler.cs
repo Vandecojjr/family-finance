@@ -14,10 +14,15 @@ public sealed class CreateAccountHandler(IWalletRepository walletRepository ) : 
         if (wallet is null)
             return Result<Guid>.Failure(Error.NotFound("WALLET_NOT_FOUND", "Carteira não encontrada."));
         
-        Account account;
-        account = command.Type == AccountType.Credit ? 
-            wallet.AddCreditAccount(command.Name, command.CreditLimit!.Value,command.ClosingDay!.Value,command.DueDay!.Value) : 
-            wallet.AddAssetAccount(command.Name, command.Type, command.InitialBalance);
+        Account account = command.Type switch
+        {
+            AccountType.Credit => wallet.AddCreditAccount(
+                command.Name, 
+                command.CreditLimit ?? 0, 
+                command.ClosingDay ?? 0, 
+                command.DueDay ?? 0),
+            _ => wallet.AddAssetAccount(command.Name, command.Type, command.InitialBalance)
+        };
 
         await walletRepository.UpdateAsync(wallet, cancellationToken);
         return Result<Guid>.Success(account.Id);

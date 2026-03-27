@@ -13,6 +13,7 @@ public class Account : Entity
     public decimal Balance { get; private set; }
 
     public decimal? CreditLimit { get; private set; }
+    public decimal UsedCredit { get; private set; }
     public int? ClosingDay { get; private set; }
     public int? DueDay { get; private set; }
 
@@ -64,7 +65,14 @@ public class Account : Entity
         
         _transactions.Add(transaction);
 
-        if (Type != AccountType.Credit)
+        if (Type == AccountType.Credit)
+        {
+            if (transaction.Type == TransactionType.Expense)
+                UsedCredit += transaction.Amount;
+            else if (transaction.Type == TransactionType.Income)
+                UsedCredit -= transaction.Amount;
+        }
+        else
         {
             if (transaction.Type == TransactionType.Income)
                 Balance += transaction.Amount;
@@ -73,12 +81,7 @@ public class Account : Entity
         }
     }
 
-    public decimal GetUsedCredit()
-    {
-        if (Type != AccountType.Credit) return 0;
-        return _transactions.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount) - 
-               _transactions.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
-    }
+    public decimal GetUsedCredit() => UsedCredit;
 
     public decimal GetAvailableLimit()
     {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { WalletService } from '../services/walletService';
-import { Account, Transaction, AccountType, TransactionType } from '../types';
+import { Account, Transaction, AccountType, TransactionType, PagedResult } from '../types';
 import { CategoryService } from '../../categories/services/categoryService';
 import { Category } from '../../categories/types';
 
@@ -12,7 +12,7 @@ export default function WalletDetailsPage() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [transactionsResult, setTransactionsResult] = useState<PagedResult<Transaction> | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
 
     // Modals state
@@ -45,12 +45,12 @@ export default function WalletDetailsPage() {
         }
     };
 
-    const fetchTransactions = async (accId: string) => {
+    const fetchTransactions = async (accId: string, page: number = 1) => {
         if (!walletId) return;
         try {
-            const res = await WalletService.getTransactions(walletId, accId);
+            const res = await WalletService.getTransactions(walletId, accId, page);
             if (res.isSuccess) {
-                setTransactions(res.value);
+                setTransactionsResult(res.value);
             }
         } catch (e) {
             console.error(e);
@@ -77,7 +77,7 @@ export default function WalletDetailsPage() {
         if (selectedAccount) {
             fetchTransactions(selectedAccount.id);
         } else {
-            setTransactions([]);
+            setTransactionsResult(null);
         }
     }, [selectedAccount, walletId]);
 
@@ -267,7 +267,7 @@ export default function WalletDetailsPage() {
                                 {acc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </p>
                             {acc.type === AccountType.Credit && (
-                                <p className="text-xs text-slate-500 mt-1">Lmite Usado: {acc.usedCredit}</p>
+                                <p className="text-xs text-slate-500 mt-1">Limite Usado: {acc.usedCredit?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                             )}
                         </div>
                     ))}
@@ -341,30 +341,54 @@ export default function WalletDetailsPage() {
                             )}
 
                             <div>
-                                {transactions.length === 0 ? (
+                                {!transactionsResult || transactionsResult.items.length === 0 ? (
                                     <p className="text-center text-slate-500 py-8">Nenhuma transação lançada nesta conta.</p>
                                 ) : (
-                                    <ul className="divide-y divide-slate-100">
-                                        {transactions.map(tx => (
-                                            <li key={tx.id} className="py-3 flex justify-between items-center group">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === TransactionType.Income ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                        <span className="material-symbols-outlined text-sm">
-                                                            {tx.type === TransactionType.Income ? 'arrow_downward' : 'arrow_upward'}
-                                                        </span>
+                                    <>
+                                        <ul className="divide-y divide-slate-100">
+                                            {transactionsResult.items.map(tx => (
+                                                <li key={tx.id} className="py-3 flex justify-between items-center group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === TransactionType.Income ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                            <span className="material-symbols-outlined text-sm">
+                                                                {tx.type === TransactionType.Income ? 'arrow_downward' : 'arrow_upward'}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-slate-900">{tx.description}</p>
+                                                            <p className="text-xs text-slate-400">{new Date(tx.date).toLocaleDateString('pt-BR')}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-semibold text-slate-900">{tx.description}</p>
-                                                        <p className="text-xs text-slate-400">{new Date(tx.date).toLocaleDateString('pt-BR')}</p>
+                                                    <div className={`font-bold ${tx.type === TransactionType.Income ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                        {tx.type === TransactionType.Expense && '- '}
+                                                        {tx.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                     </div>
-                                                </div>
-                                                <div className={`font-bold ${tx.type === TransactionType.Income ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                                    {tx.type === TransactionType.Expense && '- '}
-                                                    {tx.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        
+                                        {transactionsResult.totalPages > 1 && (
+                                            <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+                                                <button
+                                                    disabled={!transactionsResult.hasPreviousPage}
+                                                    onClick={() => fetchTransactions(selectedAccount.id, transactionsResult.page - 1)}
+                                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                                                >
+                                                    Anterior
+                                                </button>
+                                                <span className="text-xs text-slate-500">
+                                                    Página {transactionsResult.page} de {transactionsResult.totalPages}
+                                                </span>
+                                                <button
+                                                    disabled={!transactionsResult.hasNextPage}
+                                                    onClick={() => fetchTransactions(selectedAccount.id, transactionsResult.page + 1)}
+                                                    className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                                                >
+                                                    Próxima
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>

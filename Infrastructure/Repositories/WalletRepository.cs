@@ -69,4 +69,20 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
             .Take(limit)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<(List<Transaction> Items, int TotalCount)> GetTransactionsPagedAsync(Guid accountId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Set<Transaction>()
+            .Where(t => t.AccountId == accountId)
+            .OrderByDescending(t => t.Date);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 }

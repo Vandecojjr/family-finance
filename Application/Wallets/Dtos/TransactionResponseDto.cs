@@ -1,3 +1,4 @@
+using System;
 using Domain.Entities.Wallets;
 using Domain.Enums;
 
