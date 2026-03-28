@@ -1,5 +1,4 @@
 using Domain.Entities.Families;
-using Domain.Enums;
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
 
@@ -21,18 +20,13 @@ public class Wallet : Entity, IAggregateRoot
         Name = name;
         MemberId = memberId;
     }
-    
-    public static Wallet CreatePersonal(string name, Guid ownerId)
-    {
-        return new Wallet(name, ownerId);
-    }
 
     public Account AddAccount(string name, bool isDebit, bool isCredit, bool isInvestment, bool isCash = false, decimal initialBalance = 0, decimal preApprovedCreditLimit = 0)
     {
         if (isCash && _accounts.Any(a => a.IsCash))
             throw new InvalidOperationException("A carteira já possui uma conta de dinheiro.");
 
-        var account = Account.Create(name, Id, isDebit, isCredit, isInvestment, isCash, initialBalance, preApprovedCreditLimit);
+        var account = new Account(name, Id, isDebit, isCredit, isInvestment, isCash, initialBalance, preApprovedCreditLimit);
         _accounts.Add(account);
         return account;
     }
@@ -43,13 +37,5 @@ public class Wallet : Entity, IAggregateRoot
         if (account is null) throw new InvalidOperationException("Conta não encontrada na carteira.");
 
         account.UpdateName(name);
-    }
-
-    public void RemoveAccount(Guid accountId)
-    {
-        var account = _accounts.FirstOrDefault(a => a.Id == accountId);
-        if (account is null) throw new InvalidOperationException("Conta não encontrada na carteira.");
-
-        _accounts.Remove(account);
     }
 }

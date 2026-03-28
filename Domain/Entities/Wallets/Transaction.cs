@@ -17,11 +17,9 @@ public class Transaction : Entity
     public Guid CategoryId { get; private set; }
     public virtual Category? Category { get; private set; }
 
-    // Relationship with Card
     public Guid? CardId { get; private set; }
     public virtual Card? Card { get; private set; }
 
-    // Flag for credit transactions (when not using a card but using pre-approved credit)
     public bool IsCredit { get; private set; }
 
     public Guid? TransferId { get; private set; }

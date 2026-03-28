@@ -25,7 +25,7 @@ public class WalletTests
         var familyId = Guid.NewGuid();
         var ownerId = Guid.NewGuid();
 
-        var wallet = Wallet.CreatePersonal(name, ownerId);
+        var wallet = new Wallet(name, ownerId);
 
         Assert.Equal(name, wallet.Name);
         Assert.Equal(ownerId, wallet.MemberId);

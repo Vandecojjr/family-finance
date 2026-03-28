@@ -1,6 +1,4 @@
 using Application.Shared.Results;
-using Domain.Entities.Wallets;
-using Domain.Enums;
 using Domain.Repositories;
 using Mediator;
 

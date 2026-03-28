@@ -17,9 +17,14 @@ public class Card : Entity
 
     public Card(string name, decimal limit, int closingDay, int dueDay, Guid accountId)
     {
-        if (limit < 0) throw new ArgumentException("O limite não pode ser negativo.");
-        if (closingDay < 1 || closingDay > 31) throw new ArgumentException("Dia de fechamento inválido.");
-        if (dueDay < 1 || dueDay > 31) throw new ArgumentException("Dia de vencimento inválido.");
+        if (limit < 0) 
+            throw new ArgumentException("O limite não pode ser negativo.");
+        
+        if (closingDay < 1 || closingDay > 31) 
+            throw new ArgumentException("Dia de fechamento inválido.");
+        
+        if (dueDay < 1 || dueDay > 31) 
+            throw new ArgumentException("Dia de vencimento inválido.");
 
         Name = name;
         Limit = limit;
@@ -28,21 +33,5 @@ public class Card : Entity
         AccountId = accountId;
     }
 
-    public void UpdateLimit(decimal newLimit)
-    {
-        if (newLimit < 0) throw new ArgumentException("O limite não pode ser negativo.");
-        Limit = newLimit;
-    }
-
-    public void AddSpending(decimal amount)
-    {
-        UsedLimit += amount;
-    }
-
-    public void RemoveSpending(decimal amount)
-    {
-        UsedLimit -= amount;
-    }
-
-    public decimal GetAvailableLimit() => Limit - UsedLimit;
+    public void AddSpending(decimal amount) => UsedLimit += amount;
 }

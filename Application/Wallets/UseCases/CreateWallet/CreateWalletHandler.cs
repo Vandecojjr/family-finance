@@ -13,7 +13,7 @@ public sealed class CreateWalletHandler(
 {
     public async ValueTask<Result<Guid>> Handle(CreateWalletCommand command, CancellationToken cancellationToken)
     {
-        var wallet = Wallet.CreatePersonal(command.Name, currentUser.MemberId);
+        var wallet = new Wallet(command.Name, currentUser.MemberId);
         await walletRepository.AddAsync(wallet, cancellationToken);
         return Result<Guid>.Success(wallet.Id);
     }
