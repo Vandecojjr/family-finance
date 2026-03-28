@@ -11,21 +11,16 @@ interface CreateWalletModalProps {
 
 export const CreateWalletModal: React.FC<CreateWalletModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [name, setName] = useState('');
-    const [type, setType] = useState('Checking');
-    const [initialBalance, setInitialBalance] = useState<string>('0');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [validationErrors, setValidationErrors] = useState<{ name?: string; balance?: string }>({});
+    const [validationErrors, setValidationErrors] = useState<{ name?: string }>({});
 
     if (!isOpen) return null;
 
     const validate = () => {
-        const errors: { name?: string; balance?: string } = {};
+        const errors: { name?: string } = {};
         if (!name.trim()) errors.name = 'O nome é obrigatório';
         if (name.length < 3) errors.name = 'O nome deve ter pelo menos 3 caracteres';
-
-        const balanceNum = parseFloat(initialBalance.replace(',', '.'));
-        if (isNaN(balanceNum)) errors.balance = 'Saldo inválido';
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -39,17 +34,12 @@ export const CreateWalletModal: React.FC<CreateWalletModalProps> = ({ isOpen, on
         setError('');
 
         try {
-            const balanceNum = parseFloat(initialBalance.replace(',', '.'));
             const response = await WalletService.createWallet({
-                name,
-                type,
-                initialBalance: balanceNum
+                name
             });
 
             if (response.isSuccess) {
                 setName('');
-                setType('Checking');
-                setInitialBalance('0');
                 onSuccess();
                 onClose();
             } else {
@@ -199,77 +189,6 @@ export const CreateWalletModal: React.FC<CreateWalletModalProps> = ({ isOpen, on
                                 )}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#475569' }}>
-                                        Tipo
-                                    </label>
-                                    <select
-                                        value={type}
-                                        onChange={(e) => setType(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem 1rem',
-                                            borderRadius: '12px',
-                                            border: '1px solid #e2e8f0',
-                                            fontSize: '1rem',
-                                            backgroundColor: '#fff',
-                                            cursor: 'pointer',
-                                            outline: 'none',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    >
-                                        <option value="Checking">Conta Corrente</option>
-                                        <option value="Savings">Poupança</option>
-                                        <option value="CreditCard">Cartão de Crédito</option>
-                                        <option value="Investment">Investimento</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: '#475569' }}>
-                                        Saldo Inicial
-                                    </label>
-                                    <div style={{ position: 'relative' }}>
-                                        <span style={{
-                                            position: 'absolute',
-                                            left: '1rem',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            color: '#94a3b8',
-                                            fontSize: '0.875rem',
-                                            fontWeight: 600
-                                        }}>
-                                            R$
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={initialBalance}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/[^0-9,.-]/g, '');
-                                                setInitialBalance(val);
-                                            }}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem 1rem 0.75rem 2.5rem',
-                                                borderRadius: '12px',
-                                                border: `1px solid ${validationErrors.balance ? '#ef4444' : '#e2e8f0'}`,
-                                                fontSize: '1rem',
-                                                outline: 'none',
-                                                boxSizing: 'border-box',
-                                                textAlign: 'right'
-                                            }}
-                                            onFocus={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-                                            onBlur={(e) => e.currentTarget.style.borderColor = validationErrors.balance ? '#ef4444' : '#e2e8f0'}
-                                        />
-                                    </div>
-                                    {validationErrors.balance && (
-                                        <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem', display: 'block' }}>
-                                            {validationErrors.balance}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                 <button

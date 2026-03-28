@@ -9,8 +9,5 @@ public class CreateWalletValidator : AbstractValidator<CreateWalletCommand>
         RuleFor(x => x.Name)
             .NotEmpty()
             .MaximumLength(80);
-            
-        RuleFor(x => x.InitialBalance)
-            .GreaterThanOrEqualTo(0);
     }
 }

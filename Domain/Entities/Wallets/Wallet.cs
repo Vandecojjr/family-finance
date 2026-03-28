@@ -16,27 +16,23 @@ public class Wallet : Entity, IAggregateRoot
 
     protected Wallet() { }
 
-    public Wallet(string name, Guid memberId, decimal initialBalance = 0)
+    public Wallet(string name, Guid memberId)
     {
         Name = name;
         MemberId = memberId;
     }
     
-    public static Wallet CreatePersonal(string name, Guid ownerId, decimal initialBalance = 0)
+    public static Wallet CreatePersonal(string name, Guid ownerId)
     {
-        return new Wallet(name, ownerId, initialBalance);
+        return new Wallet(name, ownerId);
     }
 
-    public Account AddAssetAccount(string name, AccountType type, decimal initialBalance = 0)
+    public Account AddAccount(string name, bool isDebit, bool isCredit, bool isInvestment, bool isCash = false, decimal initialBalance = 0, decimal preApprovedCreditLimit = 0)
     {
-        var account = Account.CreateAssetAccount(name, type, Id, initialBalance);
-        _accounts.Add(account);
-        return account;
-    }
+        if (isCash && _accounts.Any(a => a.IsCash))
+            throw new InvalidOperationException("A carteira já possui uma conta de dinheiro.");
 
-    public Account AddCreditAccount(string name, decimal limit, int closingDay, int dueDay)
-    {
-        var account = Account.CreateCreditAccount(name, Id, limit, closingDay, dueDay);
+        var account = Account.Create(name, Id, isDebit, isCredit, isInvestment, isCash, initialBalance, preApprovedCreditLimit);
         _accounts.Add(account);
         return account;
     }

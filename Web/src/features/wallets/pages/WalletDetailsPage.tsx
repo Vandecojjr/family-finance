@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { WalletService } from '../services/walletService';
-import { Account, Transaction, AccountType, TransactionType, PagedResult } from '../types';
+import { Account, Transaction, TransactionType, PagedResult } from '../types';
 import { CategoryService } from '../../categories/services/categoryService';
 import { Category } from '../../categories/types';
 
@@ -18,17 +18,26 @@ export default function WalletDetailsPage() {
     // Modals state
     const [isAddingAccount, setIsAddingAccount] = useState(false);
     const [newAccName, setNewAccName] = useState('');
-    const [newAccType, setNewAccType] = useState<AccountType>(AccountType.Checking);
+    const [newAccIsDebit, setNewAccIsDebit] = useState(true);
+    const [newAccIsCredit, setNewAccIsCredit] = useState(false);
+    const [newAccIsInvestment, setNewAccIsInvestment] = useState(false);
+    const [newAccIsCash, setNewAccIsCash] = useState(false);
     const [newAccInitialBalance, setNewAccInitialBalance] = useState(0);
-    const [newAccCreditLimit, setNewAccCreditLimit] = useState(0);
-    const [newAccClosingDay, setNewAccClosingDay] = useState(1);
-    const [newAccDueDay, setNewAccDueDay] = useState(5);
+    const [newAccPreApprovedLimit, setNewAccPreApprovedLimit] = useState(0);
+
+    const [isAddingCard, setIsAddingCard] = useState(false);
+    const [newCardName, setNewCardName] = useState('');
+    const [newCardLimit, setNewCardLimit] = useState(0);
+    const [newCardClosingDay, setNewCardClosingDay] = useState(1);
+    const [newCardDueDay, setNewCardDueDay] = useState(5);
 
     const [isAddingTx, setIsAddingTx] = useState(false);
     const [newTxDesc, setNewTxDesc] = useState('');
     const [newTxAmount, setNewTxAmount] = useState(0);
     const [newTxType, setNewTxType] = useState<TransactionType>(TransactionType.Expense);
     const [newTxCat, setNewTxCat] = useState('');
+    const [newTxCardId, setNewTxCardId] = useState<string | undefined>(undefined);
+    const [newTxIsCredit, setNewTxIsCredit] = useState(false);
 
     const fetchAccounts = async () => {
         if (!walletId) return;
@@ -87,25 +96,53 @@ export default function WalletDetailsPage() {
         try {
             const res = await WalletService.createAccount(walletId, {
                 name: newAccName,
-                type: newAccType,
-                balance: newAccType !== AccountType.Credit ? newAccInitialBalance : 0,
-                creditLimit: newAccType === AccountType.Credit ? newAccCreditLimit : undefined,
-                closingDay: newAccType === AccountType.Credit ? newAccClosingDay : undefined,
-                dueDay: newAccType === AccountType.Credit ? newAccDueDay : undefined
-            });
+                isDebit: newAccIsDebit,
+                isCredit: newAccIsCredit,
+                isInvestment: newAccIsInvestment,
+                isCash: newAccIsCash,
+                balance: newAccInitialBalance,
+                preApprovedCreditLimit: newAccPreApprovedLimit
+            } as any); // Cast because we simplified createAccount DTO but types haven't fully matched yet or Partial<Account> is used
             if (res.isSuccess) {
                 setIsAddingAccount(false);
                 setNewAccName('');
+                setNewAccIsDebit(true);
+                setNewAccIsCredit(false);
+                setNewAccIsInvestment(false);
+                setNewAccIsCash(false);
                 setNewAccInitialBalance(0);
-                setNewAccCreditLimit(0);
-                setNewAccClosingDay(1);
-                setNewAccDueDay(5);
+                setNewAccPreApprovedLimit(0);
                 await fetchAccounts();
             } else {
                 alert(res.error?.message);
             }
         } catch (error) {
             alert('Falha ao criar conta');
+        }
+    };
+
+    const handleCreateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!walletId || !selectedAccount) return;
+        try {
+            const res = await WalletService.createCard(walletId, selectedAccount.id, {
+                name: newCardName,
+                limit: newCardLimit,
+                closingDay: newCardClosingDay,
+                dueDay: newCardDueDay
+            });
+            if (res.isSuccess) {
+                setIsAddingCard(false);
+                setNewCardName('');
+                setNewCardLimit(0);
+                setNewCardClosingDay(1);
+                setNewCardDueDay(5);
+                await fetchAccounts(); // To refresh the selected account's cards
+            } else {
+                alert(res.error?.message);
+            }
+        } catch (error) {
+            alert('Falha ao criar cartão');
         }
     };
 
@@ -117,13 +154,17 @@ export default function WalletDetailsPage() {
                 description: newTxDesc,
                 amount: newTxAmount,
                 type: newTxType,
-                categoryId: newTxCat || '00000000-0000-0000-0000-000000000000', // needs real valid guid from categories ideally
-                date: new Date().toISOString()
+                categoryId: newTxCat || '00000000-0000-0000-0000-000000000000',
+                date: new Date().toISOString(),
+                cardId: newTxCardId,
+                isCredit: newTxIsCredit
             });
             if (res.isSuccess) {
                 setIsAddingTx(false);
                 setNewTxDesc('');
                 setNewTxAmount(0);
+                setNewTxCardId(undefined);
+                setNewTxIsCredit(false);
                 await fetchTransactions(selectedAccount.id);
                 await fetchAccounts(); // to update balance
             } else {
@@ -170,21 +211,29 @@ export default function WalletDetailsPage() {
                                 className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
-                            <select
-                                value={newAccType}
-                                onChange={(e) => setNewAccType(e.target.value as AccountType)}
-                                className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
-                            >
-                                <option value={AccountType.Checking}>Conta Corrente</option>
-                                <option value={AccountType.Cash}>Dinheiro Vivo</option>
-                                <option value={AccountType.Investment}>Investimentos</option>
-                                <option value={AccountType.Credit}>Cartão de Crédito</option>
-                            </select>
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Capacidades da Conta</label>
+                            <div className="flex flex-wrap gap-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={newAccIsDebit} onChange={e => setNewAccIsDebit(e.target.checked)} className="rounded text-indigo-600" />
+                                    <span className="text-sm text-slate-700">Débito</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={newAccIsCredit} onChange={e => setNewAccIsCredit(e.target.checked)} className="rounded text-indigo-600" />
+                                    <span className="text-sm text-slate-700">Crédito (Pré-Aprovado)</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={newAccIsInvestment} onChange={e => setNewAccIsInvestment(e.target.checked)} className="rounded text-indigo-600" />
+                                    <span className="text-sm text-slate-700">Investimento</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={newAccIsCash} onChange={e => setNewAccIsCash(e.target.checked)} className="rounded text-indigo-600" />
+                                    <span className="text-sm text-slate-700">Dinheiro Físico</span>
+                                </label>
+                            </div>
                         </div>
 
-                        {newAccType !== AccountType.Credit && (
+                        {(newAccIsDebit || newAccIsInvestment || newAccIsCash) && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Saldo Inicial</label>
                                 <input
@@ -196,42 +245,17 @@ export default function WalletDetailsPage() {
                                 />
                             </div>
                         )}
-                        {newAccType === AccountType.Credit && (
-                            <>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Limite do Cartão</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        required
-                                        value={newAccCreditLimit || ''}
-                                        onChange={(e) => setNewAccCreditLimit(parseFloat(e.target.value) || 0)}
-                                        className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Dia do Fechamento</label>
-                                    <input
-                                        type="number"
-                                        min="1" max="31"
-                                        required
-                                        value={newAccClosingDay}
-                                        onChange={(e) => setNewAccClosingDay(parseInt(e.target.value) || 1)}
-                                        className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Dia do Vencimento</label>
-                                    <input
-                                        type="number"
-                                        min="1" max="31"
-                                        required
-                                        value={newAccDueDay}
-                                        onChange={(e) => setNewAccDueDay(parseInt(e.target.value) || 5)}
-                                        className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
-                                    />
-                                </div>
-                            </>
+                        {newAccIsCredit && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Limite Pré-Aprovado</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={newAccPreApprovedLimit || ''}
+                                    onChange={(e) => setNewAccPreApprovedLimit(parseFloat(e.target.value) || 0)}
+                                    className="w-full rounded-lg border-slate-300 shadow-sm px-3 py-2 border"
+                                />
+                            </div>
                         )}
 
                         <div className="flex items-end">
@@ -259,16 +283,37 @@ export default function WalletDetailsPage() {
                         >
                             <div className="flex justify-between items-center mb-2">
                                 <h4 className="font-bold text-slate-900">{acc.name}</h4>
-                                <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-md">
-                                    {acc.type === AccountType.Credit ? 'Crédito' : acc.type === AccountType.Investment ? 'Invest.' : acc.type === AccountType.Cash ? 'Físico' : 'Corrente'}
-                                </span>
+                                <div className="flex gap-1 flex-wrap justify-end">
+                                    {acc.isDebit && <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded uppercase">Deb</span>}
+                                    {acc.isCredit && <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded uppercase">Cred</span>}
+                                    {acc.isInvestment && <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded uppercase">Inv</span>}
+                                    {acc.isCash && <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded uppercase">Fis</span>}
+                                </div>
                             </div>
-                            <p className="text-2xl font-black text-slate-900 tracking-tight">
-                                {acc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </p>
-                            {acc.type === AccountType.Credit && (
-                                <p className="text-xs text-slate-500 mt-1">Limite Usado: {acc.usedCredit?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                            )}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400">Saldo Disponível</span>
+                                    <span className="text-lg font-black text-slate-900">
+                                        {acc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
+                                </div>
+                                {acc.isInvestment && (
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-indigo-400">Investimentos</span>
+                                        <span className="text-lg font-black text-indigo-600">
+                                            {acc.investmentBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </span>
+                                    </div>
+                                )}
+                                {acc.isCredit && (
+                                    <div className="flex flex-col bg-slate-50 p-2 rounded-lg">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400">Crédito Total</span>
+                                        <span className="text-sm font-bold text-slate-700">
+                                            {(acc.preApprovedCreditLimit + (acc.cards?.reduce((sum, c) => sum + c.limit, 0) || 0) + acc.collateralCreditLimit).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -279,17 +324,66 @@ export default function WalletDetailsPage() {
                         <div className="bg-white p-6 rounded-2xl border border-slate-100 min-h-[400px]">
                             <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h3 className="text-xl font-bold text-slate-900">Transações</h3>
+                                    <h3 className="text-xl font-bold text-slate-900">Transações e Cartões</h3>
                                     <p className="text-sm text-slate-500">{selectedAccount.name}</p>
                                 </div>
-                                <button
-                                    onClick={() => setIsAddingTx(!isAddingTx)}
-                                    className="flex items-center text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-sm mr-1">add</span>
-                                    Lançar Valor
-                                </button>
+                                <div className="flex gap-2">
+                                    {selectedAccount.isCredit && (!selectedAccount.cards || selectedAccount.cards.length === 0) && (
+                                        <button
+                                            onClick={() => setIsAddingCard(!isAddingCard)}
+                                            className="flex items-center text-sm font-medium text-purple-600 bg-purple-50 px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-sm mr-1">credit_card</span>
+                                            Novo Cartão
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setIsAddingTx(!isAddingTx)}
+                                        className="flex items-center text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm mr-1">add</span>
+                                        Lançar Valor
+                                    </button>
+                                </div>
                             </div>
+
+                            {isAddingCard && (
+                                <form onSubmit={handleCreateCard} className="bg-purple-50 p-4 rounded-xl border border-purple-200 mb-6 flex flex-col gap-3">
+                                    <h4 className="text-sm font-bold text-purple-900">Adicionar Novo Cartão</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                        <div className="col-span-1 lg:col-span-2">
+                                            <input placeholder="Nome do Cartão" required value={newCardName} onChange={e => setNewCardName(e.target.value)} className="w-full text-sm rounded-lg border-purple-300 px-3 py-2 border focus:ring-purple-500" />
+                                        </div>
+                                        <div>
+                                            <input placeholder="Limite (R$)" type="number" step="0.01" required value={newCardLimit || ''} onChange={e => setNewCardLimit(parseFloat(e.target.value))} className="w-full text-sm rounded-lg border-purple-300 px-3 py-2 border focus:ring-purple-500" />
+                                        </div>
+                                        <div>
+                                            <input placeholder="Dia Fechamento" type="number" min="1" max="31" required value={newCardClosingDay} onChange={e => setNewCardClosingDay(parseInt(e.target.value))} className="w-full text-sm rounded-lg border-purple-300 px-3 py-2 border focus:ring-purple-500" />
+                                        </div>
+                                        <div>
+                                            <input placeholder="Dia Vencimento" type="number" min="1" max="31" required value={newCardDueDay} onChange={e => setNewCardDueDay(parseInt(e.target.value))} className="w-full text-sm rounded-lg border-purple-300 px-3 py-2 border focus:ring-purple-500" />
+                                        </div>
+                                        <div className="col-span-1 lg:col-span-2 flex items-end">
+                                            <button type="submit" className="w-full py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">Salvar Cartão</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            )}
+
+                            {selectedAccount.cards && selectedAccount.cards.length > 0 && (
+                                <div className="mb-6">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Cartões Associados</h4>
+                                    <div className="flex flex-wrap gap-3">
+                                        {selectedAccount.cards.map(card => (
+                                            <div key={card.id} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 flex flex-col min-w-[150px]">
+                                                <span className="text-xs font-bold text-slate-900">{card.name}</span>
+                                                <span className="text-sm font-black text-slate-700">{card.limit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                                <span className="text-[10px] text-slate-500">Vence dia {card.dueDay}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {isAddingTx && (
                                 <form onSubmit={handleCreateTransaction} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 flex flex-col gap-3">
@@ -304,8 +398,34 @@ export default function WalletDetailsPage() {
                                             <select value={newTxType} onChange={e => setNewTxType(e.target.value as TransactionType)} className="w-full text-sm rounded-lg border-slate-300 px-3 py-2 border">
                                                 <option value={TransactionType.Expense}>Despesa</option>
                                                 <option value={TransactionType.Income}>Receita</option>
+                                                {selectedAccount.isInvestment && (
+                                                    <>
+                                                        <option value={TransactionType.Investment}>Aplicação</option>
+                                                        <option value={TransactionType.Redemption}>Resgate</option>
+                                                    </>
+                                                )}
                                             </select>
                                         </div>
+                                        {newTxType === TransactionType.Expense && (
+                                            <div className="col-span-1 lg:col-span-2 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100 flex flex-col gap-2">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={newTxIsCredit} onChange={e => setNewTxIsCredit(e.target.checked)} className="rounded text-indigo-600" />
+                                                    <span className="text-xs font-medium text-slate-700">Usar Crédito</span>
+                                                </label>
+                                                {newTxIsCredit && (
+                                                    <select 
+                                                        value={newTxCardId || ''} 
+                                                        onChange={e => setNewTxCardId(e.target.value || undefined)} 
+                                                        className="w-full text-xs rounded border-slate-300 px-2 py-1 border"
+                                                    >
+                                                        <option value="">Crédito Pré-Aprovado</option>
+                                                        {selectedAccount.cards?.map(card => (
+                                                            <option key={card.id} value={card.id}>Cartão: {card.name}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="col-span-1 lg:col-span-2">
                                             <select 
                                                 value={newTxCat} 
@@ -349,9 +469,17 @@ export default function WalletDetailsPage() {
                                             {transactionsResult.items.map(tx => (
                                                 <li key={tx.id} className="py-3 flex justify-between items-center group">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === TransactionType.Income ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                            tx.type === TransactionType.Income ? 'bg-emerald-100 text-emerald-600' : 
+                                                            tx.type === TransactionType.Investment ? 'bg-indigo-100 text-indigo-600' :
+                                                            tx.type === TransactionType.Redemption ? 'bg-blue-100 text-blue-600' :
+                                                            'bg-red-100 text-red-600'
+                                                        }`}>
                                                             <span className="material-symbols-outlined text-sm">
-                                                                {tx.type === TransactionType.Income ? 'arrow_downward' : 'arrow_upward'}
+                                                                {tx.type === TransactionType.Income ? 'arrow_downward' : 
+                                                                 tx.type === TransactionType.Investment ? 'account_balance' :
+                                                                 tx.type === TransactionType.Redemption ? 'local_atm' :
+                                                                 'arrow_upward'}
                                                             </span>
                                                         </div>
                                                         <div>
@@ -359,8 +487,13 @@ export default function WalletDetailsPage() {
                                                             <p className="text-xs text-slate-400">{new Date(tx.date).toLocaleDateString('pt-BR')}</p>
                                                         </div>
                                                     </div>
-                                                    <div className={`font-bold ${tx.type === TransactionType.Income ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                                        {tx.type === TransactionType.Expense && '- '}
+                                                    <div className={`font-bold ${
+                                                        tx.type === TransactionType.Income ? 'text-emerald-600' : 
+                                                        tx.type === TransactionType.Investment ? 'text-indigo-600' :
+                                                        tx.type === TransactionType.Redemption ? 'text-blue-600' :
+                                                        'text-slate-900'
+                                                    }`}>
+                                                        {(tx.type === TransactionType.Expense || tx.type === TransactionType.Investment) && '- '}
                                                         {tx.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                     </div>
                                                 </li>

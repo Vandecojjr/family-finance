@@ -34,8 +34,8 @@ public class GetMyWalletsHandlerTests
 
         var wallets = new List<Wallet>
         {
-            new("Carteira 1", memberId, 100),
-            new("Carteira 2", memberId, 200)
+            new("Carteira 1", memberId),
+            new("Carteira 2", memberId)
         };
 
         _walletRepositoryMock.Setup(x => x.GetWalletsForUserAsync(memberId, It.IsAny<CancellationToken>()))

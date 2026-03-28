@@ -7,9 +7,10 @@ namespace Application.Wallets.UseCases.CreateAccount;
 public record CreateAccountCommand(
     Guid WalletId,
     string Name,
-    AccountType Type,
+    bool IsDebit,
+    bool IsCredit,
+    bool IsInvestment,
+    bool IsCash,
     decimal InitialBalance,
-    decimal? CreditLimit,
-    int? ClosingDay,
-    int? DueDay
+    decimal PreApprovedCreditLimit
 ) : ICommand<Result<Guid>>;

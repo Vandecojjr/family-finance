@@ -7,22 +7,20 @@ public class CreateAccountValidator : AbstractValidator<CreateAccountCommand>
 {
     public CreateAccountValidator()
     {
-        When(x => x.Type == AccountType.Credit, () =>
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(80);
+
+        When(x => x.IsCredit, () =>
         {
-            RuleFor(x => x.CreditLimit)
-                .NotNull()
-                .WithMessage("Contas de crédito requerem limite, dia de fechamento e dia de vencimento.")
-                .WithErrorCode("INVALID_CREDIT_ACCOUNT");
-
-            RuleFor(x => x.ClosingDay)
-                .NotNull()
-                .WithMessage("Contas de crédito requerem limite, dia de fechamento e dia de vencimento.")
-                .WithErrorCode("INVALID_CREDIT_ACCOUNT");
-
-            RuleFor(x => x.DueDay)
-                .NotNull()
-                .WithMessage("Contas de crédito requerem limite, dia de fechamento e dia de vencimento.")
-                .WithErrorCode("INVALID_CREDIT_ACCOUNT");
+            RuleFor(x => x.PreApprovedCreditLimit)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("O limite pré-aprovado deve ser maior ou igual a zero.")
+                .WithErrorCode("INVALID_PRE_APPROVED_LIMIT");
         });
+
+        RuleFor(x => x.InitialBalance)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("O saldo inicial deve ser maior ou igual a zero.");
     }
 }

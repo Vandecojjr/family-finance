@@ -6,6 +6,7 @@ using Application.Wallets.UseCases.UpdateAccount;
 using Application.Wallets.UseCases.GetAccountsByWallet;
 using Application.Wallets.UseCases.CreateTransaction;
 using Application.Wallets.UseCases.GetTransactionsByAccount;
+using Application.Wallets.UseCases.CreateCard;
 using Domain.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
@@ -78,6 +79,15 @@ public static class WalletEndpoints
             })
             .WithName("GetPersonalWalletTransactions")
             .RequirePermission(Permission.WalletView);
+
+        group.MapPost("/{walletId:guid}/accounts/{accountId:guid}/cards", async (Guid walletId, Guid accountId, [FromBody] CreateCardCommand command, CancellationToken cancellationToken, IMediator mediator) =>
+            {
+                command = command with { AccountId = accountId };
+                var result = await mediator.Send(command, cancellationToken);
+                return result.ToResult();
+            })
+            .WithName("CreatePersonalCard")
+            .RequirePermission(Permission.WalletUpdate);
 
         group.MapGet("/transactions/recent", async ([FromQuery] int? limit, CancellationToken cancellationToken, IMediator mediator) =>
             {

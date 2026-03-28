@@ -1,0 +1,355 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-1.0.0",
+  "version": "1.0.0",
+  "runs": [
+    {
+      "tool": {
+        "name": "Compilador do Microsoft (R) Visual C#",
+        "version": "5.0.0.0",
+        "fileVersion": "5.0.0-2.25523.111 (b0f34d51)",
+        "semanticVersion": "5.0.0",
+        "language": "pt-BR"
+      },
+      "results": [
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"Type\" e não foi possível encontrar nenhum método de extensão \"Type\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 15,
+                  "endLine": 24,
+                  "endColumn": 19
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"GetCurrentBalance\" e não foi possível encontrar nenhum método de extensão \"GetCurrentBalance\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 25,
+                  "startColumn": 15,
+                  "endLine": 25,
+                  "endColumn": 32
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"CreditLimit\" e não foi possível encontrar nenhum método de extensão \"CreditLimit\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 15,
+                  "endLine": 26,
+                  "endColumn": 26
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"ClosingDay\" e não foi possível encontrar nenhum método de extensão \"ClosingDay\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 15,
+                  "endLine": 27,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"DueDay\" e não foi possível encontrar nenhum método de extensão \"DueDay\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 28,
+                  "startColumn": 15,
+                  "endLine": 28,
+                  "endColumn": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"GetAvailableLimit\" e não foi possível encontrar nenhum método de extensão \"GetAvailableLimit\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 29,
+                  "startColumn": 15,
+                  "endLine": 29,
+                  "endColumn": 32
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"GetUsedCredit\" e não foi possível encontrar nenhum método de extensão \"GetUsedCredit\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/AccountResponseDto.cs",
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 15,
+                  "endLine": 30,
+                  "endColumn": 28
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘IWalletRepository’ não contém uma definição para \"GetAllAsync\" e não foi possível encontrar nenhum método de extensão \"GetAllAsync\" que aceite um primeiro argumento do tipo ‘IWalletRepository’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateCard/CreateCardHandler.cs",
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 46,
+                  "endLine": 16,
+                  "endColumn": 57
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘Account’ não contém uma definição para \"GetCurrentBalance\" e não foi possível encontrar nenhum método de extensão \"GetCurrentBalance\" que aceite um primeiro argumento do tipo ‘Account’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/Dtos/WalletResponseDto.cs",
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 35,
+                  "endLine": 21,
+                  "endColumn": 52
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘CreateAccountCommand’ não contém uma definição para \"Type\" e não foi possível encontrar nenhum método de extensão \"Type\" que aceite um primeiro argumento do tipo ‘CreateAccountCommand’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateAccount/CreateAccountValidator.cs",
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 21,
+                  "endLine": 10,
+                  "endColumn": 25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘CreateAccountCommand’ não contém uma definição para \"CreditLimit\" e não foi possível encontrar nenhum método de extensão \"CreditLimit\" que aceite um primeiro argumento do tipo ‘CreateAccountCommand’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateAccount/CreateAccountValidator.cs",
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 28,
+                  "endLine": 12,
+                  "endColumn": 39
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘CreateAccountCommand’ não contém uma definição para \"ClosingDay\" e não foi possível encontrar nenhum método de extensão \"ClosingDay\" que aceite um primeiro argumento do tipo ‘CreateAccountCommand’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateAccount/CreateAccountValidator.cs",
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 28,
+                  "endLine": 17,
+                  "endColumn": 38
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘CreateAccountCommand’ não contém uma definição para \"DueDay\" e não foi possível encontrar nenhum método de extensão \"DueDay\" que aceite um primeiro argumento do tipo ‘CreateAccountCommand’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateAccount/CreateAccountValidator.cs",
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 28,
+                  "endLine": 22,
+                  "endColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "CS1061",
+          "level": "error",
+          "message": "‘CreateWalletCommand’ não contém uma definição para \"InitialBalance\" e não foi possível encontrar nenhum método de extensão \"InitialBalance\" que aceite um primeiro argumento do tipo ‘CreateWalletCommand’ (você está se esquecendo de usar uma diretiva ou uma referência de assembly?)",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Wallets/UseCases/CreateWallet/CreateWalletValidator.cs",
+                "region": {
+                  "startLine": 13,
+                  "startColumn": 24,
+                  "endLine": 13,
+                  "endColumn": 38
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "SYSLIB1045",
+          "level": "note",
+          "message": "Use 'GeneratedRegexAttribute' para gerar a implementação de expressão regular em tempo de compilação.",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Shared/Validation/FluentValidationExtensions.cs",
+                "region": {
+                  "startLine": 18,
+                  "startColumn": 15,
+                  "endLine": 18,
+                  "endColumn": 47
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1860",
+          "level": "note",
+          "message": "Prefira comparar 'Count' com 0 em vez de usar 'Any()', tanto para clareza quanto para desempenho",
+          "locations": [
+            {
+              "resultFile": {
+                "uri": "file:///C:/dev/Projetos_pessoais/family-finance/Application/Categories/UseCases/DeleteCategory/DeleteCategoryHandler.cs",
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 13,
+                  "endLine": 27,
+                  "endColumn": 41
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1,
+            "customProperties": {
+              "DiagnosticPropertyKey": "Count"
+            }
+          }
+        }
+      ],
+      "rules": {
+        "CA1860": {
+          "id": "CA1860",
+          "shortDescription": "Evite usar o método de extensão 'Enumerable.Any()'",
+          "fullDescription": "Prefira usar as propriedades 'IsEmpty', 'Count' ou 'Length', conforme disponível, em vez de chamar 'Enumerable.Any()'. A intenção é mais clara e tem mais desempenho do que usar o método de extensão 'Enumerable.Any()'.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1860",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Telemetry",
+              "EnabledRuleInAggressiveMode"
+            ]
+          }
+        },
+        "CS1061": {
+          "id": "CS1061",
+          "defaultLevel": "error",
+          "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS1061)",
+          "properties": {
+            "category": "Compiler",
+            "isEnabledByDefault": true,
+            "tags": [
+              "Compiler",
+              "Telemetry",
+              "NotConfigurable"
+            ]
+          }
+        },
+        "SYSLIB1045": {
+          "id": "SYSLIB1045",
+          "shortDescription": "Converter em 'GeneratedRegexAttribute'.",
+          "defaultLevel": "note",
+          "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/syslib-diagnostics/syslib1045",
+          "properties": {
+            "category": "Performance",
+            "isEnabledByDefault": true
+          }
+        }
+      }
+    }
+  ]
+}

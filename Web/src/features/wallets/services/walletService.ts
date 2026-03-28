@@ -8,7 +8,7 @@ export const WalletService = {
         return response.data;
     },
 
-    createWallet: async (data: { name: string; type: string; initialBalance: number }): Promise<ApiResponse<string>> => {
+    createWallet: async (data: { name: string }): Promise<ApiResponse<string>> => {
         const response = await api.post<ApiResponse<string>>('personal/wallets', data);
         return response.data;
     },
@@ -18,8 +18,26 @@ export const WalletService = {
         return response.data;
     },
 
-    createAccount: async (walletId: string, data: Partial<Account>): Promise<ApiResponse<string>> => {
+    createAccount: async (walletId: string, data: { 
+        name: string; 
+        isDebit: boolean; 
+        isCredit: boolean; 
+        isInvestment: boolean; 
+        isCash: boolean; 
+        balance: number; 
+        preApprovedCreditLimit: number; 
+    }): Promise<ApiResponse<string>> => {
         const response = await api.post<ApiResponse<string>>(`personal/wallets/${walletId}/accounts`, data);
+        return response.data;
+    },
+
+    createCard: async (walletId: string, accountId: string, data: {
+        name: string;
+        limit: number;
+        closingDay: number;
+        dueDay: number;
+    }): Promise<ApiResponse<string>> => {
+        const response = await api.post<ApiResponse<string>>(`personal/wallets/${walletId}/accounts/${accountId}/cards`, data);
         return response.data;
     },
 

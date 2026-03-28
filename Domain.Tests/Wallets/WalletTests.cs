@@ -11,9 +11,8 @@ public class WalletTests
         var name = "Nubank";
         var familyId = Guid.NewGuid();
         var ownerId = Guid.NewGuid();
-        var initialBalance = 100.50m;
 
-        var wallet = new Wallet(name, ownerId, initialBalance);
+        var wallet = new Wallet(name, ownerId);
 
         Assert.Equal(name, wallet.Name);
         Assert.Equal(ownerId, wallet.MemberId);

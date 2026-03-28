@@ -30,9 +30,11 @@ public sealed class CreateTransactionHandler(
 
         Transaction? transaction = command.Type switch
         {
-            TransactionType.Expense => Transaction.CreateExpense(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
+            TransactionType.Expense => Transaction.CreateExpense(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId, command.CardId, command.IsCredit),
             TransactionType.Income => Transaction.CreateIncome(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
             TransactionType.Transfer when command.TransferId is { } tid => Transaction.CreateTransfer(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId, tid),
+            TransactionType.Investment => Transaction.CreateInvestment(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
+            TransactionType.Redemption => Transaction.CreateRedemption(command.Description, command.Amount, command.Date, command.AccountId, command.CategoryId, memberId, familyId),
             _ => null
         };
 

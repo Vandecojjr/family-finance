@@ -16,22 +16,21 @@ public class WalletAccountConfiguration : IEntityTypeConfiguration<Account>
             .IsRequired()
             .HasMaxLength(150);
 
-        builder.Property(x => x.Type)
-            .IsRequired()
-            .HasConversion<string>();
+        // Capabilities
+        builder.Property(x => x.IsDebit).IsRequired();
+        builder.Property(x => x.IsCredit).IsRequired();
+        builder.Property(x => x.IsInvestment).IsRequired();
+        builder.Property(x => x.IsCash).IsRequired();
 
         builder.Property(x => x.Balance)
             .HasPrecision(18, 2);
 
-        builder.Property(x => x.CreditLimit)
+        // Pre-approved credit
+        builder.Property(x => x.PreApprovedCreditLimit)
             .HasPrecision(18, 2);
 
-        builder.Property(x => x.UsedCredit)
+        builder.Property(x => x.UsedPreApprovedCredit)
             .HasPrecision(18, 2);
-
-        builder.Property(x => x.ClosingDay);
-
-        builder.Property(x => x.DueDay);
 
         // Account -> Wallet relationship
         builder.HasOne(x => x.Wallet)
@@ -39,13 +38,21 @@ public class WalletAccountConfiguration : IEntityTypeConfiguration<Account>
             .HasForeignKey(x => x.WalletId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany(x => x.Cards)
+            .WithOne(c => c.Account)
+            .HasForeignKey(c => c.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasMany(x => x.Transactions)
             .WithOne(x => x.Account)
             .HasForeignKey(x => x.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
             
-        // Configure backing field for Transactions
+        // Configure backing fields
         builder.Metadata.FindNavigation(nameof(Account.Transactions))
+            ?.SetPropertyAccessMode(PropertyAccessMode.Field);
+            
+        builder.Metadata.FindNavigation(nameof(Account.Cards))
             ?.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

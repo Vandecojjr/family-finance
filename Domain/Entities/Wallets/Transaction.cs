@@ -17,6 +17,13 @@ public class Transaction : Entity
     public Guid CategoryId { get; private set; }
     public virtual Category? Category { get; private set; }
 
+    // Relationship with Card
+    public Guid? CardId { get; private set; }
+    public virtual Card? Card { get; private set; }
+
+    // Flag for credit transactions (when not using a card but using pre-approved credit)
+    public bool IsCredit { get; private set; }
+
     public Guid? TransferId { get; private set; }
     public bool IsInternalTransfer => TransferId.HasValue;
 
@@ -34,6 +41,8 @@ public class Transaction : Entity
         Guid categoryId, 
         Guid memberId, 
         Guid familyId,
+        Guid? cardId = null,
+        bool isCredit = false,
         Guid? transferId = null)
     {
         if (amount <= 0) throw new ArgumentException("O valor deve ser maior que zero.");
@@ -46,15 +55,23 @@ public class Transaction : Entity
         CategoryId = categoryId;
         MemberId = memberId;
         FamilyId = familyId;
+        CardId = cardId;
+        IsCredit = isCredit || cardId.HasValue;
         TransferId = transferId;
     }
 
-    public static Transaction CreateExpense(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId)
-        => new(desc, value, date, TransactionType.Expense, accId, catId, memId, famId);
+    public static Transaction CreateExpense(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId, Guid? cardId = null, bool isCredit = false)
+        => new(desc, value, date, TransactionType.Expense, accId, catId, memId, famId, cardId: cardId, isCredit: isCredit);
 
     public static Transaction CreateIncome(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId)
         => new(desc, value, date, TransactionType.Income, accId, catId, memId, famId);
 
     public static Transaction CreateTransfer(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId, Guid transferId)
-        => new(desc, value, date, TransactionType.Transfer, accId, catId, memId, famId, transferId);
+        => new(desc, value, date, TransactionType.Transfer, accId, catId, memId, famId, transferId: transferId);
+
+    public static Transaction CreateInvestment(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId)
+        => new(desc, value, date, TransactionType.Investment, accId, catId, memId, famId);
+
+    public static Transaction CreateRedemption(string desc, decimal value, DateTime date, Guid accId, Guid catId, Guid memId, Guid famId)
+        => new(desc, value, date, TransactionType.Redemption, accId, catId, memId, famId);
 }

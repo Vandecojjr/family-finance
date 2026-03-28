@@ -14,5 +14,7 @@ public record CreateTransactionCommand(
     Guid CategoryId,
     Guid MemberId,
     Guid FamilyId,
+    Guid? CardId = null,
+    bool IsCredit = false,
     Guid? TransferId = null
 ) : ICommand<Result<Guid>>;

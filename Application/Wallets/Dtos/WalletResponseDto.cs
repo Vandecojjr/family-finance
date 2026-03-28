@@ -18,7 +18,7 @@ public record WalletResponseDto(
             w.Id,
             w.Name,
             w.MemberId,
-            w.Accounts.Sum(a => a.GetCurrentBalance()),
+            w.Accounts.Sum(a => a.Balance),
             "Personal", // TODO: Determine Type if applicable from Wallet
             false, // TODO: Resolve IsShared
             w.Member?.Name

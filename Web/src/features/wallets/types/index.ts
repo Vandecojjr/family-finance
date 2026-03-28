@@ -8,30 +8,38 @@ export interface Wallet {
     ownerName?: string;
 }
 
-export enum AccountType {
-    Checking = 'Checking',
-    Cash = 'Cash',
-    Investment = 'Investment',
-    Credit = 'Credit'
+export interface Card {
+    id: string;
+    name: string;
+    limit: number;
+    usedLimit: number;
+    closingDay: number;
+    dueDay: number;
+    accountId: string;
 }
 
 export interface Account {
     id: string;
     name: string;
-    type: AccountType;
+    isDebit: boolean;
+    isCredit: boolean;
+    isInvestment: boolean;
+    isCash: boolean;
     balance: number;
-    creditLimit?: number;
-    closingDay?: number;
-    dueDay?: number;
-    availableLimit?: number;
-    usedCredit?: number;
+    investmentBalance: number;
+    preApprovedCreditLimit: number;
+    usedPreApprovedCredit: number;
+    collateralCreditLimit: number;
     walletId: string;
+    cards?: Card[];
 }
 
 export enum TransactionType {
     Expense = 'Expense',
     Income = 'Income',
-    Transfer = 'Transfer'
+    Transfer = 'Transfer',
+    Investment = 'Investment',
+    Redemption = 'Redemption'
 }
 
 export interface Transaction {
@@ -44,6 +52,8 @@ export interface Transaction {
     categoryId: string;
     memberId: string;
     familyId: string;
+    cardId?: string;
+    isCredit: boolean;
     transferId?: string;
 }
 
