@@ -1,5 +1,4 @@
-﻿using Domain.Entities.Families;
-using Domain.Enums;
+﻿using Domain.Enums;
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
 
@@ -12,7 +11,6 @@ public class Account : Entity, IAggregateRoot
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
 
     public Guid MemberId { get; private set; }
-    public Member? Member { get; private set; }
 
     public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];

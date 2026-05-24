@@ -1,13 +1,3 @@
-# Stage 1: Build the Frontend (Vite)
-FROM node:20-alpine AS build-web
-WORKDIR /app
-COPY Web/package*.json ./
-RUN npm install
-COPY Web/ .
-# Set environment variable to use same origin for API
-ARG VITE_API_URL=/api/v1
-ENV VITE_API_URL=$VITE_API_URL
-RUN npm run build
 
 # Stage 2: Build the Backend (.NET)
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build-api
@@ -36,7 +26,6 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 COPY nginx.conf /etc/nginx/sites-available/default
 
 # Copy Frontend artifacts to Nginx's html directory
-COPY --from=build-web /app/dist /usr/share/nginx/html
 
 # Copy Backend artifacts
 COPY --from=publish-api /app/publish .

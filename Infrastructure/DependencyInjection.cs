@@ -3,7 +3,6 @@ using Infrastructure.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Domain.Repositories;
@@ -23,9 +22,6 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IAccountRepository, AccountRepository>();
-        services.AddScoped<IFamilyRepository, FamilyRepository>();
-        services.AddScoped<IWalletRepository, WalletRepository>();
-        services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();

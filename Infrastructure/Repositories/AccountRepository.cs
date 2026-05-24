@@ -1,4 +1,4 @@
-using Domain.AccessContext.Entities.Accounts;
+﻿using Domain.AccessContext.Entities.Accounts;
 using Domain.Repositories;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,6 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     {
         return await context.Set<Account>()
             .Include(x => x.RefreshTokens)
-            .Include(x => x.Member)
             .Include(x => x.Roles)
             .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }

@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <Folder Include="AccessContext\Entities\" />
+      <Folder Include="Entities\" />
     </ItemGroup>
 
 </Project>

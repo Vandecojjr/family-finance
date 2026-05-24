@@ -1,5 +1,5 @@
 using Domain.AccessContext.Entities.Accounts;
-using Domain.Entities.Families;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -10,12 +10,15 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
     public void Configure(EntityTypeBuilder<Account> builder)
     {
         builder.ToTable("Accounts");
-        
+
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Email)
             .IsRequired()
-            .HasMaxLength(255);
+            .HasMaxLength(256);
+
+        builder.HasIndex(x => x.Email)
+            .IsUnique();
 
         builder.Property(x => x.PasswordHash)
             .IsRequired()
@@ -23,19 +26,17 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.Property(x => x.Status)
             .IsRequired()
-            .HasConversion<string>();
+            .HasConversion<string>()
+            .HasMaxLength(50);
 
         builder.Property(x => x.MemberId)
             .IsRequired();
-
-        builder.HasOne(x => x.Member)
-            .WithOne(x => x.Account)
-            .HasForeignKey<Account>(x => x.MemberId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.RefreshTokens)
             .WithOne()
             .HasForeignKey(x => x.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Many-to-many with Roles is configured via RoleConfiguration
     }
 }

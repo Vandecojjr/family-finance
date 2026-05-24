@@ -1,17 +1,17 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Application.Accounts.UseCases.Login;
 
-public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
+internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("E-mail é obrigatório.")
-            .EmailAddress().WithMessage("E-mail inválido.");
+            .NotEmpty().WithMessage("O e-mail é obrigatório.")
+            .EmailAddress().WithMessage("O e-mail informado é inválido.");
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Senha é obrigatória.")
-            .MinimumLength(6).WithMessage("Senha deve ter pelo menos 6 caracteres.");
+            .NotEmpty().WithMessage("A senha é obrigatória.")
+            .MinimumLength(6).WithMessage("A senha deve ter ao menos 6 caracteres.");
     }
 }

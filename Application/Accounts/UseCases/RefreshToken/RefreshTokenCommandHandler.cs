@@ -1,47 +1,52 @@
-﻿using Application.Shared.Auth;
+using Application.Shared.Auth;
 using Application.Shared.Responses;
 using Application.Shared.Results;
 using Domain.Repositories;
 using Mediator;
+using RefreshTokenEntity = Domain.AccessContext.Entities.Accounts.RefreshToken;
 
 namespace Application.Accounts.UseCases.RefreshToken;
 
-public sealed class RefreshTokenCommandHandler : ICommandHandler<RefreshTokenCommand, Result<TokenPairResponse>>
+public sealed class RefreshTokenCommandHandler(
+    IAccountRepository accountRepository,
+    IAuthTokenService authTokenService)
+    : ICommandHandler<RefreshTokenCommand, Result<TokenPairResponse>>
 {
-    private readonly IAccountRepository _accountRepository;
-    private readonly IAuthTokenService _authTokenService;
-
-    public RefreshTokenCommandHandler(
-        IAccountRepository accountRepository,
-        IAuthTokenService authTokenService)
+    public async ValueTask<Result<TokenPairResponse>> Handle(
+        RefreshTokenCommand command,
+        CancellationToken cancellationToken)
     {
-        _accountRepository = accountRepository;
-        _authTokenService = authTokenService;
-    }
+        var existingToken = await accountRepository.GetRefreshTokenAsync(command.RefreshToken, cancellationToken);
 
-    public async ValueTask<Result<TokenPairResponse>> Handle(RefreshTokenCommand command, CancellationToken cancellationToken)
-    {
-        var account = await _accountRepository.GetByIdAsync(command.AccountId, cancellationToken);
+        if (existingToken is null || !existingToken.IsActive)
+            return Result<TokenPairResponse>.Failure(
+                Error.Failure("Auth.InvalidRefreshToken", "Refresh token inválido ou expirado."));
+
+        var account = await accountRepository.GetByIdAsync(existingToken.AccountId, cancellationToken);
+
         if (account is null)
-        {
-            return Result<TokenPairResponse>.Failure(Error.NotFound("ACCOUNT_NOT_FOUND", "Conta não encontrada."));
-        }
+            return Result<TokenPairResponse>.Failure(
+                Error.NotFound("Auth.AccountNotFound", "Conta não encontrada."));
 
-        var storedToken = await _accountRepository.GetRefreshTokenAsync(command.RefreshToken, cancellationToken);
-        if (storedToken is null || !storedToken.IsActive)
-        {
-            return Result<TokenPairResponse>.Failure(Error.Failure("INVALID_REFRESH_TOKEN", "Refresh token inválido ou expirado."));
-        }
+        if (account.Status != Domain.Enums.AccountStatus.Active)
+            return Result<TokenPairResponse>.Failure(
+                Error.Failure("Auth.AccountInactive", "Conta inativa ou bloqueada."));
 
-        await _accountRepository.RevokeRefreshTokenAsync(account.Id, command.RefreshToken, cancellationToken);
+        // Revoke the used refresh token (rotation)
+        await accountRepository.RevokeRefreshTokenAsync(account.Id, command.RefreshToken, cancellationToken);
 
-        var (accessToken, accessExpiresAt) = _authTokenService.GenerateAccessToken(account);
-        var (newRefreshToken, newRefreshExpiresAt) = _authTokenService.GenerateRefreshToken();
+        var (accessToken, accessTokenExpiresAt) = authTokenService.GenerateAccessToken(account);
+        var (newRefreshToken, newRefreshTokenExpiresAt) = authTokenService.GenerateRefreshToken();
 
-        await _accountRepository.RemoveExpiredRefreshTokensAsync(account.Id, cancellationToken);
-        await _accountRepository.AddRefreshTokenAsync(account.Id, new Domain.AccessContext.Entities.Accounts.RefreshToken(account.Id, newRefreshToken, newRefreshExpiresAt), cancellationToken);
+        var refreshTokenEntity = new RefreshTokenEntity(account.Id, newRefreshToken, newRefreshTokenExpiresAt);
+        await accountRepository.AddRefreshTokenAsync(account.Id, refreshTokenEntity, cancellationToken);
 
-        var dto = new TokenPairResponse(accessToken, accessExpiresAt, newRefreshToken, newRefreshExpiresAt);
-        return Result<TokenPairResponse>.Success(dto);
+        var response = new TokenPairResponse(
+            accessToken,
+            accessTokenExpiresAt,
+            newRefreshToken,
+            newRefreshTokenExpiresAt);
+
+        return Result<TokenPairResponse>.Success(response);
     }
 }

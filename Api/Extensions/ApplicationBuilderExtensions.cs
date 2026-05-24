@@ -31,10 +31,7 @@ public static class ApplicationBuilderExtensions
             }
         }
 
-        app.MapAccountEndpoints();
-        app.MapFamilyEndpoints();
-        app.MapPersonalWalletEndpoints();
-        app.MapCategoryEndpoints();
+        app.MapEndpoints();
 
         return app;
     }
