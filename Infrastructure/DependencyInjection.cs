@@ -1,4 +1,4 @@
-﻿using Application.Shared.Auth;
+using Application.Shared.Auth;
 using Infrastructure.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +22,7 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IFamilyRepository, FamilyRepository>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
