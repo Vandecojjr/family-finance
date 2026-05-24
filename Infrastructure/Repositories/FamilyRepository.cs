@@ -1,4 +1,5 @@
 using Domain.Entities.Families;
+using Domain.Entities.Families.ValueObjects;
 using Domain.Entities.Members;
 using Domain.Repositories;
 using Infrastructure.Data;
@@ -13,6 +14,14 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
         return await context.Set<Family>()
             .Include(x => x.Members)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<FamilyName?> GetNameByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Family>()
+            .Where(x => x.Id == id)
+            .Select(x => x.Name)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task AddAsync(Family family, CancellationToken cancellationToken = default)
