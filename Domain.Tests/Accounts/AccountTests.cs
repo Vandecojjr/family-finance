@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Linq;
 using Domain.AccessContext.Entities.Accounts;
 using Domain.Enums;
 using Xunit;
+
+using Domain.AccessContext.Entities.Accounts.Exceptions;
 
 namespace Domain.Tests.Accounts;
 
@@ -55,7 +57,7 @@ public class AccountTests
         acc.AssignMember(initialMemberId);
 
         var other = Guid.NewGuid();
-        Assert.Throws<InvalidOperationException>(() => acc.AssignMember(other));
+        Assert.Throws<AccountAlreadyLinkedException>(() => acc.AssignMember(other));
     }
 
     [Fact]

@@ -1,6 +1,7 @@
-﻿using Domain.Enums;
+using Domain.Enums;
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
+using Domain.Entities.Members;
 
 namespace Domain.AccessContext.Entities.Accounts;
 
@@ -11,6 +12,7 @@ public class Account : Entity, IAggregateRoot
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
 
     public Guid MemberId { get; private set; }
+    public Member Member { get; private set; } = null!;
 
     public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
@@ -46,7 +48,7 @@ public class Account : Entity, IAggregateRoot
     public void AssignMember(Guid memberId)
     {
         if (MemberId != Guid.Empty && MemberId != memberId)
-            throw new InvalidOperationException("Account já está vinculada a um Member.");
+            throw new Exceptions.AccountAlreadyLinkedException();
 
         MemberId = memberId;
     }

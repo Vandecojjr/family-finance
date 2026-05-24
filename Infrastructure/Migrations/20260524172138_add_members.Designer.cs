@@ -3,17 +3,20 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260524172138_add_members")]
+    partial class add_members
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,6 +72,9 @@ namespace Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("MemberId")
                         .IsUnique();
 
                     b.ToTable("Accounts", (string)null);
@@ -136,6 +142,56 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("Roles", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Families.Family", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Families", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Members.Member", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FamilyId");
+
+                    b.ToTable("Members", (string)null);
+                });
+
             modelBuilder.Entity("AccountRole", b =>
                 {
                     b.HasOne("Domain.AccessContext.Entities.Accounts.Account", null)
@@ -151,6 +207,17 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.AccessContext.Entities.Accounts.Account", b =>
+                {
+                    b.HasOne("Domain.Entities.Members.Member", "Member")
+                        .WithOne("Account")
+                        .HasForeignKey("Domain.AccessContext.Entities.Accounts.Account", "MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
             modelBuilder.Entity("Domain.AccessContext.Entities.Accounts.RefreshToken", b =>
                 {
                     b.HasOne("Domain.AccessContext.Entities.Accounts.Account", null)
@@ -160,9 +227,30 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.Members.Member", b =>
+                {
+                    b.HasOne("Domain.Entities.Families.Family", "Family")
+                        .WithMany("Members")
+                        .HasForeignKey("FamilyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Family");
+                });
+
             modelBuilder.Entity("Domain.AccessContext.Entities.Accounts.Account", b =>
                 {
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Families.Family", b =>
+                {
+                    b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Members.Member", b =>
+                {
+                    b.Navigation("Account");
                 });
 #pragma warning restore 612, 618
         }
