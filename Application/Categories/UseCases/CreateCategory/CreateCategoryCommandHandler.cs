@@ -31,7 +31,6 @@ public sealed class CreateCategoryCommandHandler(
                     Error.NotFound("Category.ParentNotFound", $"Categoria pai com ID '{command.ParentId.Value}' não foi encontrada."));
             }
 
-            // Validar se pertence à mesma família
             if (parent.FamilyId != currentMember.FamilyId)
             {
                 return Result<Guid>.Failure(

@@ -32,6 +32,6 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .WithOne(x => x.Parent)
             .HasForeignKey(x => x.ParentId)
             .OnDelete(DeleteBehavior.Restrict)
-            .Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field);
+            .Metadata.PrincipalToDependent!.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -66,5 +66,10 @@ public class RecurringExpenseConfiguration : IEntityTypeConfiguration<RecurringE
             .WithMany(m => m.RecurringExpenses)
             .HasForeignKey(x => x.MemberId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Category)
+            .WithMany()
+            .HasForeignKey(x => x.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -13,7 +13,8 @@ public sealed record UpdateRecurringExpenseCommand(
     RecurringFrequency Frequency,
     int DueDay,
     DateTime StartDate,
-    DateTime? EndDate) : ICommand<Result>, IAuthorizeableRequest
+    DateTime? EndDate,
+    Guid CategoryId) : ICommand<Result>, IAuthorizeableRequest
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseUpdate];
 }

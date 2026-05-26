@@ -45,7 +45,8 @@ public class DeleteRecurringExpenseCommandHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            targetMember.Id);
+            targetMember.Id,
+            Guid.NewGuid());
 
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 
@@ -101,7 +102,8 @@ public class DeleteRecurringExpenseCommandHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            targetMember.Id);
+            targetMember.Id,
+            Guid.NewGuid());
 
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 
@@ -142,7 +144,8 @@ public class DeleteRecurringExpenseCommandHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            targetMember.Id);
+            targetMember.Id,
+            Guid.NewGuid());
 
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 

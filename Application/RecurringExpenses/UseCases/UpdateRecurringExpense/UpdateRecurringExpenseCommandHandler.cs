@@ -8,6 +8,7 @@ namespace Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
 public sealed class UpdateRecurringExpenseCommandHandler(
     IRecurringExpenseRepository recurringExpenseRepository,
     IFamilyRepository familyRepository,
+    ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<UpdateRecurringExpenseCommand, Result>
 {
     public async ValueTask<Result> Handle(
@@ -34,6 +35,25 @@ public sealed class UpdateRecurringExpenseCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para editar este gasto recorrente."));
         }
 
+        var category = await categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
+        if (category is null)
+        {
+            return Result.Failure(
+                Error.NotFound("Category.NotFound", $"Categoria com ID '{command.CategoryId}' não foi encontrada."));
+        }
+
+        if (category.FamilyId != currentMember.FamilyId)
+        {
+            return Result.Failure(
+                Error.Failure("Family.AccessDenied", "A categoria não pertence à mesma família do membro."));
+        }
+
+        if (category.Type != Domain.Enums.CategoryType.Expense)
+        {
+            return Result.Failure(
+                Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
+        }
+
         expense.Update(
             command.Description,
             command.Amount,
@@ -41,7 +61,8 @@ public sealed class UpdateRecurringExpenseCommandHandler(
             command.Frequency,
             command.DueDay,
             command.StartDate,
-            command.EndDate);
+            command.EndDate,
+            command.CategoryId);
 
         await recurringExpenseRepository.UpdateAsync(expense, cancellationToken);
 

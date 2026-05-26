@@ -12,12 +12,14 @@ public class RecurringExpenseRepository(AppDbContext context) : IRecurringExpens
     {
         return await context.Set<RecurringExpense>()
             .Include(x => x.Member)
+            .Include(x => x.Category)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<RecurringExpense>> GetByMemberIdAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
         var list = await context.Set<RecurringExpense>()
+            .Include(x => x.Category)
             .Where(x => x.MemberId == memberId)
             .ToListAsync(cancellationToken);
         return list.AsReadOnly();

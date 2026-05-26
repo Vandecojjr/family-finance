@@ -1,3 +1,4 @@
+using Domain.Entities.Categories;
 using Domain.Entities.RecurringExpenses.ValueObjects;
 using Domain.Enums;
 using Domain.Shared.Aggregates.Abstractions;
@@ -16,8 +17,10 @@ public class RecurringExpense : Entity, IAggregateRoot
     public RecurringPeriod Period { get; private set; } = null!;
     public RecurringExpenseStatus Status { get; private set; } = null!;
     public Guid MemberId { get; private set; }
+    public Guid CategoryId { get; private set; }
     
     public virtual Member Member { get; private set; } = null!;
+    public virtual Category Category { get; private set; } = null!;
 
     #pragma warning disable CS8618 // Required for EF Core and serialization
     protected RecurringExpense()
@@ -33,7 +36,8 @@ public class RecurringExpense : Entity, IAggregateRoot
         int dueDay,
         DateTime startDate,
         DateTime? endDate,
-        Guid memberId)
+        Guid memberId,
+        Guid categoryId)
     {
         Description = RecurringExpenseDescription.Create(description);
         Amount = RecurringExpenseAmount.Create(amount);
@@ -43,6 +47,7 @@ public class RecurringExpense : Entity, IAggregateRoot
         Period = RecurringPeriod.Create(startDate, endDate);
         Status = RecurringExpenseStatus.Active;
         MemberId = memberId;
+        CategoryId = categoryId;
     }
 
     public void Update(
@@ -52,7 +57,8 @@ public class RecurringExpense : Entity, IAggregateRoot
         RecurringFrequency frequency,
         int dueDay,
         DateTime startDate,
-        DateTime? endDate)
+        DateTime? endDate,
+        Guid categoryId)
     {
         Description = RecurringExpenseDescription.Create(description);
         Amount = RecurringExpenseAmount.Create(amount);
@@ -60,6 +66,7 @@ public class RecurringExpense : Entity, IAggregateRoot
         Frequency = frequency;
         DueDay = DueDay.Create(dueDay);
         Period = RecurringPeriod.Create(startDate, endDate);
+        CategoryId = categoryId;
         SeUpdate();
     }
 

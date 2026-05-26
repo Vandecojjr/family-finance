@@ -105,3 +105,8 @@ The solution is organized into the following projects:
 * **Location**: `Application.Tests` and `Domain.Tests`.
 * **Libraries**: `xUnit`, `Moq`, `FluentAssertions`.
 * **Focus**: Test happy paths, boundary validations, domain exceptions, and access control blocks.
+
+### 3.8. Compiler Warnings & Code Quality
+* **Zero Warnings Policy**: Compiler warnings are strictly prohibited in this codebase. They must either be corrected or resolved completely. Setting `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` globally ensures compile errors occur on warning.
+* **NuGet Vulnerabilities**: NuGet audit warnings (e.g. package vulnerabilities) must be handled by upgrading the package to a secure version, or manually adding direct secure package references in `.csproj`.
+

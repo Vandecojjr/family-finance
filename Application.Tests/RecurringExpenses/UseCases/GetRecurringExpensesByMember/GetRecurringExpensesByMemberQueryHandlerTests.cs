@@ -45,7 +45,8 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            targetMember.Id);
+            targetMember.Id,
+            Guid.NewGuid());
 
         var expensesList = new List<RecurringExpense> { expense };
         var query = new GetRecurringExpensesByMemberQuery(targetMember.Id);

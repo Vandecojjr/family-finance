@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { familyApi, FamilyMemberResponse } from '@/api/endpoints/family';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
+import { categoriesApi } from '@/api/endpoints/categories';
 import { RecurringExpense } from '@/types';
 
 const MEMBER_COLORS = [colors.brand.primary, colors.brand.teal, colors.brand.accent];
@@ -53,6 +55,8 @@ export default function FamilyScreen() {
   const [dueDay, setDueDay] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0] ?? '');
   const [endDate, setEndDate] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   // Queries
   const { data: family, isLoading: isLoadingFamily, error: familyError, refetch: refetchFamily } = useQuery({
@@ -65,6 +69,28 @@ export default function FamilyScreen() {
     queryFn: () => recurringExpensesApi.getByMemberId(selectedMember!.id),
     enabled: !!selectedMember,
   });
+
+  // Fetch Categories for selection
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesApi.list(),
+  });
+
+  const flattenedExpenseCategories = React.useMemo(() => {
+    if (!categories) return [];
+    const list: { id: string; name: string }[] = [];
+    categories
+      .filter(c => c.type === 'Expense')
+      .forEach(parent => {
+        list.push({ id: parent.id, name: parent.name });
+        if (parent.subCategories && parent.subCategories.length > 0) {
+          parent.subCategories.forEach(sub => {
+            list.push({ id: sub.id, name: `${parent.name} ➔ ${sub.name}` });
+          });
+        }
+      });
+    return list;
+  }, [categories]);
 
   // Mutations
   const deleteMutation = useMutation({
@@ -100,7 +126,7 @@ export default function FamilyScreen() {
       const parsedAmount = parseFloat(amount.replace(',', '.'));
       const parsedDueDay = parseInt(dueDay, 10);
 
-      if (!description || isNaN(parsedAmount) || isNaN(parsedDueDay)) {
+      if (!description || isNaN(parsedAmount) || isNaN(parsedDueDay) || !categoryId) {
         throw new Error('Preencha os campos obrigatórios corretamente.');
       }
 
@@ -113,6 +139,7 @@ export default function FamilyScreen() {
           dueDay: parsedDueDay,
           startDate,
           endDate: endDate || null,
+          categoryId,
         });
       } else {
         await recurringExpensesApi.create({
@@ -124,6 +151,7 @@ export default function FamilyScreen() {
           startDate,
           endDate: endDate || null,
           memberId: selectedMember!.id,
+          categoryId,
         });
       }
     },
@@ -147,6 +175,7 @@ export default function FamilyScreen() {
     setDueDay('10');
     setStartDate(new Date().toISOString().split('T')[0] ?? '');
     setEndDate('');
+    setCategoryId('');
     setIsFormOpen(true);
   };
 
@@ -159,12 +188,14 @@ export default function FamilyScreen() {
     setDueDay(expense.dueDay.toString());
     setStartDate(expense.startDate.split('T')[0] ?? '');
     setEndDate(expense.endDate ? expense.endDate.split('T')[0] ?? '' : '');
+    setCategoryId(expense.categoryId);
     setIsFormOpen(true);
   };
 
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingExpense(null);
+    setCategoryId('');
   };
 
   const handleSave = () => {
@@ -184,6 +215,10 @@ export default function FamilyScreen() {
     }
     if (!startDate) {
       Alert.alert('Validação', 'A data de início é obrigatória.');
+      return;
+    }
+    if (!categoryId) {
+      Alert.alert('Validação', 'A categoria é obrigatória.');
       return;
     }
 
@@ -312,6 +347,12 @@ export default function FamilyScreen() {
                                 {item.endDate ? ` a ${new Date(item.endDate).toLocaleDateString('pt-BR')}` : ' (Indeterminado)'}
                               </Text>
                             )}
+                            {item.categoryName ? (
+                               <View style={styles.categoryBadge}>
+                                 <Ionicons name="pricetag-outline" size={10} color={colors.brand.primary} />
+                                 <Text style={styles.categoryBadgeText}>{item.categoryName}</Text>
+                               </View>
+                             ) : null}
                           </View>
                         <Text style={[styles.expenseAmount, { color: colors.danger }]}>
                           {fmt(item.amount)}
@@ -379,6 +420,22 @@ export default function FamilyScreen() {
                         value={description}
                         onChangeText={setDescription}
                       />
+                    </View>
+
+                    {/* Categoria */}
+                    <View style={styles.fieldWrapper}>
+                      <Text style={styles.label}>Categoria</Text>
+                      <TouchableOpacity
+                        style={styles.selectInput}
+                        onPress={() => setIsCategoryModalOpen(true)}
+                      >
+                        <Text style={[styles.selectInputText, !categoryId && { color: colors.text.muted }]}>
+                          {categoryId 
+                            ? (flattenedExpenseCategories.find(c => c.id === categoryId)?.name ?? 'Categoria Selecionada') 
+                            : 'Selecione uma categoria'}
+                        </Text>
+                        <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                      </TouchableOpacity>
                     </View>
 
                     {/* Valor e Dia Vencimento */}
@@ -499,6 +556,51 @@ export default function FamilyScreen() {
             </View>
           </KeyboardAvoidingView>
         </Modal>
+      </Modal>
+
+      {/* ── SELETOR DE CATEGORIA MODAL ─────────────────────────────── */}
+      <Modal visible={isCategoryModalOpen} animationType="slide" transparent>
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.categorySelectorCard}>
+            <View style={styles.formHeader}>
+              <View style={styles.formHeaderInfo}>
+                <Text style={styles.formTitle}>Selecionar Categoria</Text>
+                <Text style={styles.formSubtitle}>Escolha uma categoria para o gasto recorrente</Text>
+              </View>
+              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsCategoryModalOpen(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={flattenedExpenseCategories}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.categoryListContent}
+              renderItem={({ item }) => {
+                const isSelected = categoryId === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[styles.categorySelectItem, isSelected && styles.categorySelectItemActive]}
+                    onPress={() => {
+                      setCategoryId(item.id);
+                      setIsCategoryModalOpen(false);
+                    }}
+                  >
+                    <Text style={[styles.categorySelectText, isSelected && styles.categorySelectTextActive]}>
+                      {item.name}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark" size={20} color={colors.brand.primary} />}
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="pricetags-outline" size={48} color={colors.text.muted} />
+                  <Text style={styles.emptyText}>Nenhuma categoria de gasto disponível. Crie-as na aba de Categorias primeiro.</Text>
+                </View>
+              }
+            />
+          </View>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -755,4 +857,82 @@ const styles = StyleSheet.create({
     ...shadow.md,
   },
   saveBtnText: { ...typography.button, color: colors.white },
+  formHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  formHeaderInfo: { flex: 1 },
+  formTitle: { ...typography.h3, color: colors.text.primary },
+  formSubtitle: { ...typography.bodySmall, color: colors.brand.teal, fontWeight: '600', marginTop: 2 },
+  selectInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.bg.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    height: 50,
+    paddingHorizontal: spacing.md,
+  },
+  selectInputText: {
+    color: colors.text.primary,
+    ...typography.body,
+  },
+  categorySelectorCard: {
+    height: '75%',
+    backgroundColor: colors.bg.secondary,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: spacing.md,
+  },
+  categoryListContent: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  categorySelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categorySelectItemActive: {
+    borderColor: colors.brand.primary,
+    backgroundColor: 'rgba(124, 106, 255, 0.05)',
+  },
+  categorySelectText: {
+    color: colors.text.primary,
+    ...typography.body,
+    fontWeight: '500',
+  },
+  categorySelectTextActive: {
+    color: colors.brand.primary,
+    fontWeight: '600',
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    backgroundColor: 'rgba(124, 106, 255, 0.1)',
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 6,
+  },
+  categoryBadgeText: {
+    ...typography.caption,
+    color: colors.brand.primary,
+    fontWeight: '600',
+    fontSize: 10,
+  },
 });

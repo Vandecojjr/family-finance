@@ -19,6 +19,7 @@ public class RecurringExpenseTests
         var startDate = DateTime.UtcNow.Date;
         DateTime? endDate = null;
         var memberId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
 
         // Act
         var expense = new RecurringExpense(
@@ -29,7 +30,8 @@ public class RecurringExpenseTests
             dueDay,
             startDate,
             endDate,
-            memberId);
+            memberId,
+            categoryId);
 
         // Assert
         Assert.Equal(description, expense.Description.Value);
@@ -41,20 +43,21 @@ public class RecurringExpenseTests
         Assert.Null(expense.Period.EndDate);
         Assert.True(expense.Status.IsActive);
         Assert.Equal(memberId, expense.MemberId);
+        Assert.Equal(categoryId, expense.CategoryId);
     }
 
     [Fact]
     public void Constructor_ShouldThrowDescriptionRequiredException_WhenDescriptionIsNull()
     {
         Assert.Throws<DescriptionRequiredException>(() => new RecurringExpense(
-            null!, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid()));
+            null!, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Constructor_ShouldThrowDescriptionRequiredException_WhenDescriptionIsEmpty()
     {
         Assert.Throws<DescriptionRequiredException>(() => new RecurringExpense(
-            "", 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid()));
+            "", 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
@@ -62,14 +65,14 @@ public class RecurringExpenseTests
     {
         var longDesc = new string('a', 201);
         Assert.Throws<DescriptionTooLongException>(() => new RecurringExpense(
-            longDesc, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid()));
+            longDesc, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Constructor_ShouldThrowInvalidAmountException_WhenAmountIsNegative()
     {
         Assert.Throws<InvalidAmountException>(() => new RecurringExpense(
-            "Netflix", -10m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid()));
+            "Netflix", -10m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Theory]
@@ -78,7 +81,7 @@ public class RecurringExpenseTests
     public void Constructor_ShouldThrowInvalidDueDayException_WhenDueDayIsInvalid(int invalidDueDay)
     {
         Assert.Throws<InvalidDueDayException>(() => new RecurringExpense(
-            "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, invalidDueDay, DateTime.UtcNow, null, Guid.NewGuid()));
+            "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, invalidDueDay, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
@@ -88,15 +91,16 @@ public class RecurringExpenseTests
         var endDate = startDate.AddDays(-1);
 
         Assert.Throws<InvalidPeriodException>(() => new RecurringExpense(
-            "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, startDate, endDate, Guid.NewGuid()));
+            "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, startDate, endDate, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Update_ShouldModifyProperties_AndSetUpdatedAt()
     {
         // Arrange
+        var categoryId = Guid.NewGuid();
         var expense = new RecurringExpense(
-            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid());
+            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), categoryId);
 
         var newDescription = "Amazon Prime";
         var newAmount = 19.90m;
@@ -105,6 +109,7 @@ public class RecurringExpenseTests
         var newDueDay = 5;
         var newStartDate = DateTime.UtcNow.AddDays(1);
         var newEndDate = DateTime.UtcNow.AddMonths(12);
+        var newCategoryId = Guid.NewGuid();
 
         // Act
         expense.Update(
@@ -114,7 +119,8 @@ public class RecurringExpenseTests
             newFrequency,
             newDueDay,
             newStartDate,
-            newEndDate);
+            newEndDate,
+            newCategoryId);
 
         // Assert
         Assert.Equal(newDescription, expense.Description.Value);
@@ -124,6 +130,7 @@ public class RecurringExpenseTests
         Assert.Equal(newDueDay, expense.DueDay.Value);
         Assert.Equal(newStartDate, expense.Period.StartDate);
         Assert.Equal(newEndDate, expense.Period.EndDate);
+        Assert.Equal(newCategoryId, expense.CategoryId);
         Assert.True(expense.UpdatedAt > DateTime.MinValue);
     }
 
@@ -132,7 +139,7 @@ public class RecurringExpenseTests
     {
         // Arrange
         var expense = new RecurringExpense(
-            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid());
+            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid());
 
         // Act
         expense.Deactivate();
@@ -147,7 +154,7 @@ public class RecurringExpenseTests
     {
         // Arrange
         var expense = new RecurringExpense(
-            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid());
+            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid());
         expense.Deactivate();
 
         var deacTime = expense.UpdatedAt;

@@ -50,7 +50,8 @@ public class GetRecurringExpenseByIdQueryHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            currentMember.Id);
+            currentMember.Id,
+            Guid.NewGuid());
         SetMember(expense, currentMember);
 
         var query = new GetRecurringExpenseByIdQuery(expense.Id);
@@ -143,7 +144,8 @@ public class GetRecurringExpenseByIdQueryHandlerTests
             10,
             DateTime.UtcNow,
             null,
-            targetMember.Id);
+            targetMember.Id,
+            Guid.NewGuid());
         SetMember(expense, targetMember);
 
         var query = new GetRecurringExpenseByIdQuery(expense.Id);

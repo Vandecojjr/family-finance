@@ -9,6 +9,7 @@ namespace Application.RecurringExpenses.UseCases.CreateRecurringExpense;
 public sealed class CreateRecurringExpenseCommandHandler(
     IRecurringExpenseRepository recurringExpenseRepository,
     IFamilyRepository familyRepository,
+    ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<CreateRecurringExpenseCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(
@@ -35,6 +36,25 @@ public sealed class CreateRecurringExpenseCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para adicionar gastos recorrentes para este membro."));
         }
 
+        var category = await categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
+        if (category is null)
+        {
+            return Result<Guid>.Failure(
+                Error.NotFound("Category.NotFound", $"Categoria com ID '{command.CategoryId}' não foi encontrada."));
+        }
+
+        if (category.FamilyId != targetMember.FamilyId)
+        {
+            return Result<Guid>.Failure(
+                Error.Failure("Family.AccessDenied", "A categoria não pertence à mesma família do membro."));
+        }
+
+        if (category.Type != Domain.Enums.CategoryType.Expense)
+        {
+            return Result<Guid>.Failure(
+                Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
+        }
+
         var recurringExpense = new RecurringExpense(
             command.Description,
             command.Amount,
@@ -43,7 +63,8 @@ public sealed class CreateRecurringExpenseCommandHandler(
             command.DueDay,
             command.StartDate,
             command.EndDate,
-            command.MemberId);
+            command.MemberId,
+            command.CategoryId);
 
         await recurringExpenseRepository.AddAsync(recurringExpense, cancellationToken);
 

@@ -31,6 +31,6 @@ public class FamilyConfiguration : IEntityTypeConfiguration<Family>
         builder.HasMany(x => x.Members)
             .WithOne(x => x.Family)
             .HasForeignKey(x => x.FamilyId)
-            .Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field);
+            .Metadata.PrincipalToDependent!.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -79,6 +79,8 @@ export interface RecurringExpense {
   endDate: string | null;
   isActive: boolean;
   memberId: string;
+  categoryId: string;
+  categoryName: string;
 }
 
 export interface CreateRecurringExpenseRequest {
@@ -90,6 +92,7 @@ export interface CreateRecurringExpenseRequest {
   startDate: string;
   endDate: string | null;
   memberId: string;
+  categoryId: string;
 }
 
 export interface UpdateRecurringExpenseRequest {
@@ -100,4 +103,5 @@ export interface UpdateRecurringExpenseRequest {
   dueDay: number;
   startDate: string;
   endDate: string | null;
+  categoryId: string;
 }

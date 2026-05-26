@@ -12,7 +12,9 @@ public sealed record RecurringExpenseResponse(
     DateTime StartDate,
     DateTime? EndDate,
     bool IsActive,
-    Guid MemberId);
+    Guid MemberId,
+    Guid CategoryId,
+    string CategoryName);
 
 public static class RecurringExpenseResponseFactory
 {
@@ -28,7 +30,9 @@ public static class RecurringExpenseResponseFactory
             expense.Period.StartDate,
             expense.Period.EndDate,
             expense.Status.IsActive,
-            expense.MemberId);
+            expense.MemberId,
+            expense.CategoryId,
+            expense.Category?.Name?.Value ?? string.Empty);
     }
 
     public static IReadOnlyCollection<RecurringExpenseResponse> ToResponse(this IEnumerable<RecurringExpense> expenses)

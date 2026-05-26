@@ -32,5 +32,8 @@ public sealed class UpdateRecurringExpenseCommandValidator : AbstractValidator<U
 
         RuleFor(x => x.Frequency)
             .IsInEnum().WithMessage("A frequência informada é inválida.");
+
+        RuleFor(x => x.CategoryId)
+            .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
 }

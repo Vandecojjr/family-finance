@@ -88,7 +88,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         int DueDay,
         DateTime StartDate,
         DateTime? EndDate,
-        Guid MemberId);
+        Guid MemberId,
+        Guid CategoryId);
 
     public record UpdateRequest(
         string Description,
@@ -97,7 +98,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         RecurringFrequency Frequency,
         int DueDay,
         DateTime StartDate,
-        DateTime? EndDate);
+        DateTime? EndDate,
+        Guid CategoryId);
 
     private static async Task<HttpResult> Create(
         [FromBody] CreateRequest request,
@@ -112,7 +114,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             request.DueDay,
             request.StartDate,
             request.EndDate,
-            request.MemberId);
+            request.MemberId,
+            request.CategoryId);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }
@@ -131,7 +134,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             request.Frequency,
             request.DueDay,
             request.StartDate,
-            request.EndDate);
+            request.EndDate,
+            request.CategoryId);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }
