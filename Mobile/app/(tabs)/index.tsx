@@ -123,7 +123,7 @@ export default function DashboardScreen() {
               <Ionicons name="calendar" size={22} color={colors.brand.accent} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.recurringLabel}>Gastos Fixos Ativos</Text>
+              <Text style={styles.recurringLabel}>Gastos Fixos Previstos</Text>
               <Text style={styles.recurringValue}>{fmt(totalRecurring)}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.text.secondary} />

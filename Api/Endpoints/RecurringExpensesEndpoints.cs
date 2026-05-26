@@ -1,11 +1,10 @@
 using Api.Extensions;
 using Application.RecurringExpenses.UseCases.CreateRecurringExpense;
 using Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
-using Application.RecurringExpenses.UseCases.ActivateRecurringExpense;
-using Application.RecurringExpenses.UseCases.DeactivateRecurringExpense;
 using Application.RecurringExpenses.UseCases.GetRecurringExpenseById;
 using Application.RecurringExpenses.UseCases.GetRecurringExpensesByMember;
 using Application.RecurringExpenses.UseCases.GetTotalFixedExpensesByMember;
+using Application.RecurringExpenses.UseCases.DeleteRecurringExpense;
 using Application.RecurringExpenses.UseCases.Shared;
 using Application.Shared.Results;
 using Domain.Enums;
@@ -42,26 +41,6 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapPost("/{id:guid}/activate", Activate)
-            .WithName("RecurringExpenses.Activate")
-            .WithSummary("Ativa um gasto recorrente desativado.")
-            .WithTags("RecurringExpenses")
-            .RequireAuthorization()
-            .Produces<Result>()
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
-
-        group.MapPost("/{id:guid}/deactivate", Deactivate)
-            .WithName("RecurringExpenses.Deactivate")
-            .WithSummary("Desativa temporariamente um gasto recorrente.")
-            .WithTags("RecurringExpenses")
-            .RequireAuthorization()
-            .Produces<Result>()
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
-
         group.MapGet("/{id:guid}", GetById)
             .WithName("RecurringExpenses.GetById")
             .WithSummary("Busca um gasto recorrente pelo ID.")
@@ -89,6 +68,16 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             .Produces<Result<decimal>>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapDelete("/{id:guid}", Delete)
+            .WithName("RecurringExpenses.Delete")
+            .WithSummary("Remove definitivamente um gasto recorrente.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     public record CreateRequest(
@@ -147,26 +136,6 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 
-    private static async Task<HttpResult> Activate(
-        [FromRoute] Guid id,
-        IMediator mediator,
-        CancellationToken cancellationToken)
-    {
-        var command = new ActivateRecurringExpenseCommand(id);
-        var result = await mediator.Send(command, cancellationToken);
-        return result.ToResult();
-    }
-
-    private static async Task<HttpResult> Deactivate(
-        [FromRoute] Guid id,
-        IMediator mediator,
-        CancellationToken cancellationToken)
-    {
-        var command = new DeactivateRecurringExpenseCommand(id);
-        var result = await mediator.Send(command, cancellationToken);
-        return result.ToResult();
-    }
-
     private static async Task<HttpResult> GetById(
         [FromRoute] Guid id,
         IMediator mediator,
@@ -194,6 +163,16 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
     {
         var query = new GetTotalFixedExpensesByMemberQuery(memberId);
         var result = await mediator.Send(query, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Delete(
+        [FromRoute] Guid id,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteRecurringExpenseCommand(id);
+        var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }
 }

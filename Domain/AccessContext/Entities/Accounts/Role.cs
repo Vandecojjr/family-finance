@@ -51,6 +51,7 @@ public class Role : Entity
         role.AddPermission(Permission.RecurringExpenseView);
         role.AddPermission(Permission.RecurringExpenseCreate);
         role.AddPermission(Permission.RecurringExpenseUpdate);
+        role.AddPermission(Permission.RecurringExpenseDelete);
         return role;
     }
 

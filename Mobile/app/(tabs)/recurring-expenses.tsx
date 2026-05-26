@@ -113,13 +113,9 @@ export default function RecurringExpensesScreen() {
   const [endDate, setEndDate] = useState('');
 
   // Mutations
-  const toggleStatusMutation = useMutation({
-    mutationFn: async (expense: RecurringExpense) => {
-      if (expense.isActive) {
-        await recurringExpensesApi.deactivate(expense.id);
-      } else {
-        await recurringExpensesApi.activate(expense.id);
-      }
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await recurringExpensesApi.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
@@ -129,6 +125,21 @@ export default function RecurringExpensesScreen() {
       Alert.alert('Erro', err.message);
     },
   });
+
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza de que deseja excluir este gasto recorrente?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Excluir', 
+          style: 'destructive',
+          onPress: () => deleteMutation.mutate(id) 
+        }
+      ]
+    );
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -312,10 +323,10 @@ export default function RecurringExpensesScreen() {
             </View>
           ) : (
             expenses?.map((item) => (
-              <View key={item.id} style={[styles.expenseCard, !item.isActive && styles.expenseCardInactive]}>
+              <View key={item.id} style={styles.expenseCard}>
                 <View style={styles.expenseHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.expenseDesc, !item.isActive && styles.expenseTextInactive]}>
+                    <Text style={styles.expenseDesc}>
                       {item.description}
                     </Text>
                     <Text style={styles.expenseDetails}>
@@ -328,7 +339,7 @@ export default function RecurringExpensesScreen() {
                       </Text>
                     )}
                   </View>
-                  <Text style={[styles.expenseAmount, { color: item.isActive ? colors.danger : colors.text.muted }]}>
+                  <Text style={[styles.expenseAmount, { color: colors.danger }]}>
                     {fmt(item.amount)}
                   </Text>
                 </View>
@@ -338,22 +349,17 @@ export default function RecurringExpensesScreen() {
 
                 {/* Controls */}
                 <View style={styles.expenseControls}>
-                  <View style={styles.statusLabelContainer}>
-                    <Text style={[styles.statusLabel, { color: item.isActive ? colors.success : colors.text.muted }]}>
-                      {item.isActive ? 'Ativo' : 'Desativado'}
-                    </Text>
-                    <Switch
-                      value={item.isActive}
-                      onValueChange={() => toggleStatusMutation.mutate(item)}
-                      trackColor={{ false: colors.border, true: `${colors.success}55` }}
-                      thumbColor={item.isActive ? colors.success : colors.text.muted}
-                    />
-                  </View>
-                  
                   <View style={styles.actionGroup}>
                     <TouchableOpacity style={styles.iconBtn} onPress={() => openEditForm(item)}>
                       <Ionicons name="create-outline" size={16} color={colors.brand.primary} />
                       <Text style={[styles.iconBtnText, { color: colors.brand.primary }]}>Editar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
+                      onPress={() => handleDelete(item.id)}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                      <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -401,10 +407,10 @@ export default function RecurringExpensesScreen() {
                   {/* Valor e Dia Vencimento */}
                   <View style={styles.row}>
                     <View style={[styles.fieldWrapper, { flex: 1 }]}>
-                      <Text style={styles.label}>Valor (R$)</Text>
+                      <Text style={styles.label}>{type === 2 ? 'Valor esperado (R$)' : 'Valor (R$)'}</Text>
                       <TextInput
                         style={styles.input}
-                        placeholder="0.00"
+                        placeholder={type === 2 ? 'Valor esperado (ex: 100.00)' : '0.00'}
                         placeholderTextColor={colors.text.muted}
                         keyboardType="numeric"
                         value={amount}
@@ -611,10 +617,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadow.sm,
   },
-  expenseCardInactive: {
-    borderColor: 'transparent',
-    backgroundColor: 'rgba(30, 30, 53, 0.4)',
-  },
   expenseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -622,7 +624,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   expenseDesc: { ...typography.body, fontWeight: '600', color: colors.text.primary },
-  expenseTextInactive: { color: colors.text.muted, textDecorationLine: 'line-through' },
   expenseDetails: { ...typography.caption, color: colors.text.secondary, marginTop: 4 },
   expensePeriod: { ...typography.caption, color: colors.text.muted, marginTop: 2, fontSize: 10 },
   expenseAmount: { ...typography.body, fontWeight: '700' },
@@ -636,12 +637,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  statusLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  statusLabel: { ...typography.bodySmall, fontWeight: '600' },
   actionGroup: {
     flexDirection: 'row',
     alignItems: 'center',

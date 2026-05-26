@@ -28,21 +28,6 @@ export const recurringExpensesApi = {
     }
   },
 
-  activate: async (id: string): Promise<void> => {
-    const { data } = await apiClient.post<ApiResult<void>>(`/api/recurringexpenses/${id}/activate`);
-    if (!data.isSuccess) {
-      const msg = data.errors?.[0]?.description ?? 'Erro ao ativar gasto recorrente.';
-      throw new Error(msg);
-    }
-  },
-
-  deactivate: async (id: string): Promise<void> => {
-    const { data } = await apiClient.post<ApiResult<void>>(`/api/recurringexpenses/${id}/deactivate`);
-    if (!data.isSuccess) {
-      const msg = data.errors?.[0]?.description ?? 'Erro ao desativar gasto recorrente.';
-      throw new Error(msg);
-    }
-  },
 
   getTotalFixedByMemberId: async (memberId: string): Promise<number> => {
     const { data } = await apiClient.get<ApiResult<number>>(`/api/recurringexpenses/member/${memberId}/total-fixed`);
@@ -51,5 +36,13 @@ export const recurringExpensesApi = {
       throw new Error(msg);
     }
     return data.value;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResult<void>>(`/api/recurringexpenses/${id}`);
+    if (!data.isSuccess) {
+      const msg = data.errors?.[0]?.description ?? 'Erro ao remover gasto recorrente.';
+      throw new Error(msg);
+    }
   },
 };
