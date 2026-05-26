@@ -14,13 +14,13 @@ public class DataSeeder(AppDbContext dbContext, IPasswordHasher passwordHasher)
         {
             // Sync permissions for existing roles in case new permissions were added
             await dbContext.Database.ExecuteSqlRawAsync(
-                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,FamilyManage,MemberView,MemberCreate,MemberUpdate,MemberDelete,WalletView,WalletCreate,WalletUpdate,WalletDelete,TransactionView,TransactionCreate,TransactionUpdate,TransactionDelete,RecurringExpenseView,RecurringExpenseCreate,RecurringExpenseUpdate,RecurringExpenseDelete' WHERE ""Name"" = 'Admin';"
+                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,FamilyManage,MemberView,MemberCreate,MemberUpdate,MemberDelete,WalletView,WalletCreate,WalletUpdate,WalletDelete,TransactionView,TransactionCreate,TransactionUpdate,TransactionDelete,RecurringExpenseView,RecurringExpenseCreate,RecurringExpenseUpdate,RecurringExpenseDelete,CategoryView,CategoryCreate' WHERE ""Name"" = 'Admin';"
             );
             await dbContext.Database.ExecuteSqlRawAsync(
-                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,MemberView,WalletView,WalletCreate,WalletUpdate,TransactionView,TransactionCreate,TransactionUpdate,RecurringExpenseView,RecurringExpenseCreate,RecurringExpenseUpdate,RecurringExpenseDelete' WHERE ""Name"" = 'Member';"
+                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,MemberView,WalletView,WalletCreate,WalletUpdate,TransactionView,TransactionCreate,TransactionUpdate,RecurringExpenseView,RecurringExpenseCreate,RecurringExpenseUpdate,RecurringExpenseDelete,CategoryView' WHERE ""Name"" = 'Member';"
             );
             await dbContext.Database.ExecuteSqlRawAsync(
-                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,MemberView,WalletView,TransactionView,RecurringExpenseView' WHERE ""Name"" = 'Viewer';"
+                @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,MemberView,WalletView,TransactionView,RecurringExpenseView,CategoryView' WHERE ""Name"" = 'Viewer';"
             );
             return;
         }

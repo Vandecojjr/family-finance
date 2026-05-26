@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { familyApi, FamilyMemberResponse } from '@/api/endpoints/family';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
 import { RecurringExpense } from '@/types';
@@ -37,6 +38,7 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export default function FamilyScreen() {
   const { logout } = useAuthStore();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Selections
   const [selectedMember, setSelectedMember] = useState<FamilyMemberResponse | null>(null);
@@ -245,8 +247,13 @@ export default function FamilyScreen() {
           })}
 
           {/* Ações */}
-          <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Conta</Text>
-          <TouchableOpacity style={styles.actionBtn} onPress={logout}>
+          <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Gerenciamento</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/categories' as any)}>
+            <Ionicons name="pricetags-outline" size={20} color={colors.brand.primary} />
+            <Text style={styles.actionText}>Categorias da Família</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionBtn, { marginTop: spacing.sm }]} onPress={logout}>
             <Ionicons name="log-out-outline" size={20} color={colors.danger} />
             <Text style={[styles.actionText, { color: colors.danger }]}>Sair da conta</Text>
           </TouchableOpacity>

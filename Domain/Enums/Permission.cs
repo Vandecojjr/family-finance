@@ -28,5 +28,9 @@ public enum Permission
     RecurringExpenseView = 40,
     RecurringExpenseCreate = 41,
     RecurringExpenseUpdate = 42,
-    RecurringExpenseDelete = 43
+    RecurringExpenseDelete = 43,
+    
+    // Category Management
+    CategoryView = 50,
+    CategoryCreate = 51
 }

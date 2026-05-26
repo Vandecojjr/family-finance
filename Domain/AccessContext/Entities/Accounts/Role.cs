@@ -52,6 +52,7 @@ public class Role : Entity
         role.AddPermission(Permission.RecurringExpenseCreate);
         role.AddPermission(Permission.RecurringExpenseUpdate);
         role.AddPermission(Permission.RecurringExpenseDelete);
+        role.AddPermission(Permission.CategoryView);
         return role;
     }
 
@@ -63,6 +64,7 @@ public class Role : Entity
         role.AddPermission(Permission.WalletView);
         role.AddPermission(Permission.TransactionView);
         role.AddPermission(Permission.RecurringExpenseView);
+        role.AddPermission(Permission.CategoryView);
         return role;
     }
 }

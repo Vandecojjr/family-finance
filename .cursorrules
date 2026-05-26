@@ -1,1 +1,107 @@
-Always follow the guidelines and architecture patterns described in DDD_GUIDELINES.md when creating or modifying repositories, use cases, endpoints, exceptions, value objects, entities, and tests.
+# Project Context & Coding Standards
+
+You are an AI coding assistant working on the **family-finance** project. Before starting any task, read this file to understand the architecture, coding standards, frameworks, and conventions of the project. Do NOT deviate from these rules.
+
+---
+
+## 1. Tech Stack & Frameworks
+* **Language/Platform**: C# 13, .NET 10.0 (`net10.0`)
+* **Presentation**: ASP.NET Core Minimal APIs
+* **Database/Persistence**: Entity Framework Core (EF Core)
+* **API Documentation**: Scalar (`Scalar.AspNetCore` - not Swagger)
+* **Mediation**: Source-generated `Mediator` (from packages `Mediator.Abstractions` / `Mediator.SourceGenerator` - **NOTE**: This is `Mediator`, NOT `MediatR`. It uses the `Mediator` namespace and handlers return `ValueTask` instead of `Task`).
+* **Validation**: FluentValidation (`AbstractValidator<T>`)
+* **Testing**: xUnit, Moq, FluentAssertions
+
+---
+
+## 2. Solution Architecture (DDD & Clean Architecture)
+The solution is organized into the following projects:
+1. **Domain**: Enterprise logic. Pure C#. No external dependencies. Contains:
+   * Aggregates & Entities (under `Domain/Entities/`)
+   * Value Objects (under `Domain/Entities/[EntityName]/ValueObjects/`)
+   * Domain Exceptions (under `Domain/Entities/[EntityName]/Exceptions/`)
+   * Repository Interfaces (under `Domain/Repositories/`)
+2. **Application**: Use cases & orchestration. Contains:
+   * CQRS Commands and Queries (under `Application/[EntityName]/UseCases/[UseCaseName]/`)
+   * Handlers and Validators (under the same use case directory)
+   * DTOs / Response contracts
+   * `ICurrentUser` interface for user context
+3. **Infrastructure**: Database access, Authentication, external integrations. Contains:
+   * EF Core DbContext (`AppDbContext`)
+   * DbContext configurations (`IEntityTypeConfiguration<T>` under `Infrastructure/Data/Configurations/`)
+   * Repository implementations
+   * Security (BCrypt hashing, JWT handling)
+4. **Api**: Entry point. Maps Minimal APIs using `IEndpointGroup`.
+5. **Domain.Tests & Application.Tests**: Unit testing projects.
+
+---
+
+## 3. Coding Guidelines & Patterns
+
+### 3.1. Domain Entities & Aggregates
+* **Base Class**: All entities must inherit from `Domain.Shared.Entities.Entity`.
+  * `Entity` exposes `Guid Id` (auto-initialized), `DateTime CreatedAt` (auto-initialized), `DateTime UpdatedAt`.
+  * For tracking updates, always call `SeUpdate()` inside mutating domain methods.
+* **Aggregate Roots**: Must also implement the marker interface `IAggregateRoot`.
+* **Encapsulation**: State changes must go through domain methods (e.g. `Deactivate()`, `UpdateName(...)`). Do NOT expose public properties with public setters.
+* **Constructors**: 
+  * Provide a protected parameterless constructor `#pragma warning disable CS8618 // Required for EF Core and serialization` for ORM/EF Core.
+  * Public/internal constructors should take primitive types (e.g. `string`, `int`) rather than pre-instantiated Value Objects, and perform VO instantiation internally.
+* **Naming**: Entity folders must be named in the **plural** (e.g. `Families`, `Members`, `RecurringExpenses`). Namespaces must match this pluralization.
+
+### 3.2. Value Objects (VOs)
+* **Implementation**: Must be defined as C# `record` types inheriting from `ValueObject` base record.
+* **Immutability**: Properties must be read-only (using `{ get; init; }` or positional records).
+* **Instantiation**: Use a static factory method e.g. `public static ValueObject Create(primitive parameter)` to encapsulate validation rules and throw custom exceptions if invalid.
+
+### 3.3. Custom Domain Exceptions
+* **Base**: Must inherit from the abstract `DomainException` class.
+* **Granularity**: Do NOT throw generic framework exceptions (e.g. `ArgumentException`, `InvalidOperationException`). Create descriptive, domain-specific exceptions (e.g. `FamilyNameRequiredException`).
+* **Location**: Store custom exceptions in the `Exceptions/` folder within the relevant entity directory.
+
+### 3.4. CQRS (Application Layer)
+* **Contracts**:
+  * Command: `public sealed record CreateSomethingCommand(...) : ICommand<Result>` or `ICommand<Result<ResponseDto>>`
+  * Query: `public sealed record GetSomethingQuery(...) : IQuery<Result<ResponseDto>>`
+  * **Important**: Inherit from `ICommand` / `IQuery` of the `Mediator` namespace.
+* **Handlers**:
+  * Inherit from `ICommandHandler<TCommand, TResult>` or `IQueryHandler<TQuery, TResult>`.
+  * Must return `ValueTask<TResult>` (e.g. `ValueTask<Result<SomethingResponse>>`) and execute asynchronously.
+* **Validation**: Define a `FluentValidation` class `AbstractValidator<TCommandOrQuery>` inside the same directory.
+* **Authorization & Safety**:
+  * Commands/Queries can implement `IAuthorizeableRequest`.
+  * Check current member boundaries: Inject `ICurrentUser` and verify that the resource being modified/read belongs to the user's `FamilyId`. Return `Result.Failure(Error.Failure("AccessDenied", "..."))` on unauthorized attempts.
+* **Response Mappers**: Decouple domain entities from responses. Create extension classes mapping `Entity` to response records (e.g., `family.ToResponse()`).
+
+### 3.5. Persistence & EF Core Configurations
+* **Location**: `Infrastructure/Data/Configurations/`.
+* **Rules**:
+  * Implement `IEntityTypeConfiguration<T>`.
+  * Map Value Objects using `.HasConversion(...)` for database translation:
+    ```csharp
+    builder.Property(x => x.Name)
+        .HasConversion(name => name.Value, value => FamilyName.Create(value))
+        .IsRequired()
+        .HasMaxLength(100);
+    ```
+  * Back collections with fields to preserve encapsulation:
+    ```csharp
+    builder.HasMany(x => x.Members)
+        .WithOne(x => x.Family)
+        .HasForeignKey(x => x.FamilyId)
+        .Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field);
+    ```
+
+### 3.6. Presentation (API Endpoints)
+* **Location**: `Api/Endpoints/`.
+* **Interface**: Implement `IEndpointGroup`.
+* **Conventions**:
+  * Use Minimal APIs with `RouteGroupBuilder`.
+  * Decouple API contracts from internal Mediator structures (use custom `Request` records for JSON payloads).
+  * Return `HttpResult` (mapped using the `result.ToResult()` extension to return correct HTTP status codes like 200, 201, 400, 403, 404).
+
+### 3.7. Testing Standards
+* **Location**: `Application.Tests` and `Domain.Tests`.
+* **Libraries**: `xUnit`, `Moq`, `FluentAssertions`.
+* **Focus**: Test happy paths, boundary validations, domain exceptions, and access control blocks.
