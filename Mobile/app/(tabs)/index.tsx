@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
+import { useQuery } from '@tanstack/react-query';
+import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
+import { decodeJwt } from '@/utils/jwt';
+import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 
 // Dados mock — serão substituídos por queries React Query futuramente
 const MOCK_SUMMARY = { income: 8500, expense: 3240, balance: 12650 };
@@ -30,7 +35,34 @@ const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function DashboardScreen() {
-  const { logout } = useAuthStore();
+  const { logout, tokens } = useAuthStore();
+  const router = useRouter();
+  const isFocused = useIsFocused();
+
+  // Decode memberId from tokens
+  const [memberId, setMemberId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tokens?.accessToken) {
+      const decoded = decodeJwt(tokens.accessToken);
+      if (decoded?.memberId) {
+        setMemberId(decoded.memberId);
+      }
+    }
+  }, [tokens]);
+
+  // Query total fixed recurring expenses
+  const { data: totalRecurring = 0, refetch } = useQuery({
+    queryKey: ['recurringExpensesTotalFixed', memberId],
+    queryFn: () => recurringExpensesApi.getTotalFixedByMemberId(memberId!),
+    enabled: !!memberId,
+  });
+
+  useEffect(() => {
+    if (isFocused && memberId) {
+      refetch();
+    }
+  }, [isFocused, memberId, refetch]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -79,6 +111,24 @@ export default function DashboardScreen() {
             </View>
           </View>
         </LinearGradient>
+
+        {/* ── Card de Gastos Recorrentes ────────────────────── */}
+        <TouchableOpacity
+          style={styles.recurringCard}
+          activeOpacity={0.85}
+          onPress={() => router.push('/recurring-expenses')}
+        >
+          <View style={styles.recurringContent}>
+            <View style={styles.recurringIconWrapper}>
+              <Ionicons name="calendar" size={22} color={colors.brand.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.recurringLabel}>Gastos Fixos Ativos</Text>
+              <Text style={styles.recurringValue}>{fmt(totalRecurring)}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.text.secondary} />
+          </View>
+        </TouchableOpacity>
 
         {/* ── Carteiras ───────────────────────────────────── */}
         <View style={styles.section}>
@@ -190,4 +240,30 @@ const styles = StyleSheet.create({
   txRight: { alignItems: 'flex-end' },
   txAmount: { ...typography.body, fontWeight: '700' },
   txDate: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
+
+  // Recurring Card
+  recurringCard: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.sm,
+  },
+  recurringContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  recurringIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255, 107, 157, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recurringLabel: { ...typography.caption, color: colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  recurringValue: { ...typography.h4, color: colors.text.primary, fontWeight: '700', marginTop: 2 },
 });

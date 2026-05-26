@@ -1,4 +1,3 @@
-using System;
 using Application.Families.UseCases.GetFamilyName;
 using FluentValidation.TestHelper;
 using Xunit;

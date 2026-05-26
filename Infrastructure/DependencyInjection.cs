@@ -23,6 +23,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IFamilyRepository, FamilyRepository>();
+        services.AddScoped<IRecurringExpenseRepository, RecurringExpenseRepository>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();

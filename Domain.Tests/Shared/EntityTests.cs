@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using Domain.Shared.Entities;
+﻿using Domain.Shared.Entities;
 using Xunit;
 
 namespace Domain.Tests.Shared;

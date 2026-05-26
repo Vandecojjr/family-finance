@@ -1,0 +1,199 @@
+using Api.Extensions;
+using Application.RecurringExpenses.UseCases.CreateRecurringExpense;
+using Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
+using Application.RecurringExpenses.UseCases.ActivateRecurringExpense;
+using Application.RecurringExpenses.UseCases.DeactivateRecurringExpense;
+using Application.RecurringExpenses.UseCases.GetRecurringExpenseById;
+using Application.RecurringExpenses.UseCases.GetRecurringExpensesByMember;
+using Application.RecurringExpenses.UseCases.GetTotalFixedExpensesByMember;
+using Application.RecurringExpenses.UseCases.Shared;
+using Application.Shared.Results;
+using Domain.Enums;
+using Mediator;
+using Microsoft.AspNetCore.Mvc;
+using HttpResult = Microsoft.AspNetCore.Http.IResult;
+
+namespace Api.Endpoints;
+
+/// <summary>
+/// Endpoints para manipulação de gastos recorrentes.
+/// Rota base: /api/recurringexpenses
+/// </summary>
+public sealed class RecurringExpensesEndpoints : IEndpointGroup
+{
+    public void Map(RouteGroupBuilder group)
+    {
+        group.MapPost("/", Create)
+            .WithName("RecurringExpenses.Create")
+            .WithSummary("Cria um novo gasto recorrente.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result<Guid>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapPut("/{id:guid}", Update)
+            .WithName("RecurringExpenses.Update")
+            .WithSummary("Atualiza os dados de um gasto recorrente existente.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/activate", Activate)
+            .WithName("RecurringExpenses.Activate")
+            .WithSummary("Ativa um gasto recorrente desativado.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/deactivate", Deactivate)
+            .WithName("RecurringExpenses.Deactivate")
+            .WithSummary("Desativa temporariamente um gasto recorrente.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/{id:guid}", GetById)
+            .WithName("RecurringExpenses.GetById")
+            .WithSummary("Busca um gasto recorrente pelo ID.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result<RecurringExpenseResponse>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/member/{memberId:guid}", GetByMember)
+            .WithName("RecurringExpenses.GetByMember")
+            .WithSummary("Lista todos os gastos recorrentes de um membro da família.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result<IReadOnlyCollection<RecurringExpenseResponse>>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapGet("/member/{memberId:guid}/total-fixed", GetTotalFixedByMember)
+            .WithName("RecurringExpenses.GetTotalFixedByMember")
+            .WithSummary("Obtém a soma dos gastos recorrentes fixos e ativos de um membro da família.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result<decimal>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+    }
+
+    public record CreateRequest(
+        string Description,
+        decimal Amount,
+        RecurringExpenseType Type,
+        RecurringFrequency Frequency,
+        int DueDay,
+        DateTime StartDate,
+        DateTime? EndDate,
+        Guid MemberId);
+
+    public record UpdateRequest(
+        string Description,
+        decimal Amount,
+        RecurringExpenseType Type,
+        RecurringFrequency Frequency,
+        int DueDay,
+        DateTime StartDate,
+        DateTime? EndDate);
+
+    private static async Task<HttpResult> Create(
+        [FromBody] CreateRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateRecurringExpenseCommand(
+            request.Description,
+            request.Amount,
+            request.Type,
+            request.Frequency,
+            request.DueDay,
+            request.StartDate,
+            request.EndDate,
+            request.MemberId);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Update(
+        [FromRoute] Guid id,
+        [FromBody] UpdateRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateRecurringExpenseCommand(
+            id,
+            request.Description,
+            request.Amount,
+            request.Type,
+            request.Frequency,
+            request.DueDay,
+            request.StartDate,
+            request.EndDate);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Activate(
+        [FromRoute] Guid id,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new ActivateRecurringExpenseCommand(id);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Deactivate(
+        [FromRoute] Guid id,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeactivateRecurringExpenseCommand(id);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> GetById(
+        [FromRoute] Guid id,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetRecurringExpenseByIdQuery(id);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> GetByMember(
+        [FromRoute] Guid memberId,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetRecurringExpensesByMemberQuery(memberId);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> GetTotalFixedByMember(
+        [FromRoute] Guid memberId,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetTotalFixedExpensesByMemberQuery(memberId);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.ToResult();
+    }
+}

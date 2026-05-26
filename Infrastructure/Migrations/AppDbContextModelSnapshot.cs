@@ -189,6 +189,48 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("Members", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("DueDay")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.ToTable("RecurringExpenses", (string)null);
+                });
+
             modelBuilder.Entity("AccountRole", b =>
                 {
                     b.HasOne("Domain.AccessContext.Entities.Accounts.Account", null)
@@ -235,6 +277,41 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("Family");
                 });
 
+            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
+                {
+                    b.HasOne("Domain.Entities.Members.Member", "Member")
+                        .WithMany("RecurringExpenses")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Domain.Entities.RecurringExpenses.ValueObjects.RecurringPeriod", "Period", b1 =>
+                        {
+                            b1.Property<Guid>("RecurringExpenseId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("EndDate")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("EndDate");
+
+                            b1.Property<DateTime>("StartDate")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("StartDate");
+
+                            b1.HasKey("RecurringExpenseId");
+
+                            b1.ToTable("RecurringExpenses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RecurringExpenseId");
+                        });
+
+                    b.Navigation("Member");
+
+                    b.Navigation("Period")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.AccessContext.Entities.Accounts.Account", b =>
                 {
                     b.Navigation("RefreshTokens");
@@ -248,6 +325,8 @@ namespace Infrastructure.Data.Migrations
             modelBuilder.Entity("Domain.Entities.Members.Member", b =>
                 {
                     b.Navigation("Account");
+
+                    b.Navigation("RecurringExpenses");
                 });
 #pragma warning restore 612, 618
         }

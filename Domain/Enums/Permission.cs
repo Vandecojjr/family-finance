@@ -23,4 +23,10 @@ public enum Permission
     TransactionCreate = 31,
     TransactionUpdate = 32,
     TransactionDelete = 33,
+    
+    // Recurring Expense Management
+    RecurringExpenseView = 40,
+    RecurringExpenseCreate = 41,
+    RecurringExpenseUpdate = 42,
+    RecurringExpenseDelete = 43
 }

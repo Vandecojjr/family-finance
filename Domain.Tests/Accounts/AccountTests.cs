@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Domain.AccessContext.Entities.Accounts;
 using Domain.Enums;
 using Xunit;

@@ -1,4 +1,4 @@
-﻿namespace Application.Shared.Results;
+namespace Application.Shared.Results;
 
 public sealed record Error(string Code, string Description, ErrorType Type)
 {
@@ -15,6 +15,9 @@ public sealed record Error(string Code, string Description, ErrorType Type)
 
     public static Error Conflict(string code, string description) =>
         new(code, description, ErrorType.Conflict);
+
+    public static Error Forbidden(string code, string description) =>
+        new(code, description, ErrorType.Forbidden);
 }
 
 public enum ErrorType
@@ -22,5 +25,6 @@ public enum ErrorType
     Failure = 0,
     Validation = 1,
     NotFound = 2,
-    Conflict = 3
+    Conflict = 3,
+    Forbidden = 4
 }

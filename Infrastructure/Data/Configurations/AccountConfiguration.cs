@@ -1,6 +1,4 @@
 using Domain.AccessContext.Entities.Accounts;
-using Domain.Enums;
-using Domain.Entities.Members;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -1,6 +1,6 @@
 # Domain-Driven Design (DDD) & Development Guidelines
 
-This document outlines the architectural rules and coding standards that must be followed when creating or modifying domain entities, value objects, and exceptions in this project.
+This document outlines the architectural rules and coding standards that must be followed when creating or modifying domain entities, value objects, exceptions, repositories, use cases, endpoints, and tests in this project.
 
 ---
 
@@ -23,3 +23,25 @@ This document outlines the architectural rules and coding standards that must be
 * **Base Exception**: All custom exceptions thrown by domain entities or value objects must inherit from the abstract `DomainException` base class.
 * **Granular Exceptions**: Avoid throwing generic system exceptions like `ArgumentException`, `ArgumentNullException`, or `InvalidOperationException` in domain classes. Create specific, descriptive exception classes for each validation or state failure rule (e.g., `FamilyNameRequiredException`, `AccountAlreadyLinkedException`).
 * **Exception Locations**: Group custom domain exceptions in an `Exceptions` folder within the relevant entity's or bounded context's directory.
+
+## 5. Repositories
+* **Interfaces**: Defined in `Domain/Repositories/` inheriting from `IRepository<TAggregate>`. They should manage entity retrieval, adding, updating, and deleting.
+* **Implementations**: Placed in `Infrastructure/Repositories/` utilizing the `AppDbContext`.
+* **Registration**: Registered in `Infrastructure/DependencyInjection.cs` with Scoped lifetime.
+
+## 6. Use Cases (Application Layer)
+* **CQRS Pattern**: Use the source-generated `Mediator` package. Define a Command (`ICommand<Result>` or `ICommand<Result<TResponse>>`) or Query (`IQuery<Result<TResponse>>`) and their corresponding handlers.
+* **Validation**: FluentValidation is used. Create validator classes inheriting from `AbstractValidator<TCommandOrQuery>` within the same usecase folder. They are automatically registered.
+* **Authorization**: Implement the `IAuthorizeableRequest` interface on commands and queries to declare required permissions checked by `AuthorizationBehavior`.
+* **Access Control**: Always fetch the logged-in member's ID from `ICurrentUser` and verify that the target resource belongs to the same `FamilyId` before proceeding.
+
+## 7. Web API Endpoints
+* **Minimal APIs**: Group endpoints in classes implementing `IEndpointGroup` inside `Api/Endpoints/`.
+* **Convention Routing**: The route prefix is automatically defined as `/api/{classNameLowerWithoutEndpoints}`.
+* **Decoupling Contracts**: Use separate `Request` records for JSON request bodies to avoid binding Mediator commands directly, keeping HTTP contracts decoupled from internal command structures.
+* **Result Mapping**: Return `result.ToResult()` which maps successes and failures (validation, not found, access denied) to standard HTTP status codes.
+
+## 8. Unit Testing
+* **Location**: Place unit tests under `Application.Tests` and `Domain.Tests`.
+* **Libraries**: Use `xUnit` for testing framework, `Moq` for mocking interfaces/repositories/ICurrentUser, and `FluentAssertions` for clear assertions.
+* **Focus**: Test success paths, validation failures, not found results, and family boundaries access denial rules.

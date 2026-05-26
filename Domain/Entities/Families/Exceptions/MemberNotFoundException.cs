@@ -1,4 +1,3 @@
-using System;
 using Domain.Shared.Exceptions;
 
 namespace Domain.Entities.Families.Exceptions;

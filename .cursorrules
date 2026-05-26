@@ -1,0 +1,1 @@
+Always follow the guidelines and architecture patterns described in DDD_GUIDELINES.md when creating or modifying repositories, use cases, endpoints, exceptions, value objects, entities, and tests.

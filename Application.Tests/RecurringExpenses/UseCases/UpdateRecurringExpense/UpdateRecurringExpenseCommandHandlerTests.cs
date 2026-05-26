@@ -1,0 +1,214 @@
+using Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
+using Application.Shared.Auth;
+using Domain.Entities.Families;
+using Domain.Entities.RecurringExpenses;
+using Domain.Enums;
+using Domain.Repositories;
+using FluentAssertions;
+using Moq;
+using Xunit;
+
+namespace Application.Tests.RecurringExpenses.UseCases.UpdateRecurringExpense;
+
+public class UpdateRecurringExpenseCommandHandlerTests
+{
+    private readonly Mock<IRecurringExpenseRepository> _recurringExpenseRepositoryMock;
+    private readonly Mock<IFamilyRepository> _familyRepositoryMock;
+    private readonly Mock<ICurrentUser> _currentUserMock;
+    private readonly UpdateRecurringExpenseCommandHandler _handler;
+
+    public UpdateRecurringExpenseCommandHandlerTests()
+    {
+        _recurringExpenseRepositoryMock = new Mock<IRecurringExpenseRepository>();
+        _familyRepositoryMock = new Mock<IFamilyRepository>();
+        _currentUserMock = new Mock<ICurrentUser>();
+        _handler = new UpdateRecurringExpenseCommandHandler(
+            _recurringExpenseRepositoryMock.Object,
+            _familyRepositoryMock.Object,
+            _currentUserMock.Object);
+    }
+
+    private static void SetMember(RecurringExpense expense, Domain.Entities.Members.Member member)
+    {
+        var property = typeof(RecurringExpense).GetProperty(nameof(RecurringExpense.Member));
+        property?.SetValue(expense, member);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnSuccessResult_WhenExpenseBelongsToUserFamily()
+    {
+        // Arrange
+        var family = new Family("Silva");
+        family.AddMember("John Doe");
+        var currentMember = family.Members.First();
+
+        var expense = new RecurringExpense(
+            "Internet",
+            100.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            10,
+            DateTime.UtcNow,
+            null,
+            currentMember.Id);
+        SetMember(expense, currentMember);
+
+        var command = new UpdateRecurringExpenseCommand(
+            expense.Id,
+            "Internet Fibra",
+            120.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            15,
+            DateTime.UtcNow,
+            null);
+
+        _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
+        _familyRepositoryMock
+            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(currentMember);
+        _recurringExpenseRepositoryMock
+            .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expense);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        expense.Description.Value.Should().Be("Internet Fibra");
+        expense.Amount.Value.Should().Be(120.00m);
+        expense.DueDay.Value.Should().Be(15);
+
+        _recurringExpenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(expense, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnFailureResult_WhenCurrentUserMemberNotFound()
+    {
+        // Arrange
+        var command = new UpdateRecurringExpenseCommand(
+            Guid.NewGuid(),
+            "Internet",
+            100.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            10,
+            DateTime.UtcNow,
+            null);
+
+        var currentMemberId = Guid.NewGuid();
+        _currentUserMock.Setup(u => u.MemberId).Returns(currentMemberId);
+        _familyRepositoryMock
+            .Setup(repo => repo.GetMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Domain.Entities.Members.Member?)null);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().ContainSingle();
+        result.Errors[0].Code.Should().Be("User.MemberNotFound");
+
+        _recurringExpenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnFailureResult_WhenExpenseNotFound()
+    {
+        // Arrange
+        var family = new Family("Silva");
+        family.AddMember("John Doe");
+        var currentMember = family.Members.First();
+
+        var expenseId = Guid.NewGuid();
+        var command = new UpdateRecurringExpenseCommand(
+            expenseId,
+            "Internet",
+            100.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            10,
+            DateTime.UtcNow,
+            null);
+
+        _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
+        _familyRepositoryMock
+            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(currentMember);
+        _recurringExpenseRepositoryMock
+            .Setup(repo => repo.GetByIdAsync(expenseId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RecurringExpense?)null);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().ContainSingle();
+        result.Errors[0].Code.Should().Be("RecurringExpense.NotFound");
+
+        _recurringExpenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnFailureResult_WhenExpenseBelongsToDifferentFamily()
+    {
+        // Arrange
+        var family1 = new Family("Silva");
+        family1.AddMember("John Doe");
+        var currentMember = family1.Members.First();
+
+        var family2 = new Family("Other");
+        family2.AddMember("Jane Doe");
+        var targetMember = family2.Members.First();
+
+        var expense = new RecurringExpense(
+            "Internet",
+            100.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            10,
+            DateTime.UtcNow,
+            null,
+            targetMember.Id);
+        SetMember(expense, targetMember);
+
+        var command = new UpdateRecurringExpenseCommand(
+            expense.Id,
+            "Internet Fibra",
+            120.00m,
+            RecurringExpenseType.Fixed,
+            RecurringFrequency.Monthly,
+            15,
+            DateTime.UtcNow,
+            null);
+
+        _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
+        _familyRepositoryMock
+            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(currentMember);
+        _recurringExpenseRepositoryMock
+            .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expense);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().ContainSingle();
+        result.Errors[0].Code.Should().Be("Family.AccessDenied");
+
+        _recurringExpenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+}

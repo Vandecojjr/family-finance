@@ -1,8 +1,8 @@
-using System;
 using Domain.AccessContext.Entities.Accounts;
 using Domain.Entities.Members.ValueObjects;
 using Domain.Shared.Entities;
 using Domain.Entities.Families;
+using Domain.Entities.RecurringExpenses;
 
 namespace Domain.Entities.Members;
 
@@ -13,6 +13,9 @@ public class Member : Entity
     
     public Family Family { get; private set; } = null!;
     public Account? Account { get; private set; }
+
+    private readonly List<RecurringExpense> _recurringExpenses = [];
+    public virtual IReadOnlyCollection<RecurringExpense> RecurringExpenses => _recurringExpenses.AsReadOnly();
 
     #pragma warning disable CS8618 // Required for EF Core and serialization
     protected Member()

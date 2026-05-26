@@ -13,10 +13,11 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { name: 'index',        title: 'Início',       icon: 'home-outline',         iconActive: 'home' },
-  { name: 'transactions', title: 'Lançamentos',  icon: 'swap-vertical-outline', iconActive: 'swap-vertical' },
-  { name: 'wallets',      title: 'Carteiras',    icon: 'wallet-outline',        iconActive: 'wallet' },
-  { name: 'family',       title: 'Família',      icon: 'people-outline',        iconActive: 'people' },
+  { name: 'index',              title: 'Início',       icon: 'home-outline',          iconActive: 'home' },
+  { name: 'transactions',       title: 'Lançamentos',  icon: 'swap-vertical-outline', iconActive: 'swap-vertical' },
+  { name: 'recurring-expenses', title: 'Recorrentes',  icon: 'calendar-outline',      iconActive: 'calendar' },
+  { name: 'wallets',            title: 'Carteiras',    icon: 'wallet-outline',         iconActive: 'wallet' },
+  { name: 'family',             title: 'Família',      icon: 'people-outline',         iconActive: 'people' },
 ];
 
 export default function TabsLayout() {

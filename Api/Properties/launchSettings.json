@@ -22,8 +22,7 @@
     "Mobile_Development": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "launchUrl": "scalar/v1",
+      "launchBrowser": false,
       "applicationUrl": "https://0.0.0.0:7094;http://0.0.0.0:5068",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

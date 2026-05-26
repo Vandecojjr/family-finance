@@ -1,6 +1,4 @@
-using System.Linq;
 using Application.Shared.Results;
-using Microsoft.AspNetCore.Http;
 using static Application.Shared.Results.ErrorType;
 
 namespace Api.Extensions;
@@ -57,6 +55,7 @@ public static class ResultExtensions
             Validation => StatusCodes.Status400BadRequest,
             NotFound => StatusCodes.Status404NotFound,
             Conflict => StatusCodes.Status409Conflict,
+            Forbidden => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError
         };
 }

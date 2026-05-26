@@ -1,5 +1,3 @@
-using System;
-
 namespace Domain.Shared.Exceptions;
 
 public abstract class DomainException : Exception

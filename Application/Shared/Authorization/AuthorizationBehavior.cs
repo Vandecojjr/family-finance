@@ -6,7 +6,8 @@ namespace Application.Shared.Authorization;
 
 public class AuthorizationBehavior<TRequest, TResponse>(ICurrentUser currentUser) 
     : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IMessage
+    where TRequest : class, IMessage
+    where TResponse : IResult
 {
     public async ValueTask<TResponse> Handle(TRequest message, MessageHandlerDelegate<TRequest, TResponse> next, CancellationToken cancellationToken)
     {
@@ -14,14 +15,18 @@ public class AuthorizationBehavior<TRequest, TResponse>(ICurrentUser currentUser
         {
             if (!currentUser.IsAuthenticated)
             {
-                throw new UnauthorizedAccessException("Usuário não autenticado.");
+                return ResultFactory.Failure<TResponse>([
+                    Error.Forbidden("Auth.Unauthenticated", "Usuário não autenticado.")
+                ]);
             }
 
             foreach (var permission in authorizeableRequest.RequiredPermissions)
             {
                 if (!currentUser.HasPermission(permission))
                 {
-                    throw new UnauthorizedAccessException($"Usuário não tem a permissão necessária: {permission}");
+                    return ResultFactory.Failure<TResponse>([
+                        Error.Forbidden("Auth.Forbidden", $"Usuário não tem a permissão necessária: {permission}")
+                    ]);
                 }
             }
         }
