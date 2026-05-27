@@ -1,4 +1,6 @@
 using Domain.Entities.Categories;
+using Domain.Entities.RecurringExpenses;
+using Domain.Entities.RecurringIncomes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
@@ -6,6 +8,8 @@ namespace Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Category> Categories { get; set; } = null!;
+    public DbSet<RecurringExpense> RecurringExpenses { get; set; } = null!;
+    public DbSet<RecurringIncome> RecurringIncomes { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

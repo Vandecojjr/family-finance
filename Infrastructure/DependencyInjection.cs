@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IFamilyRepository, FamilyRepository>();
         services.AddScoped<IRecurringExpenseRepository, RecurringExpenseRepository>();
+        services.AddScoped<IRecurringIncomeRepository, RecurringIncomeRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         services.AddHttpContextAccessor();

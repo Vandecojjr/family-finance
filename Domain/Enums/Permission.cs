@@ -32,5 +32,11 @@ public enum Permission
     
     // Category Management
     CategoryView = 50,
-    CategoryCreate = 51
+    CategoryCreate = 51,
+    
+    // Recurring Income Management
+    RecurringIncomeView = 60,
+    RecurringIncomeCreate = 61,
+    RecurringIncomeUpdate = 62,
+    RecurringIncomeDelete = 63
 }

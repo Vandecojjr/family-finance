@@ -105,3 +105,41 @@ export interface UpdateRecurringExpenseRequest {
   endDate: string | null;
   categoryId: string;
 }
+
+export interface RecurringIncome {
+  id: string;
+  description: string;
+  amount: number;
+  type: number; // 1 = Fixed, 2 = Variable
+  frequency: number; // 1 = Weekly, 2 = Monthly, 3 = Yearly
+  dueDay: number;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+  memberId: string;
+  categoryId: string;
+  categoryName: string;
+}
+
+export interface CreateRecurringIncomeRequest {
+  description: string;
+  amount: number;
+  type: number;
+  frequency: number;
+  dueDay: number;
+  startDate: string;
+  endDate: string | null;
+  memberId: string;
+  categoryId: string;
+}
+
+export interface UpdateRecurringIncomeRequest {
+  description: string;
+  amount: number;
+  type: number;
+  frequency: number;
+  dueDay: number;
+  startDate: string;
+  endDate: string | null;
+  categoryId: string;
+}
