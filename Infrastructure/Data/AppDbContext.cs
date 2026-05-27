@@ -3,6 +3,7 @@ using Domain.Entities.RecurringExpenses;
 using Domain.Entities.RecurringIncomes;
 using Domain.Entities.PlannedIncomes;
 using Domain.Entities.PlannedExpenses;
+using Domain.Entities.Transactions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
@@ -17,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Domain.Entities.Wallets.Wallet> Wallets { get; set; } = null!;
     public DbSet<Domain.Entities.Wallets.BankAccount> BankAccounts { get; set; } = null!;
     public DbSet<Domain.Entities.Wallets.CreditCard> CreditCards { get; set; } = null!;
+    public DbSet<Transaction> Transactions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

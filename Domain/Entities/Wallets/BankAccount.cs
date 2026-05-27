@@ -70,4 +70,24 @@ public class BankAccount : Entity
             SeUpdate();
         }
     }
+
+    public void AdjustBalance(decimal amount, TransactionType type)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("O valor do ajuste deve ser maior que zero.", nameof(amount));
+
+        if (type == TransactionType.Income)
+        {
+            DebitBalance += amount;
+        }
+        else if (type == TransactionType.Expense)
+        {
+            var availableFunds = DebitBalance + CreditLimit;
+            if (availableFunds < amount)
+                throw new InvalidOperationException("Saldo e limite de crédito insuficientes para realizar esta transação.");
+            
+            DebitBalance -= amount;
+        }
+        SeUpdate();
+    }
 }

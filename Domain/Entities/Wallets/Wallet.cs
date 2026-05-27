@@ -73,4 +73,22 @@ public class Wallet : Entity, IAggregateRoot
             SeUpdate();
         }
     }
+
+    public void AdjustCashBalance(decimal amount, TransactionType type)
+    {
+        if (amount <= 0)
+            throw new ArgumentException("O valor do ajuste deve ser maior que zero.", nameof(amount));
+
+        if (type == TransactionType.Income)
+        {
+            CashBalance += amount;
+        }
+        else if (type == TransactionType.Expense)
+        {
+            if (CashBalance < amount)
+                throw new InvalidOperationException("Saldo em dinheiro vivo insuficiente para realizar esta despesa.");
+            CashBalance -= amount;
+        }
+        SeUpdate();
+    }
 }

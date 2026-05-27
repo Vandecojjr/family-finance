@@ -38,7 +38,9 @@ public class PlannedIncome : Entity, IAggregateRoot
 
         Description = description.Trim();
         Amount = amount;
-        Date = date;
+        Date = date.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(date, DateTimeKind.Utc)
+            : date.ToUniversalTime();
         MemberId = memberId;
         CategoryId = categoryId;
     }
@@ -58,7 +60,9 @@ public class PlannedIncome : Entity, IAggregateRoot
 
         Description = description.Trim();
         Amount = amount;
-        Date = date;
+        Date = date.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(date, DateTimeKind.Utc)
+            : date.ToUniversalTime();
         CategoryId = categoryId;
         SeUpdate();
     }

@@ -99,12 +99,32 @@ export interface Transaction {
   id: string;
   description: string;
   amount: number;
-  type: 'Income' | 'Expense';
-  categoryId: string;
-  walletId: string;
+  type: number; // 1 = Income, 2 = Expense
   date: string;
+  familyId: string;
+  categoryId: string;
+  categoryName: string;
+  walletId: string | null;
+  bankAccountId: string | null;
+  creditCardId: string | null;
+  walletName: string | null;
+  bankAccountName: string | null;
+  creditCardDisplayName: string | null;
   notes?: string;
 }
+
+export interface RegisterTransactionRequest {
+  description: string;
+  amount: number;
+  type: number; // 1 = Income, 2 = Expense
+  date: string;
+  categoryId: string;
+  walletId: string | null;
+  bankAccountId: string | null;
+  creditCardId: string | null;
+  notes?: string;
+}
+
 
 export interface Category {
   id: string;

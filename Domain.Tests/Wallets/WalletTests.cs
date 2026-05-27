@@ -142,4 +142,62 @@ public class WalletTests
         Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "432", 5000m));
         Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
     }
+
+    [Fact]
+    public void Wallet_ShouldAdjustCashBalance_WhenTypeIsIncomeOrExpense()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 100m, Guid.NewGuid());
+
+        // Act
+        wallet.AdjustCashBalance(50m, TransactionType.Income);
+        // Assert
+        Assert.Equal(150m, wallet.CashBalance);
+
+        // Act
+        wallet.AdjustCashBalance(30m, TransactionType.Expense);
+        // Assert
+        Assert.Equal(120m, wallet.CashBalance);
+    }
+
+    [Fact]
+    public void Wallet_ShouldThrow_WhenExpenseExceedsCashBalance()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 10m, Guid.NewGuid());
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => wallet.AdjustCashBalance(15m, TransactionType.Expense));
+    }
+
+    [Fact]
+    public void BankAccount_ShouldAdjustBalance_WhenTypeIsIncomeOrExpense()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
+        var account = wallet.Accounts.First();
+
+        // Act
+        account.AdjustBalance(100m, TransactionType.Income);
+        // Assert
+        Assert.Equal(300m, account.DebitBalance);
+
+        // Act (Uses 100m of the 500m credit limit)
+        account.AdjustBalance(400m, TransactionType.Expense);
+        // Assert
+        Assert.Equal(-100m, account.DebitBalance);
+    }
+
+    [Fact]
+    public void BankAccount_ShouldThrow_WhenExpenseExceedsDebitAndCreditLimit()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
+        var account = wallet.Accounts.First();
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => account.AdjustBalance(750m, TransactionType.Expense));
+    }
 }
