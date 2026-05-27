@@ -1,4 +1,5 @@
 using Domain.Entities.Wallets;
+using Domain.Entities.Wallets.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,6 +14,10 @@ public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.BankName)
+            .HasConversion(
+                bankName => bankName.Value,
+                value => BankName.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(100);
 
@@ -25,6 +30,10 @@ public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
             .HasPrecision(18, 2);
 
         builder.Property(x => x.CreditLimit)
+            .HasConversion(
+                creditLimit => creditLimit.Value,
+                value => CreditLimit.Create(value)
+            )
             .IsRequired()
             .HasPrecision(18, 2);
 

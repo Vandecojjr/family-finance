@@ -68,7 +68,7 @@ public class DeleteTransactionCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        wallet.CashBalance.Should().Be(150m);
+        wallet.CashBalance.Value.Should().Be(150m);
 
         _walletRepositoryMock.Verify(repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()), Times.Once);
         _transactionRepositoryMock.Verify(repo => repo.DeleteAsync(transaction, It.IsAny<CancellationToken>()), Times.Once);

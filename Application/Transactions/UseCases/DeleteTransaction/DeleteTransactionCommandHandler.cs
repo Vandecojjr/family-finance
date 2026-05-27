@@ -53,13 +53,13 @@ public sealed class DeleteTransactionCommandHandler(
                         var account = wallet.Accounts.FirstOrDefault(a => a.Id == transaction.BankAccountId.Value);
                         if (account is not null)
                         {
-                            account.AdjustBalance(transaction.Amount, reversalType);
+                            account.AdjustBalance(transaction.Amount.Value, reversalType);
                             await walletRepository.UpdateAsync(wallet, cancellationToken);
                         }
                     }
                     else
                     {
-                        wallet.AdjustCashBalance(transaction.Amount, reversalType);
+                        wallet.AdjustCashBalance(transaction.Amount.Value, reversalType);
                         await walletRepository.UpdateAsync(wallet, cancellationToken);
                     }
                 }

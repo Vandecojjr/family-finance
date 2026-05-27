@@ -74,7 +74,7 @@ public class RegisterTransactionCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        wallet.CashBalance.Should().Be(450m);
+        wallet.CashBalance.Value.Should().Be(450m);
 
         _walletRepositoryMock.Verify(repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()), Times.Once);
         _transactionRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()), Times.Once);

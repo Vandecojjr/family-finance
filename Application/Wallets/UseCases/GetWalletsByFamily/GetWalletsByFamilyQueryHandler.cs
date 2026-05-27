@@ -26,20 +26,20 @@ public sealed class GetWalletsByFamilyQueryHandler(
 
         var response = wallets.Select(w => new WalletResponse(
             w.Id,
-            w.Name,
-            w.CashBalance,
+            w.Name.Value,
+            w.CashBalance.Value,
             w.FamilyId,
             w.Accounts.Select(a => new BankAccountResponse(
                 a.Id,
-                a.BankName,
+                a.BankName.Value,
                 (int)a.Type,
                 a.DebitBalance,
-                a.CreditLimit,
+                a.CreditLimit.Value,
                 a.CreditCards.Select(c => new CreditCardResponse(
                     c.Id,
-                    c.Brand,
-                    c.LastFourDigits,
-                    c.TotalLimit
+                    c.Brand.Value,
+                    c.LastFourDigits.Value,
+                    c.TotalLimit.Value
                 )).ToList()
             )).ToList()
         )).ToList();

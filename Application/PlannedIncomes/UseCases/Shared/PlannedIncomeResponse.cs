@@ -17,8 +17,8 @@ public static class PlannedIncomeResponseFactory
     {
         return new PlannedIncomeResponse(
             income.Id,
-            income.Description,
-            income.Amount,
+            income.Description.Value,
+            income.Amount.Value,
             income.Date,
             income.MemberId,
             income.CategoryId,

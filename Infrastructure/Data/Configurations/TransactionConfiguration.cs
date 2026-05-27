@@ -1,4 +1,5 @@
 using Domain.Entities.Transactions;
+using Domain.Entities.Transactions.ValueObjects;
 using Domain.Entities.Wallets;
 using Domain.Entities.Categories;
 using Domain.Entities.Families;
@@ -16,10 +17,18 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Description)
+            .HasConversion(
+                description => description.Value,
+                value => TransactionDescription.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(100);
 
         builder.Property(x => x.Amount)
+            .HasConversion(
+                amount => amount.Value,
+                value => TransactionAmount.Create(value)
+            )
             .IsRequired()
             .HasPrecision(18, 2);
 

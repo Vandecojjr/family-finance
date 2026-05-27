@@ -1,5 +1,6 @@
 using Domain.Entities.Categories;
 using Domain.Entities.Members;
+using Domain.Entities.PlannedIncomes.ValueObjects;
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
 
@@ -7,8 +8,8 @@ namespace Domain.Entities.PlannedIncomes;
 
 public class PlannedIncome : Entity, IAggregateRoot
 {
-    public string Description { get; private set; } = null!;
-    public decimal Amount { get; private set; }
+    public PlannedIncomeDescription Description { get; private set; } = null!;
+    public PlannedIncomeAmount Amount { get; private set; } = null!;
     public DateTime Date { get; private set; }
     public Guid MemberId { get; private set; }
     public Guid CategoryId { get; private set; }
@@ -29,15 +30,8 @@ public class PlannedIncome : Entity, IAggregateRoot
         Guid memberId,
         Guid categoryId)
     {
-        if (string.IsNullOrWhiteSpace(description))
-            throw new ArgumentException("A descrição é obrigatória.", nameof(description));
-        if (description.Length > 200)
-            throw new ArgumentException("A descrição deve ter no máximo 200 caracteres.", nameof(description));
-        if (amount < 0)
-            throw new ArgumentException("O valor deve ser maior ou igual a zero.", nameof(amount));
-
-        Description = description.Trim();
-        Amount = amount;
+        Description = PlannedIncomeDescription.Create(description);
+        Amount = PlannedIncomeAmount.Create(amount);
         Date = date.Kind == DateTimeKind.Unspecified
             ? DateTime.SpecifyKind(date, DateTimeKind.Utc)
             : date.ToUniversalTime();
@@ -51,15 +45,8 @@ public class PlannedIncome : Entity, IAggregateRoot
         DateTime date,
         Guid categoryId)
     {
-        if (string.IsNullOrWhiteSpace(description))
-            throw new ArgumentException("A descrição é obrigatória.", nameof(description));
-        if (description.Length > 200)
-            throw new ArgumentException("A descrição deve ter no máximo 200 caracteres.", nameof(description));
-        if (amount < 0)
-            throw new ArgumentException("O valor deve ser maior ou igual a zero.", nameof(amount));
-
-        Description = description.Trim();
-        Amount = amount;
+        Description = PlannedIncomeDescription.Create(description);
+        Amount = PlannedIncomeAmount.Create(amount);
         Date = date.Kind == DateTimeKind.Unspecified
             ? DateTime.SpecifyKind(date, DateTimeKind.Utc)
             : date.ToUniversalTime();

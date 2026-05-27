@@ -1,4 +1,5 @@
 using Domain.Entities.Wallets;
+using Domain.Entities.Wallets.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,15 +14,27 @@ public class CreditCardConfiguration : IEntityTypeConfiguration<CreditCard>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Brand)
+            .HasConversion(
+                brand => brand.Value,
+                value => CreditCardBrand.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(50);
 
         builder.Property(x => x.LastFourDigits)
+            .HasConversion(
+                lastFourDigits => lastFourDigits.Value,
+                value => LastFourDigits.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(4)
             .IsFixedLength();
 
         builder.Property(x => x.TotalLimit)
+            .HasConversion(
+                totalLimit => totalLimit.Value,
+                value => CreditCardLimit.Create(value)
+            )
             .IsRequired()
             .HasPrecision(18, 2);
     }

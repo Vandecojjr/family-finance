@@ -1,13 +1,14 @@
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
 using Domain.Enums;
+using Domain.Entities.Transactions.ValueObjects;
 
 namespace Domain.Entities.Transactions;
 
 public class Transaction : Entity, IAggregateRoot
 {
-    public string Description { get; private set; } = null!;
-    public decimal Amount { get; private set; }
+    public TransactionDescription Description { get; private set; } = null!;
+    public TransactionAmount Amount { get; private set; } = null!;
     public TransactionType Type { get; private set; }
     public DateTime Date { get; private set; }
     public Guid FamilyId { get; private set; }
@@ -46,15 +47,8 @@ public class Transaction : Entity, IAggregateRoot
         string? creditCardDisplayName = null,
         string? notes = null)
     {
-        if (string.IsNullOrWhiteSpace(description))
-            throw new ArgumentException("A descrição da transação é obrigatória.", nameof(description));
-        if (description.Length > 100)
-            throw new ArgumentException("A descrição da transação deve ter no máximo 100 caracteres.", nameof(description));
-        if (amount <= 0)
-            throw new ArgumentException("O valor da transação deve ser maior que zero.", nameof(amount));
-
-        Description = description.Trim();
-        Amount = amount;
+        Description = TransactionDescription.Create(description);
+        Amount = TransactionAmount.Create(amount);
         Type = type;
         Date = date.Kind == DateTimeKind.Unspecified
             ? DateTime.SpecifyKind(date, DateTimeKind.Utc)

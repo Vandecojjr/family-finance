@@ -1,15 +1,16 @@
 using Domain.Shared.Entities;
 using Domain.Enums;
+using Domain.Entities.Wallets.ValueObjects;
 
 namespace Domain.Entities.Wallets;
 
 public class BankAccount : Entity
 {
     public Guid WalletId { get; private set; }
-    public string BankName { get; private set; } = null!;
+    public BankName BankName { get; private set; } = null!;
     public AccountType Type { get; private set; }
     public decimal DebitBalance { get; private set; }
-    public decimal CreditLimit { get; private set; }
+    public CreditLimit CreditLimit { get; private set; } = null!;
 
     public virtual Wallet Wallet { get; private set; } = null!;
 
@@ -24,33 +25,19 @@ public class BankAccount : Entity
 
     public BankAccount(string bankName, AccountType type, decimal debitBalance, decimal creditLimit, Guid walletId)
     {
-        if (string.IsNullOrWhiteSpace(bankName))
-            throw new ArgumentException("O nome do banco é obrigatório.", nameof(bankName));
-        if (bankName.Length > 100)
-            throw new ArgumentException("O nome do banco deve ter no máximo 100 caracteres.", nameof(bankName));
-        if (creditLimit < 0)
-            throw new ArgumentException("O limite de crédito deve ser maior ou igual a zero.", nameof(creditLimit));
-
-        BankName = bankName.Trim();
+        BankName = BankName.Create(bankName);
         Type = type;
         DebitBalance = debitBalance;
-        CreditLimit = creditLimit;
+        CreditLimit = CreditLimit.Create(creditLimit);
         WalletId = walletId;
     }
 
     public void Update(string bankName, AccountType type, decimal debitBalance, decimal creditLimit)
     {
-        if (string.IsNullOrWhiteSpace(bankName))
-            throw new ArgumentException("O nome do banco é obrigatório.", nameof(bankName));
-        if (bankName.Length > 100)
-            throw new ArgumentException("O nome do banco deve ter no máximo 100 caracteres.", nameof(bankName));
-        if (creditLimit < 0)
-            throw new ArgumentException("O limite de crédito deve ser maior ou igual a zero.", nameof(creditLimit));
-
-        BankName = bankName.Trim();
+        BankName = BankName.Create(bankName);
         Type = type;
         DebitBalance = debitBalance;
-        CreditLimit = creditLimit;
+        CreditLimit = CreditLimit.Create(creditLimit);
         SeUpdate();
     }
 
@@ -82,7 +69,7 @@ public class BankAccount : Entity
         }
         else if (type == TransactionType.Expense)
         {
-            var availableFunds = DebitBalance + CreditLimit;
+            var availableFunds = DebitBalance + CreditLimit.Value;
             if (availableFunds < amount)
                 throw new InvalidOperationException("Saldo e limite de crédito insuficientes para realizar esta transação.");
             

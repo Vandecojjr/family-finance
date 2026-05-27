@@ -60,7 +60,7 @@ public class CreateBankAccountCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        wallet.Accounts.Should().ContainSingle(a => a.BankName == "Nubank");
+        wallet.Accounts.Should().ContainSingle(a => a.BankName.Value == "Nubank");
         _walletRepositoryMock.Verify(
             repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()),
             Times.Once);

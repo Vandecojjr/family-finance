@@ -17,8 +17,8 @@ public static class PlannedExpenseResponseFactory
     {
         return new PlannedExpenseResponse(
             expense.Id,
-            expense.Description,
-            expense.Amount,
+            expense.Description.Value,
+            expense.Amount.Value,
             expense.Date,
             expense.MemberId,
             expense.CategoryId,

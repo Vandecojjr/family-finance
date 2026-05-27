@@ -33,8 +33,8 @@ public class TransactionTests
             walletName);
 
         // Assert
-        Assert.Equal(description, transaction.Description);
-        Assert.Equal(amount, transaction.Amount);
+        Assert.Equal(description, transaction.Description.Value);
+        Assert.Equal(amount, transaction.Amount.Value);
         Assert.Equal(type, transaction.Type);
         Assert.Equal(date, transaction.Date);
         Assert.Equal(familyId, transaction.FamilyId);
@@ -53,7 +53,7 @@ public class TransactionTests
     [InlineData(null)]
     public void Transaction_ShouldThrow_WhenDescriptionIsInvalid(string? description)
     {
-        Assert.Throws<ArgumentException>(() => new Transaction(
+        Assert.Throws<Domain.Entities.Transactions.Exceptions.TransactionDescriptionRequiredException>(() => new Transaction(
             description!,
             100m,
             TransactionType.Income,
@@ -65,7 +65,7 @@ public class TransactionTests
     [Fact]
     public void Transaction_ShouldThrow_WhenAmountIsZeroOrNegative()
     {
-        Assert.Throws<ArgumentException>(() => new Transaction(
+        Assert.Throws<Domain.Entities.Transactions.Exceptions.InvalidTransactionAmountException>(() => new Transaction(
             "Test",
             0m,
             TransactionType.Income,
@@ -73,7 +73,7 @@ public class TransactionTests
             Guid.NewGuid(),
             Guid.NewGuid()));
 
-        Assert.Throws<ArgumentException>(() => new Transaction(
+        Assert.Throws<Domain.Entities.Transactions.Exceptions.InvalidTransactionAmountException>(() => new Transaction(
             "Test",
             -15.50m,
             TransactionType.Income,

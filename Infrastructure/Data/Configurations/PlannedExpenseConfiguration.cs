@@ -1,4 +1,5 @@
 using Domain.Entities.PlannedExpenses;
+using Domain.Entities.PlannedExpenses.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,10 +14,18 @@ public class PlannedExpenseConfiguration : IEntityTypeConfiguration<PlannedExpen
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Description)
+            .HasConversion(
+                description => description.Value,
+                value => PlannedExpenseDescription.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(200);
 
         builder.Property(x => x.Amount)
+            .HasConversion(
+                amount => amount.Value,
+                value => PlannedExpenseAmount.Create(value)
+            )
             .IsRequired()
             .HasPrecision(18, 2);
 

@@ -62,7 +62,7 @@ public class CreateCreditCardCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        account.CreditCards.Should().ContainSingle(c => c.Brand == "Visa" && c.LastFourDigits == "1234");
+        account.CreditCards.Should().ContainSingle(c => c.Brand.Value == "Visa" && c.LastFourDigits.Value == "1234");
         _walletRepositoryMock.Verify(
             repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()),
             Times.Once);

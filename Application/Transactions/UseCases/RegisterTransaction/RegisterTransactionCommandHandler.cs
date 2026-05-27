@@ -56,7 +56,7 @@ public sealed class RegisterTransactionCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem acesso a esta carteira."));
         }
 
-        string walletName = wallet.Name;
+        string walletName = wallet.Name.Value;
         string? bankAccountName = null;
         string? creditCardDisplayName = null;
 
@@ -71,7 +71,7 @@ public sealed class RegisterTransactionCommandHandler(
                         Error.NotFound("BankAccount.NotFound", $"Conta com ID '{command.BankAccountId}' não foi encontrada na carteira."));
                 }
 
-                bankAccountName = account.BankName;
+                bankAccountName = account.BankName.Value;
 
                 if (command.CreditCardId.HasValue)
                 {
@@ -82,7 +82,7 @@ public sealed class RegisterTransactionCommandHandler(
                             Error.NotFound("CreditCard.NotFound", $"Cartão de crédito com ID '{command.CreditCardId}' não foi encontrado na conta."));
                     }
 
-                    creditCardDisplayName = $"{card.Brand} •••• {card.LastFourDigits}";
+                    creditCardDisplayName = $"{card.Brand.Value} •••• {card.LastFourDigits.Value}";
                 }
 
                 // Call adjust balance on the account (both normal bank account or credit card transactions affect bank account balance)

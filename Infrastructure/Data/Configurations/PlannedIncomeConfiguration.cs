@@ -1,4 +1,5 @@
 using Domain.Entities.PlannedIncomes;
+using Domain.Entities.PlannedIncomes.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,10 +14,18 @@ public class PlannedIncomeConfiguration : IEntityTypeConfiguration<PlannedIncome
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Description)
+            .HasConversion(
+                description => description.Value,
+                value => PlannedIncomeDescription.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(200);
 
         builder.Property(x => x.Amount)
+            .HasConversion(
+                amount => amount.Value,
+                value => PlannedIncomeAmount.Create(value)
+            )
             .IsRequired()
             .HasPrecision(18, 2);
 

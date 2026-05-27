@@ -1,4 +1,5 @@
 using Domain.Entities.Wallets;
+using Domain.Entities.Wallets.Exceptions;
 using Domain.Enums;
 using Xunit;
 
@@ -18,8 +19,8 @@ public class WalletTests
         var wallet = new Wallet(name, cashBalance, familyId);
 
         // Assert
-        Assert.Equal(name, wallet.Name);
-        Assert.Equal(cashBalance, wallet.CashBalance);
+        Assert.Equal(name, wallet.Name.Value);
+        Assert.Equal(cashBalance, wallet.CashBalance.Value);
         Assert.Equal(familyId, wallet.FamilyId);
         Assert.Empty(wallet.Accounts);
     }
@@ -30,20 +31,20 @@ public class WalletTests
     [InlineData(null)]
     public void Wallet_ShouldThrow_WhenNameIsInvalid(string? name)
     {
-        Assert.Throws<ArgumentException>(() => new Wallet(name!, 100m, Guid.NewGuid()));
+        Assert.Throws<WalletNameRequiredException>(() => new Wallet(name!, 100m, Guid.NewGuid()));
     }
 
     [Fact]
     public void Wallet_ShouldThrow_WhenNameIsTooLong()
     {
         var longName = new string('A', 101);
-        Assert.Throws<ArgumentException>(() => new Wallet(longName, 100m, Guid.NewGuid()));
+        Assert.Throws<WalletNameTooLongException>(() => new Wallet(longName, 100m, Guid.NewGuid()));
     }
 
     [Fact]
     public void Wallet_ShouldThrow_WhenCashBalanceIsNegative()
     {
-        Assert.Throws<ArgumentException>(() => new Wallet("Test Wallet", -0.01m, Guid.NewGuid()));
+        Assert.Throws<InvalidCashBalanceException>(() => new Wallet("Test Wallet", -0.01m, Guid.NewGuid()));
     }
 
     [Fact]
@@ -56,8 +57,8 @@ public class WalletTests
         wallet.Update("Updated Name", 120.90m);
 
         // Assert
-        Assert.Equal("Updated Name", wallet.Name);
-        Assert.Equal(120.90m, wallet.CashBalance);
+        Assert.Equal("Updated Name", wallet.Name.Value);
+        Assert.Equal(120.90m, wallet.CashBalance.Value);
     }
 
     [Fact]
@@ -72,10 +73,10 @@ public class WalletTests
         // Assert
         Assert.Single(wallet.Accounts);
         var account = wallet.Accounts.First();
-        Assert.Equal("Nubank", account.BankName);
+        Assert.Equal("Nubank", account.BankName.Value);
         Assert.Equal(AccountType.Checking, account.Type);
         Assert.Equal(500m, account.DebitBalance);
-        Assert.Equal(1000m, account.CreditLimit);
+        Assert.Equal(1000m, account.CreditLimit.Value);
     }
 
     [Fact]
@@ -91,9 +92,9 @@ public class WalletTests
 
         // Assert
         var account = wallet.Accounts.First();
-        Assert.Equal("Nubank Ultravioleta", account.BankName);
+        Assert.Equal("Nubank Ultravioleta", account.BankName.Value);
         Assert.Equal(1500m, account.DebitBalance);
-        Assert.Equal(5000m, account.CreditLimit);
+        Assert.Equal(5000m, account.CreditLimit.Value);
     }
 
     [Fact]
@@ -125,9 +126,9 @@ public class WalletTests
         // Assert
         Assert.Single(account.CreditCards);
         var card = account.CreditCards.First();
-        Assert.Equal("Visa", card.Brand);
-        Assert.Equal("4321", card.LastFourDigits);
-        Assert.Equal(5000m, card.TotalLimit);
+        Assert.Equal("Visa", card.Brand.Value);
+        Assert.Equal("4321", card.LastFourDigits.Value);
+        Assert.Equal(5000m, card.TotalLimit.Value);
     }
 
     [Fact]
@@ -139,8 +140,8 @@ public class WalletTests
         var account = wallet.Accounts.First();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "432", 5000m));
-        Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
+        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "432", 5000m));
+        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
     }
 
     [Fact]
@@ -152,12 +153,12 @@ public class WalletTests
         // Act
         wallet.AdjustCashBalance(50m, TransactionType.Income);
         // Assert
-        Assert.Equal(150m, wallet.CashBalance);
+        Assert.Equal(150m, wallet.CashBalance.Value);
 
         // Act
         wallet.AdjustCashBalance(30m, TransactionType.Expense);
         // Assert
-        Assert.Equal(120m, wallet.CashBalance);
+        Assert.Equal(120m, wallet.CashBalance.Value);
     }
 
     [Fact]

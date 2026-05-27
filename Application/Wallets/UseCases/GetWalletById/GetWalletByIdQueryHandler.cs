@@ -37,20 +37,20 @@ public sealed class GetWalletByIdQueryHandler(
 
         var response = new WalletResponse(
             wallet.Id,
-            wallet.Name,
-            wallet.CashBalance,
+            wallet.Name.Value,
+            wallet.CashBalance.Value,
             wallet.FamilyId,
             wallet.Accounts.Select(a => new BankAccountResponse(
                 a.Id,
-                a.BankName,
+                a.BankName.Value,
                 (int)a.Type,
                 a.DebitBalance,
-                a.CreditLimit,
+                a.CreditLimit.Value,
                 a.CreditCards.Select(c => new CreditCardResponse(
                     c.Id,
-                    c.Brand,
-                    c.LastFourDigits,
-                    c.TotalLimit
+                    c.Brand.Value,
+                    c.LastFourDigits.Value,
+                    c.TotalLimit.Value
                 )).ToList()
             )).ToList()
         );

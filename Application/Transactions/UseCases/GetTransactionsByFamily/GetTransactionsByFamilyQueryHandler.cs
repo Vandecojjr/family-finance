@@ -29,8 +29,8 @@ public sealed class GetTransactionsByFamilyQueryHandler(
 
         var responseList = transactions.Select(t => new TransactionResponse(
             t.Id,
-            t.Description,
-            t.Amount,
+            t.Description.Value,
+            t.Amount.Value,
             (int)t.Type,
             t.Date,
             t.FamilyId,
