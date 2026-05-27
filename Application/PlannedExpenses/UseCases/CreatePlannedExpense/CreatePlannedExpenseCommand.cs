@@ -1,0 +1,16 @@
+using Application.Shared.Results;
+using Application.Shared.Authorization;
+using Domain.Enums;
+using Mediator;
+
+namespace Application.PlannedExpenses.UseCases.CreatePlannedExpense;
+
+public sealed record CreatePlannedExpenseCommand(
+    string Description,
+    decimal Amount,
+    DateTime Date,
+    Guid MemberId,
+    Guid CategoryId) : ICommand<Result<Guid>>, IAuthorizeableRequest
+{
+    public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseCreate];
+}

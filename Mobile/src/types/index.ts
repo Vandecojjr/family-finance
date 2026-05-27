@@ -143,3 +143,53 @@ export interface UpdateRecurringIncomeRequest {
   endDate: string | null;
   categoryId: string;
 }
+
+export interface PlannedIncome {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  memberId: string;
+  categoryId: string;
+  categoryName: string;
+}
+
+export interface CreatePlannedIncomeRequest {
+  description: string;
+  amount: number;
+  date: string;
+  memberId: string;
+  categoryId: string;
+}
+
+export interface UpdatePlannedIncomeRequest {
+  description: string;
+  amount: number;
+  date: string;
+  categoryId: string;
+}
+
+export interface PlannedExpense {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  memberId: string;
+  categoryId: string;
+  categoryName: string;
+}
+
+export interface CreatePlannedExpenseRequest {
+  description: string;
+  amount: number;
+  date: string;
+  memberId: string;
+  categoryId: string;
+}
+
+export interface UpdatePlannedExpenseRequest {
+  description: string;
+  amount: number;
+  date: string;
+  categoryId: string;
+}

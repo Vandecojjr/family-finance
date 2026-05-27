@@ -21,11 +21,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { familyApi, FamilyMemberResponse } from '@/api/endpoints/family';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
 import { recurringIncomesApi } from '@/api/endpoints/recurringIncomes';
+import { plannedIncomesApi } from '@/api/endpoints/plannedIncomes';
+import { plannedExpensesApi } from '@/api/endpoints/plannedExpenses';
 import { categoriesApi } from '@/api/endpoints/categories';
 import { decodeJwt } from '@/utils/jwt';
-import { RecurringExpense, RecurringIncome } from '@/types';
+import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense } from '@/types';
 import { useIsFocused } from '@react-navigation/native';
 import DatePicker from '@/components/DatePicker';
+
 
 const MEMBER_COLORS = [colors.brand.primary, colors.brand.teal, colors.brand.accent];
 
@@ -51,6 +54,9 @@ export default function RecurringExpensesScreen() {
 
   // Active tab state: 'expense' (Gastos) or 'income' (Ganhos)
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
+
+  // View Mode: 'recurring' (Recorrências) or 'planned' (Previsões Avulsas)
+  const [viewMode, setViewMode] = useState<'recurring' | 'planned'>('recurring');
 
   // Decode memberId from logged-in user token
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
@@ -97,6 +103,20 @@ export default function RecurringExpensesScreen() {
     enabled: !!selectedMember,
   });
 
+  // Fetch Planned Expenses for selected member
+  const { data: plannedExpenses, isLoading: isLoadingPlannedExpenses, refetch: refetchPlannedExpenses } = useQuery({
+    queryKey: ['plannedExpenses', selectedMember?.id],
+    queryFn: () => plannedExpensesApi.getByMemberId(selectedMember!.id),
+    enabled: !!selectedMember,
+  });
+
+  // Fetch Planned Incomes for selected member
+  const { data: plannedIncomes, isLoading: isLoadingPlannedIncomes, refetch: refetchPlannedIncomes } = useQuery({
+    queryKey: ['plannedIncomes', selectedMember?.id],
+    queryFn: () => plannedIncomesApi.getByMemberId(selectedMember!.id),
+    enabled: !!selectedMember,
+  });
+
   // Fetch Categories for selection
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -124,8 +144,10 @@ export default function RecurringExpensesScreen() {
     if (isFocused && selectedMember?.id) {
       refetchExpenses();
       refetchIncomes();
+      refetchPlannedExpenses();
+      refetchPlannedIncomes();
     }
-  }, [isFocused, selectedMember?.id, refetchExpenses, refetchIncomes]);
+  }, [isFocused, selectedMember?.id, refetchExpenses, refetchIncomes, refetchPlannedExpenses, refetchPlannedIncomes]);
 
   // Calculate totals by frequency based on active tab
   const activeItems = activeTab === 'expense'
@@ -146,7 +168,7 @@ export default function RecurringExpensesScreen() {
 
   // Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<RecurringExpense | RecurringIncome | null>(null);
+  const [editingItem, setEditingItem] = useState<RecurringExpense | RecurringIncome | PlannedExpense | PlannedIncome | null>(null);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<number>(1); // 1 = Fixed, 2 = Variable
@@ -163,10 +185,18 @@ export default function RecurringExpensesScreen() {
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (activeTab === 'expense') {
-        await recurringExpensesApi.delete(id);
+      if (viewMode === 'planned') {
+        if (activeTab === 'expense') {
+          await plannedExpensesApi.delete(id);
+        } else {
+          await plannedIncomesApi.delete(id);
+        }
       } else {
-        await recurringIncomesApi.delete(id);
+        if (activeTab === 'expense') {
+          await recurringExpensesApi.delete(id);
+        } else {
+          await recurringIncomesApi.delete(id);
+        }
       }
     },
     onSuccess: () => {
@@ -174,6 +204,8 @@ export default function RecurringExpensesScreen() {
       queryClient.invalidateQueries({ queryKey: ['recurringExpensesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomes'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomesTotalFixed'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedIncomes'] });
     },
     onError: (err: any) => {
       Alert.alert('Erro', err.message);
@@ -181,7 +213,9 @@ export default function RecurringExpensesScreen() {
   });
 
   const handleDelete = (id: string) => {
-    const title = activeTab === 'expense' ? 'gasto recorrente' : 'ganho recorrente';
+    const title = viewMode === 'planned'
+      ? (activeTab === 'expense' ? 'gasto previsto' : 'ganho previsto')
+      : (activeTab === 'expense' ? 'gasto recorrente' : 'ganho recorrente');
     Alert.alert(
       'Confirmar Exclusão',
       `Tem certeza de que deseja excluir este ${title}?`,
@@ -199,62 +233,105 @@ export default function RecurringExpensesScreen() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const parsedAmount = parseFloat(amount.replace(',', '.'));
-      const rawDueDay = parseInt(dueDay, 10);
-      const parsedDueDay = (activeTab === 'income' && dueDayType === 'business') ? (rawDueDay + 100) : rawDueDay;
 
-      if (!description || isNaN(parsedAmount) || isNaN(parsedDueDay) || !categoryId) {
-        throw new Error('Preencha os campos obrigatórios corretamente.');
-      }
+      if (viewMode === 'planned') {
+        if (!description || isNaN(parsedAmount) || !startDate || !categoryId) {
+          throw new Error('Preencha os campos obrigatórios corretamente.');
+        }
 
-      if (activeTab === 'expense') {
-        if (editingItem) {
-          await recurringExpensesApi.update(editingItem.id, {
-            description,
-            amount: parsedAmount,
-            type,
-            frequency,
-            dueDay: parsedDueDay,
-            startDate,
-            endDate: endDate || null,
-            categoryId,
-          });
+        if (activeTab === 'expense') {
+          if (editingItem) {
+            await plannedExpensesApi.update(editingItem.id, {
+              description,
+              amount: parsedAmount,
+              date: startDate,
+              categoryId,
+            });
+          } else {
+            await plannedExpensesApi.create({
+              description,
+              amount: parsedAmount,
+              date: startDate,
+              memberId: selectedMember!.id,
+              categoryId,
+            });
+          }
         } else {
-          await recurringExpensesApi.create({
-            description,
-            amount: parsedAmount,
-            type,
-            frequency,
-            dueDay: parsedDueDay,
-            startDate,
-            endDate: endDate || null,
-            memberId: selectedMember!.id,
-            categoryId,
-          });
+          if (editingItem) {
+            await plannedIncomesApi.update(editingItem.id, {
+              description,
+              amount: parsedAmount,
+              date: startDate,
+              categoryId,
+            });
+          } else {
+            await plannedIncomesApi.create({
+              description,
+              amount: parsedAmount,
+              date: startDate,
+              memberId: selectedMember!.id,
+              categoryId,
+            });
+          }
         }
       } else {
-        if (editingItem) {
-          await recurringIncomesApi.update(editingItem.id, {
-            description,
-            amount: parsedAmount,
-            type,
-            frequency,
-            dueDay: parsedDueDay,
-            startDate,
-            endDate: endDate || null,
-            categoryId,
-          });
+        const rawDueDay = parseInt(dueDay, 10);
+        const parsedDueDay = (activeTab === 'income' && dueDayType === 'business') ? (rawDueDay + 100) : rawDueDay;
+
+        if (!description || isNaN(parsedAmount) || isNaN(parsedDueDay) || !categoryId) {
+          throw new Error('Preencha os campos obrigatórios corretamente.');
+        }
+
+        if (activeTab === 'expense') {
+          if (editingItem) {
+            await recurringExpensesApi.update(editingItem.id, {
+              description,
+              amount: parsedAmount,
+              type,
+              frequency,
+              dueDay: parsedDueDay,
+              startDate,
+              endDate: endDate || null,
+              categoryId,
+            });
+          } else {
+            await recurringExpensesApi.create({
+              description,
+              amount: parsedAmount,
+              type,
+              frequency,
+              dueDay: parsedDueDay,
+              startDate,
+              endDate: endDate || null,
+              memberId: selectedMember!.id,
+              categoryId,
+            });
+          }
         } else {
-          await recurringIncomesApi.create({
-            description,
-            amount: parsedAmount,
-            type,
-            frequency,
-            dueDay: parsedDueDay,
-            startDate,
-            endDate: endDate || null,
-            memberId: selectedMember!.id,
-            categoryId,
-          });
+          if (editingItem) {
+            await recurringIncomesApi.update(editingItem.id, {
+              description,
+              amount: parsedAmount,
+              type,
+              frequency,
+              dueDay: parsedDueDay,
+              startDate,
+              endDate: endDate || null,
+              categoryId,
+            });
+          } else {
+            await recurringIncomesApi.create({
+              description,
+              amount: parsedAmount,
+              type,
+              frequency,
+              dueDay: parsedDueDay,
+              startDate,
+              endDate: endDate || null,
+              memberId: selectedMember!.id,
+              categoryId,
+            });
+          }
         }
       }
     },
@@ -263,6 +340,8 @@ export default function RecurringExpensesScreen() {
       queryClient.invalidateQueries({ queryKey: ['recurringExpensesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomes'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomesTotalFixed'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedIncomes'] });
       closeForm();
     },
     onError: (err: any) => {
@@ -285,21 +364,34 @@ export default function RecurringExpensesScreen() {
     setIsFormOpen(true);
   };
 
-  const openEditForm = (item: RecurringExpense | RecurringIncome) => {
+  const openEditForm = (item: RecurringExpense | RecurringIncome | PlannedExpense | PlannedIncome) => {
     setEditingItem(item);
     setDescription(item.description);
     setAmount(item.amount.toString());
-    setType(item.type);
-    setFrequency(item.frequency);
-    if (activeTab === 'income' && item.dueDay > 100) {
-      setDueDayType('business');
-      setDueDay((item.dueDay - 100).toString());
-    } else {
+    
+    if (viewMode === 'planned') {
+      setType(1);
+      setFrequency(2);
       setDueDayType('regular');
-      setDueDay(item.dueDay.toString());
+      setDueDay('10');
+      const pItem = item as PlannedExpense | PlannedIncome;
+      setStartDate(pItem.date.split('T')[0] ?? '');
+      setEndDate('');
+    } else {
+      const rItem = item as RecurringExpense | RecurringIncome;
+      setType(rItem.type);
+      setFrequency(rItem.frequency);
+      if (activeTab === 'income' && rItem.dueDay > 100) {
+        setDueDayType('business');
+        setDueDay((rItem.dueDay - 100).toString());
+      } else {
+        setDueDayType('regular');
+        setDueDay(rItem.dueDay.toString());
+      }
+      setStartDate(rItem.startDate.split('T')[0] ?? '');
+      setEndDate(rItem.endDate ? rItem.endDate.split('T')[0] ?? '' : '');
     }
-    setStartDate(item.startDate.split('T')[0] ?? '');
-    setEndDate(item.endDate ? item.endDate.split('T')[0] ?? '' : '');
+    
     setCategoryId(item.categoryId);
     setIsFormOpen(true);
   };
@@ -320,17 +412,24 @@ export default function RecurringExpensesScreen() {
       Alert.alert('Validação', 'O valor deve ser um número válido maior ou igual a zero.');
       return;
     }
-    const parsedDue = parseInt(dueDay, 10);
-    if (isNaN(parsedDue) || parsedDue < 1 || parsedDue > 31) {
-      const label = activeTab === 'income' 
-        ? (dueDayType === 'business' ? 'dia útil de entrada' : 'dia de entrada') 
-        : 'dia de vencimento';
-      Alert.alert('Validação', `O ${label} deve estar entre 1 e 31.`);
-      return;
-    }
-    if (!startDate) {
-      Alert.alert('Validação', 'A data de início é obrigatória.');
-      return;
+    if (viewMode === 'planned') {
+      if (!startDate) {
+        Alert.alert('Validação', 'A data prevista é obrigatória.');
+        return;
+      }
+    } else {
+      const parsedDue = parseInt(dueDay, 10);
+      if (isNaN(parsedDue) || parsedDue < 1 || parsedDue > 31) {
+        const label = activeTab === 'income' 
+          ? (dueDayType === 'business' ? 'dia útil de entrada' : 'dia de entrada') 
+          : 'dia de vencimento';
+        Alert.alert('Validação', `O ${label} deve estar entre 1 e 31.`);
+        return;
+      }
+      if (!startDate) {
+        Alert.alert('Validação', 'A data de início é obrigatória.');
+        return;
+      }
     }
     if (!categoryId) {
       Alert.alert('Validação', 'A categoria é obrigatória.');
@@ -340,15 +439,114 @@ export default function RecurringExpensesScreen() {
     saveMutation.mutate();
   };
 
-  const isLoadingData = isLoadingExpenses || isLoadingIncomes || isLoadingFamily;
-  const currentList = activeTab === 'expense' ? expenses : incomes;
+  const isLoadingData = viewMode === 'planned'
+    ? (isLoadingPlannedExpenses || isLoadingPlannedIncomes || isLoadingFamily)
+    : (isLoadingExpenses || isLoadingIncomes || isLoadingFamily);
+    
+  const currentList = viewMode === 'planned'
+    ? (activeTab === 'expense' ? plannedExpenses : plannedIncomes)
+    : (activeTab === 'expense' ? expenses : incomes);
+
+  const totalPlanned = React.useMemo(() => {
+    if (viewMode !== 'planned' || !currentList) return 0;
+    return currentList.reduce((sum, item) => sum + item.amount, 0);
+  }, [viewMode, currentList]);
+
+  const groupedItems = React.useMemo(() => {
+    if (!currentList) return [];
+    if (!categories) {
+      return [{
+        parentId: 'uncategorized',
+        parentName: 'Geral',
+        subgroups: [{
+          subId: 'uncategorized-sub',
+          subName: null,
+          items: currentList
+        }]
+      }];
+    }
+
+    const catMap: Record<string, { parentId: string; parentName: string; subId: string | null; subName: string | null }> = {};
+    
+    categories.forEach(parent => {
+      catMap[parent.id] = {
+        parentId: parent.id,
+        parentName: parent.name,
+        subId: null,
+        subName: null
+      };
+      if (parent.subCategories) {
+        parent.subCategories.forEach(sub => {
+          catMap[sub.id] = {
+            parentId: parent.id,
+            parentName: parent.name,
+            subId: sub.id,
+            subName: sub.name
+          };
+        });
+      }
+    });
+
+    const groups: Record<string, {
+      parentId: string;
+      parentName: string;
+      subgroups: Record<string, {
+        subId: string | null;
+        subName: string | null;
+        items: (RecurringExpense | RecurringIncome | PlannedExpense | PlannedIncome)[];
+      }>;
+    }> = {};
+
+    currentList.forEach(item => {
+      const mapping = catMap[item.categoryId];
+      const pId = mapping?.parentId ?? 'uncategorized';
+      const pName = mapping?.parentName ?? item.categoryName ?? 'Sem Categoria';
+      const sId = mapping?.subId ?? null;
+      const sName = mapping?.subName ?? null;
+
+      if (!groups[pId]) {
+        groups[pId] = {
+          parentId: pId,
+          parentName: pName,
+          subgroups: {}
+        };
+      }
+
+      const sKey = sId ?? 'none';
+      if (!groups[pId].subgroups[sKey]) {
+        groups[pId].subgroups[sKey] = {
+          subId: sId,
+          subName: sName,
+          items: []
+        };
+      }
+
+      groups[pId].subgroups[sKey].items.push(item);
+    });
+
+    return Object.values(groups)
+      .sort((a, b) => a.parentName.localeCompare(b.parentName))
+      .map(group => ({
+        ...group,
+        subgroups: Object.values(group.subgroups)
+          .sort((a, b) => {
+            if (!a.subName) return -1;
+            if (!b.subName) return 1;
+            return a.subName.localeCompare(b.subName);
+          })
+      }));
+  }, [currentList, categories]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Finanças Recorrentes</Text>
-          <Text style={styles.subtitle}>Gerencie gastos e ganhos recorrentes da família</Text>
+          <Text style={styles.title}>{viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}</Text>
+          <Text style={styles.subtitle}>
+            {viewMode === 'planned' 
+              ? 'Gerencie gastos e ganhos planejados para a família' 
+              : 'Gerencie gastos e ganhos recorrentes da família'}
+          </Text>
         </View>
         <TouchableOpacity 
           style={[styles.addBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
@@ -394,6 +592,48 @@ export default function RecurringExpensesScreen() {
         </View>
       </View>
 
+      {/* View Mode Switcher */}
+      <View style={styles.viewModeOuterContainer}>
+        <View style={styles.viewModeContainer}>
+          <TouchableOpacity
+            style={[
+              styles.viewModeBtn,
+              viewMode === 'recurring' && styles.viewModeActive,
+              viewMode === 'recurring' && { backgroundColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }
+            ]}
+            onPress={() => setViewMode('recurring')}
+          >
+            <Ionicons
+              name="repeat-outline"
+              size={16}
+              color={viewMode === 'recurring' ? colors.white : colors.text.secondary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.viewModeText, viewMode === 'recurring' && styles.viewModeTextActive]}>
+              Recorrências
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.viewModeBtn,
+              viewMode === 'planned' && styles.viewModeActive,
+              viewMode === 'planned' && { backgroundColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }
+            ]}
+            onPress={() => setViewMode('planned')}
+          >
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={viewMode === 'planned' ? colors.white : colors.text.secondary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.viewModeText, viewMode === 'planned' && styles.viewModeTextActive]}>
+              Previsões Avulsas
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Member Selector chips */}
       {family?.members && family.members.length > 0 && (
         <View style={styles.selectorWrapper}>
@@ -428,28 +668,39 @@ export default function RecurringExpensesScreen() {
         </View>
       )}
 
-      {/* Resumo de Totais por Frequência */}
+      {/* Resumo de Totais por Frequência ou Total Previsto */}
       {!isLoadingData && selectedMember && currentList && currentList.length > 0 && (
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Semanal</Text>
-            <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-              {fmt(totalWeekly)}
-            </Text>
+        viewMode === 'planned' ? (
+          <View style={styles.summaryContainer}>
+            <View style={[styles.summaryCard, { flex: 1 }]}>
+              <Text style={styles.summaryTitle}>Total Previsto</Text>
+              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
+                {fmt(totalPlanned)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Mensal</Text>
-            <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-              {fmt(totalMonthly)}
-            </Text>
+        ) : (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Semanal</Text>
+              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
+                {fmt(totalWeekly)}
+              </Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Mensal</Text>
+              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
+                {fmt(totalMonthly)}
+              </Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Anual</Text>
+              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
+                {fmt(totalYearly)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Anual</Text>
-            <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-              {fmt(totalYearly)}
-            </Text>
-          </View>
-        </View>
+        )
       )}
 
       {/* Main content body */}
@@ -467,84 +718,156 @@ export default function RecurringExpensesScreen() {
                 color={colors.text.muted} 
               />
               <Text style={styles.emptyText}>
-                {activeTab === 'expense' 
-                  ? 'Nenhum gasto recorrente cadastrado para este membro.' 
-                  : 'Nenhum ganho recorrente cadastrado para este membro.'}
+                {viewMode === 'planned'
+                  ? (activeTab === 'expense' 
+                    ? 'Nenhum gasto previsto cadastrado para este membro.' 
+                    : 'Nenhum ganho previsto cadastrado para este membro.')
+                  : (activeTab === 'expense' 
+                    ? 'Nenhum gasto recorrente cadastrado para este membro.' 
+                    : 'Nenhum ganho recorrente cadastrado para este membro.')}
               </Text>
               <TouchableOpacity 
                 style={[styles.emptyAddBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
                 onPress={openCreateForm}
               >
                 <Text style={styles.emptyAddBtnText}>
-                  {activeTab === 'expense' ? 'Criar Primeiro Gasto' : 'Criar Primeiro Ganho'}
+                  {viewMode === 'planned'
+                    ? (activeTab === 'expense' ? 'Criar Primeiro Gasto Previsto' : 'Criar Primeiro Ganho Previsto')
+                    : (activeTab === 'expense' ? 'Criar Primeiro Gasto' : 'Criar Primeiro Ganho')}
                 </Text>
               </TouchableOpacity>
             </View>
           ) : (
-            currentList?.map((item) => (
-              <View key={item.id} style={styles.expenseCard}>
-                <View style={styles.expenseHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.expenseDesc}>
-                      {item.description}
-                    </Text>
-                    <Text style={styles.expenseDetails}>
-                      {activeTab === 'income' 
-                        ? (item.dueDay > 100 ? `Dia de entrada: ${item.dueDay - 100}º dia útil` : `Dia de entrada: ${item.dueDay}`) 
-                        : `Vence dia ${item.dueDay}`} · {item.frequency === 1 ? 'Semanal' : item.frequency === 2 ? 'Mensal' : 'Anual'} · {item.type === 1 ? 'Fixo' : 'Variável'}
-                    </Text>
-                    {item.startDate && (
-                      <Text style={styles.expensePeriod}>
-                        Início: {formatDateDisplay(item.startDate.split('T')[0])} 
-                        {item.endDate ? ` · Fim: ${formatDateDisplay(item.endDate.split('T')[0])}` : ' (Indeterminado)'}
-                      </Text>
-                    )}
-                    {item.categoryName ? (
-                      <View style={[styles.categoryBadge, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]}>
-                        <Ionicons 
-                          name="pricetag-outline" 
-                          size={10} 
-                          color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
-                        />
-                        <Text style={[styles.categoryBadgeText, activeTab === 'income' && { color: colors.brand.teal }]}>
-                          {item.categoryName}
-                        </Text>
+            groupedItems.map((parentGroup) => (
+              <View key={parentGroup.parentId} style={styles.categorySection}>
+                {/* Parent Category Header */}
+                <View style={[styles.categoryHeader, { borderLeftColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                  <Ionicons name="folder-open-outline" size={15} color={colors.text.secondary} />
+                  <Text style={styles.categoryTitleText}>{parentGroup.parentName}</Text>
+                </View>
+
+                {parentGroup.subgroups.map((subGroup) => (
+                  <View key={subGroup.subId ?? 'none'} style={styles.subcategoryWrapper}>
+                    {/* Subcategory Header */}
+                    {subGroup.subName && (
+                      <View style={styles.subcategoryHeader}>
+                        <Ionicons name="chevron-forward-outline" size={11} color={colors.text.muted} />
+                        <Text style={styles.subcategoryTitleText}>{subGroup.subName}</Text>
                       </View>
-                    ) : null}
-                  </View>
-                  <Text style={[styles.expenseAmount, { color: activeTab === 'expense' ? colors.danger : colors.success }]}>
-                    {activeTab === 'expense' ? '-' : '+'}{fmt(item.amount)}
-                  </Text>
-                </View>
+                    )}
 
-                {/* Divider */}
-                <View style={styles.cardDivider} />
+                    {/* Cards grid */}
+                    <View style={styles.cardsGrid}>
+                      {subGroup.items.map((item) => {
+                        if (viewMode === 'planned') {
+                          const plannedItem = item as PlannedExpense | PlannedIncome;
+                          return (
+                            <View key={plannedItem.id} style={styles.expenseCard}>
+                              <View style={styles.expenseHeader}>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.expenseDesc}>
+                                    {plannedItem.description}
+                                  </Text>
+                                  <Text style={styles.expenseDetails}>
+                                    {activeTab === 'income' ? 'Entrada prevista:' : 'Vencimento previsto:'} {formatDateDisplay(plannedItem.date.split('T')[0])}
+                                  </Text>
+                                </View>
+                                <Text style={[styles.expenseAmount, { color: activeTab === 'expense' ? colors.danger : colors.success }]}>
+                                  {activeTab === 'expense' ? '-' : '+'}{fmt(plannedItem.amount)}
+                                </Text>
+                              </View>
 
-                {/* Controls */}
-                <View style={styles.expenseControls}>
-                  <View style={styles.actionGroup}>
-                    <TouchableOpacity 
-                      style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
-                      onPress={() => openEditForm(item)}
-                    >
-                      <Ionicons 
-                        name="create-outline" 
-                        size={16} 
-                        color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
-                      />
-                      <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
-                        Editar
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
-                      onPress={() => handleDelete(item.id)}
-                    >
-                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                      <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
-                    </TouchableOpacity>
+                              {/* Divider */}
+                              <View style={styles.cardDivider} />
+
+                              {/* Controls */}
+                              <View style={styles.expenseControls}>
+                                <View style={styles.actionGroup}>
+                                  <TouchableOpacity 
+                                    style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
+                                    onPress={() => openEditForm(plannedItem)}
+                                  >
+                                    <Ionicons 
+                                      name="create-outline" 
+                                      size={16} 
+                                      color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                    />
+                                    <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                                      Editar
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity 
+                                    style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
+                                    onPress={() => handleDelete(plannedItem.id)}
+                                  >
+                                    <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                                    <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        }
+
+                        const recItem = item as RecurringExpense | RecurringIncome;
+                        return (
+                          <View key={recItem.id} style={styles.expenseCard}>
+                            <View style={styles.expenseHeader}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.expenseDesc}>
+                                  {recItem.description}
+                                </Text>
+                                <Text style={styles.expenseDetails}>
+                                  {activeTab === 'income' 
+                                    ? (recItem.dueDay > 100 ? `Dia de entrada: ${recItem.dueDay - 100}º dia útil` : `Dia de entrada: ${recItem.dueDay}`) 
+                                    : `Vence dia ${recItem.dueDay}`} · {recItem.frequency === 1 ? 'Semanal' : recItem.frequency === 2 ? 'Mensal' : 'Anual'} · {recItem.type === 1 ? 'Fixo' : 'Variável'}
+                                </Text>
+                                {recItem.startDate && (
+                                  <Text style={styles.expensePeriod}>
+                                    Início: {formatDateDisplay(recItem.startDate.split('T')[0])} 
+                                    {recItem.endDate ? ` · Fim: ${formatDateDisplay(recItem.endDate.split('T')[0])}` : ' (Indeterminado)'}
+                                  </Text>
+                                )}
+                              </View>
+                              <Text style={[styles.expenseAmount, { color: activeTab === 'expense' ? colors.danger : colors.success }]}>
+                                {activeTab === 'expense' ? '-' : '+'}{fmt(recItem.amount)}
+                              </Text>
+                            </View>
+
+                            {/* Divider */}
+                            <View style={styles.cardDivider} />
+
+                            {/* Controls */}
+                            <View style={styles.expenseControls}>
+                              <View style={styles.actionGroup}>
+                                <TouchableOpacity 
+                                  style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
+                                  onPress={() => openEditForm(recItem)}
+                                >
+                                  <Ionicons 
+                                    name="create-outline" 
+                                    size={16} 
+                                    color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                  />
+                                  <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                                    Editar
+                                  </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
+                                  onPress={() => handleDelete(recItem.id)}
+                                >
+                                  <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                                  <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
+                ))}
               </View>
             ))
           )}
@@ -565,8 +888,12 @@ export default function RecurringExpensesScreen() {
                   <View style={styles.formHeaderInfo}>
                     <Text style={styles.formTitle}>
                       {editingItem 
-                        ? (activeTab === 'expense' ? 'Editar Gasto' : 'Editar Ganho') 
-                        : (activeTab === 'expense' ? 'Novo Gasto Recorrente' : 'Novo Ganho Recorrente')}
+                        ? (viewMode === 'planned' 
+                            ? (activeTab === 'expense' ? 'Editar Gasto Previsto' : 'Editar Ganho Previsto')
+                            : (activeTab === 'expense' ? 'Editar Gasto Recorrente' : 'Editar Ganho Recorrente')) 
+                        : (viewMode === 'planned'
+                            ? (activeTab === 'expense' ? 'Novo Gasto Previsto' : 'Novo Ganho Previsto')
+                            : (activeTab === 'expense' ? 'Novo Gasto Recorrente' : 'Novo Ganho Recorrente'))}
                     </Text>
                     <Text style={[styles.formSubtitle, activeTab === 'income' && { color: colors.brand.teal }]}>
                       Para {selectedMember?.name}
@@ -609,36 +936,38 @@ export default function RecurringExpensesScreen() {
                   {/* Valor e Dia Vencimento/Entrada */}
                   <View style={styles.row}>
                     <View style={[styles.fieldWrapper, { flex: 1 }]}>
-                      <Text style={styles.label}>{type === 2 ? 'Valor esperado (R$)' : 'Valor (R$)'}</Text>
+                      <Text style={styles.label}>{viewMode === 'planned' ? 'Valor (R$)' : (type === 2 ? 'Valor esperado (R$)' : 'Valor (R$)')}</Text>
                       <TextInput
                         style={styles.input}
-                        placeholder={type === 2 ? 'Valor esperado (ex: 100.00)' : '0.00'}
+                        placeholder={viewMode === 'planned' ? '0.00' : (type === 2 ? 'Valor esperado (ex: 100.00)' : '0.00')}
                         placeholderTextColor={colors.text.muted}
                         keyboardType="numeric"
                         value={amount}
                         onChangeText={setAmount}
                       />
                     </View>
-                    <View style={[styles.fieldWrapper, { width: 130 }]}>
-                      <Text style={styles.label}>
-                        {activeTab === 'income' 
-                          ? (dueDayType === 'business' ? 'Dia Útil Entrada' : 'Dia Entrada') 
-                          : 'Dia Vencimento'}
-                      </Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder={dueDayType === 'business' ? "5" : "10"}
-                        placeholderTextColor={colors.text.muted}
-                        keyboardType="numeric"
-                        maxLength={2}
-                        value={dueDay}
-                        onChangeText={setDueDay}
-                      />
-                    </View>
+                    {viewMode !== 'planned' && (
+                      <View style={[styles.fieldWrapper, { width: 130 }]}>
+                        <Text style={styles.label}>
+                          {activeTab === 'income' 
+                            ? (dueDayType === 'business' ? 'Dia Útil Entrada' : 'Dia Entrada') 
+                            : 'Dia Vencimento'}
+                        </Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder={dueDayType === 'business' ? "5" : "10"}
+                          placeholderTextColor={colors.text.muted}
+                          keyboardType="numeric"
+                          maxLength={2}
+                          value={dueDay}
+                          onChangeText={setDueDay}
+                        />
+                      </View>
+                    )}
                   </View>
 
                   {/* Tipo de Dia (apenas para Ganho Recorrente) */}
-                  {activeTab === 'income' && (
+                  {viewMode !== 'planned' && activeTab === 'income' && (
                     <View style={styles.fieldWrapper}>
                       <Text style={styles.label}>Tipo de Dia de Entrada</Text>
                       <View style={styles.segmentContainer}>
@@ -667,75 +996,79 @@ export default function RecurringExpensesScreen() {
                   )}
 
                   {/* Tipo (Fixo / Variável) */}
-                  <View style={styles.fieldWrapper}>
-                    <Text style={styles.label}>
-                      {activeTab === 'expense' ? 'Tipo de Gasto' : 'Tipo de Ganho'}
-                    </Text>
-                    <View style={styles.segmentContainer}>
-                      <TouchableOpacity
-                        style={[
-                          styles.segmentBtn, 
-                          type === 1 && styles.segmentActive,
-                          type === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
-                        ]}
-                        onPress={() => setType(1)}
-                      >
-                        <Text style={[styles.segmentText, type === 1 && styles.segmentTextActive]}>Fixo</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.segmentBtn, 
-                          type === 2 && styles.segmentActive,
-                          type === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
-                        ]}
-                        onPress={() => setType(2)}
-                      >
-                        <Text style={[styles.segmentText, type === 2 && styles.segmentTextActive]}>Variável</Text>
-                      </TouchableOpacity>
+                  {viewMode !== 'planned' && (
+                    <View style={styles.fieldWrapper}>
+                      <Text style={styles.label}>
+                        {activeTab === 'expense' ? 'Tipo de Gasto' : 'Tipo de Ganho'}
+                      </Text>
+                      <View style={styles.segmentContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.segmentBtn, 
+                            type === 1 && styles.segmentActive,
+                            type === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                          ]}
+                          onPress={() => setType(1)}
+                        >
+                          <Text style={[styles.segmentText, type === 1 && styles.segmentTextActive]}>Fixo</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.segmentBtn, 
+                            type === 2 && styles.segmentActive,
+                            type === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                          ]}
+                          onPress={() => setType(2)}
+                        >
+                          <Text style={[styles.segmentText, type === 2 && styles.segmentTextActive]}>Variável</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                   {/* Frequência (Semanal / Mensal / Anual) */}
-                  <View style={styles.fieldWrapper}>
-                    <Text style={styles.label}>Frequência de Cobrança</Text>
-                    <View style={styles.segmentContainer}>
-                      <TouchableOpacity
-                        style={[
-                          styles.segmentBtn, 
-                          frequency === 1 && styles.segmentActive,
-                          frequency === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
-                        ]}
-                        onPress={() => setFrequency(1)}
-                      >
-                        <Text style={[styles.segmentText, frequency === 1 && styles.segmentTextActive]}>Semanal</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.segmentBtn, 
-                          frequency === 2 && styles.segmentActive,
-                          frequency === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
-                        ]}
-                        onPress={() => setFrequency(2)}
-                      >
-                        <Text style={[styles.segmentText, frequency === 2 && styles.segmentTextActive]}>Mensal</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.segmentBtn, 
-                          frequency === 3 && styles.segmentActive,
-                          frequency === 3 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
-                        ]}
-                        onPress={() => setFrequency(3)}
-                      >
-                        <Text style={[styles.segmentText, frequency === 3 && styles.segmentTextActive]}>Anual</Text>
-                      </TouchableOpacity>
+                  {viewMode !== 'planned' && (
+                    <View style={styles.fieldWrapper}>
+                      <Text style={styles.label}>Frequência de Cobrança</Text>
+                      <View style={styles.segmentContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.segmentBtn, 
+                            frequency === 1 && styles.segmentActive,
+                            frequency === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                          ]}
+                          onPress={() => setFrequency(1)}
+                        >
+                          <Text style={[styles.segmentText, frequency === 1 && styles.segmentTextActive]}>Semanal</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.segmentBtn, 
+                            frequency === 2 && styles.segmentActive,
+                            frequency === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                          ]}
+                          onPress={() => setFrequency(2)}
+                        >
+                          <Text style={[styles.segmentText, frequency === 2 && styles.segmentTextActive]}>Mensal</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.segmentBtn, 
+                            frequency === 3 && styles.segmentActive,
+                            frequency === 3 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                          ]}
+                          onPress={() => setFrequency(3)}
+                        >
+                          <Text style={[styles.segmentText, frequency === 3 && styles.segmentTextActive]}>Anual</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
+                  )}
 
                     {/* Datas */}
                     <View style={styles.row}>
                       <View style={[styles.fieldWrapper, { flex: 1 }]}>
-                        <Text style={styles.label}>Data de Início</Text>
+                        <Text style={styles.label}>{viewMode === 'planned' ? 'Data Prevista' : 'Data de Início'}</Text>
                         <TouchableOpacity
                           style={styles.selectInput}
                           onPress={() => setIsStartDatePickerOpen(true)}
@@ -746,18 +1079,20 @@ export default function RecurringExpensesScreen() {
                           <Ionicons name="calendar-outline" size={20} color={colors.text.secondary} />
                         </TouchableOpacity>
                       </View>
-                      <View style={[styles.fieldWrapper, { flex: 1 }]}>
-                        <Text style={styles.label}>Data de Fim (Opcional)</Text>
-                        <TouchableOpacity
-                          style={styles.selectInput}
-                          onPress={() => setIsEndDatePickerOpen(true)}
-                        >
-                          <Text style={[styles.selectInputText, !endDate && { color: colors.text.muted }]}>
-                            {endDate ? formatDateDisplay(endDate) : 'Sem data de fim'}
-                          </Text>
-                          <Ionicons name="calendar-outline" size={20} color={colors.text.secondary} />
-                        </TouchableOpacity>
-                      </View>
+                      {viewMode !== 'planned' && (
+                        <View style={[styles.fieldWrapper, { flex: 1 }]}>
+                          <Text style={styles.label}>Data de Fim (Opcional)</Text>
+                          <TouchableOpacity
+                            style={styles.selectInput}
+                            onPress={() => setIsEndDatePickerOpen(true)}
+                          >
+                            <Text style={[styles.selectInputText, !endDate && { color: colors.text.muted }]}>
+                              {endDate ? formatDateDisplay(endDate) : 'Sem data de fim'}
+                            </Text>
+                            <Ionicons name="calendar-outline" size={20} color={colors.text.secondary} />
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
 
                     {/* Submit Button */}
@@ -773,8 +1108,12 @@ export default function RecurringExpensesScreen() {
                           <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} />
                           <Text style={styles.saveBtnText}>
                             {editingItem 
-                              ? (activeTab === 'expense' ? 'Atualizar Gasto' : 'Atualizar Ganho') 
-                              : (activeTab === 'expense' ? 'Criar Gasto' : 'Criar Ganho')}
+                              ? (viewMode === 'planned' 
+                                  ? (activeTab === 'expense' ? 'Atualizar Gasto Previsto' : 'Atualizar Ganho Previsto') 
+                                  : (activeTab === 'expense' ? 'Atualizar Gasto' : 'Atualizar Ganho')) 
+                              : (viewMode === 'planned' 
+                                  ? (activeTab === 'expense' ? 'Criar Gasto Previsto' : 'Criar Ganho Previsto') 
+                                  : (activeTab === 'expense' ? 'Criar Gasto' : 'Criar Ganho'))}
                           </Text>
                         </>
                       )}
@@ -788,7 +1127,7 @@ export default function RecurringExpensesScreen() {
                     onClose={() => setIsStartDatePickerOpen(false)}
                     onSelect={setStartDate}
                     accentColor={activeTab === 'income' ? colors.brand.teal : colors.brand.primary}
-                    title="Data de Início"
+                    title={viewMode === 'planned' ? "Data Prevista" : "Data de Início"}
                   />
 
                   <DatePicker
@@ -934,6 +1273,40 @@ const styles = StyleSheet.create({
   },
   tabText: { ...typography.bodySmall, color: colors.text.secondary, fontWeight: '700' },
   tabTextActive: { color: colors.white },
+
+  // View Mode Switcher Styles
+  viewModeOuterContainer: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  viewModeContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  viewModeBtn: {
+    flex: 1,
+    height: 36,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: radius.sm,
+  },
+  viewModeActive: {
+    ...shadow.sm,
+  },
+  viewModeText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+  viewModeTextActive: {
+    color: colors.white,
+  },
 
   // Member selector
   selectorWrapper: {
@@ -1219,5 +1592,44 @@ const styles = StyleSheet.create({
     color: colors.brand.primary,
     fontWeight: '600',
     fontSize: 10,
+  },
+  categorySection: {
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: spacing.sm,
+    paddingVertical: 6,
+    borderLeftWidth: 3,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.sm,
+    marginBottom: spacing.xs,
+  },
+  categoryTitleText: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  subcategoryWrapper: {
+    gap: spacing.xs,
+    paddingLeft: spacing.sm,
+  },
+  subcategoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: spacing.xs,
+    marginBottom: 2,
+  },
+  subcategoryTitleText: {
+    ...typography.caption,
+    fontWeight: '600',
+    color: colors.text.secondary,
+  },
+  cardsGrid: {
+    gap: spacing.sm,
   },
 });
