@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IPlannedIncomeRepository, PlannedIncomeRepository>();
         services.AddScoped<IPlannedExpenseRepository, PlannedExpenseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IWalletRepository, WalletRepository>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();

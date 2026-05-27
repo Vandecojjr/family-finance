@@ -43,11 +43,57 @@ export interface Member {
 export interface Wallet {
   id: string;
   name: string;
-  balance: number;
-  type: string;
-  memberId: string;
-  currency: string;
+  cashBalance: number;
+  familyId: string;
+  accounts: BankAccount[];
 }
+
+export interface BankAccount {
+  id: string;
+  bankName: string;
+  type: number; // 1 = Checking, 5 = Savings
+  debitBalance: number;
+  creditLimit: number;
+  creditCards: CreditCard[];
+}
+
+export interface CreditCard {
+  id: string;
+  brand: string;
+  lastFourDigits: string;
+  totalLimit: number;
+}
+
+export interface CreateWalletRequest {
+  name: string;
+  cashBalance: number;
+}
+
+export interface UpdateWalletRequest {
+  name: string;
+  cashBalance: number;
+}
+
+export interface CreateBankAccountRequest {
+  bankName: string;
+  type: number;
+  debitBalance: number;
+  creditLimit: number;
+}
+
+export interface UpdateBankAccountRequest {
+  bankName: string;
+  type: number;
+  debitBalance: number;
+  creditLimit: number;
+}
+
+export interface CreateCreditCardRequest {
+  brand: string;
+  lastFourDigits: string;
+  totalLimit: number;
+}
+
 
 export interface Transaction {
   id: string;

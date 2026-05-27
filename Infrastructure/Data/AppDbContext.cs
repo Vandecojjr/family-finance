@@ -14,6 +14,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RecurringIncome> RecurringIncomes { get; set; } = null!;
     public DbSet<PlannedIncome> PlannedIncomes { get; set; } = null!;
     public DbSet<PlannedExpense> PlannedExpenses { get; set; } = null!;
+    public DbSet<Domain.Entities.Wallets.Wallet> Wallets { get; set; } = null!;
+    public DbSet<Domain.Entities.Wallets.BankAccount> BankAccounts { get; set; } = null!;
+    public DbSet<Domain.Entities.Wallets.CreditCard> CreditCards { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

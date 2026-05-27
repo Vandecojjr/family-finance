@@ -1,0 +1,145 @@
+using Domain.Entities.Wallets;
+using Domain.Enums;
+using Xunit;
+
+namespace Domain.Tests.Wallets;
+
+public class WalletTests
+{
+    [Fact]
+    public void Wallet_ShouldCreate_WhenValuesAreValid()
+    {
+        // Arrange
+        var name = "Carteira Principal";
+        var cashBalance = 150.50m;
+        var familyId = Guid.NewGuid();
+
+        // Act
+        var wallet = new Wallet(name, cashBalance, familyId);
+
+        // Assert
+        Assert.Equal(name, wallet.Name);
+        Assert.Equal(cashBalance, wallet.CashBalance);
+        Assert.Equal(familyId, wallet.FamilyId);
+        Assert.Empty(wallet.Accounts);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Wallet_ShouldThrow_WhenNameIsInvalid(string? name)
+    {
+        Assert.Throws<ArgumentException>(() => new Wallet(name!, 100m, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void Wallet_ShouldThrow_WhenNameIsTooLong()
+    {
+        var longName = new string('A', 101);
+        Assert.Throws<ArgumentException>(() => new Wallet(longName, 100m, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void Wallet_ShouldThrow_WhenCashBalanceIsNegative()
+    {
+        Assert.Throws<ArgumentException>(() => new Wallet("Test Wallet", -0.01m, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void Wallet_ShouldUpdate_WhenValuesAreValid()
+    {
+        // Arrange
+        var wallet = new Wallet("Original Name", 50m, Guid.NewGuid());
+
+        // Act
+        wallet.Update("Updated Name", 120.90m);
+
+        // Assert
+        Assert.Equal("Updated Name", wallet.Name);
+        Assert.Equal(120.90m, wallet.CashBalance);
+    }
+
+    [Fact]
+    public void Wallet_ShouldAddAccount_WhenValuesAreValid()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+
+        // Act
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+
+        // Assert
+        Assert.Single(wallet.Accounts);
+        var account = wallet.Accounts.First();
+        Assert.Equal("Nubank", account.BankName);
+        Assert.Equal(AccountType.Checking, account.Type);
+        Assert.Equal(500m, account.DebitBalance);
+        Assert.Equal(1000m, account.CreditLimit);
+    }
+
+    [Fact]
+    public void Wallet_ShouldUpdateAccount_WhenAccountExists()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+        var accountId = wallet.Accounts.First().Id;
+
+        // Act
+        wallet.UpdateAccount(accountId, "Nubank Ultravioleta", AccountType.Checking, 1500m, 5000m);
+
+        // Assert
+        var account = wallet.Accounts.First();
+        Assert.Equal("Nubank Ultravioleta", account.BankName);
+        Assert.Equal(1500m, account.DebitBalance);
+        Assert.Equal(5000m, account.CreditLimit);
+    }
+
+    [Fact]
+    public void Wallet_ShouldRemoveAccount_WhenAccountExists()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+        var accountId = wallet.Accounts.First().Id;
+
+        // Act
+        wallet.RemoveAccount(accountId);
+
+        // Assert
+        Assert.Empty(wallet.Accounts);
+    }
+
+    [Fact]
+    public void BankAccount_ShouldAddCreditCard_WhenValuesAreValid()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+        var account = wallet.Accounts.First();
+
+        // Act
+        account.AddCreditCard("Visa", "4321", 5000m);
+
+        // Assert
+        Assert.Single(account.CreditCards);
+        var card = account.CreditCards.First();
+        Assert.Equal("Visa", card.Brand);
+        Assert.Equal("4321", card.LastFourDigits);
+        Assert.Equal(5000m, card.TotalLimit);
+    }
+
+    [Fact]
+    public void BankAccount_ShouldThrow_WhenCreditCardDigitsAreInvalid()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+        var account = wallet.Accounts.First();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "432", 5000m));
+        Assert.Throws<ArgumentException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
+    }
+}
