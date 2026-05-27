@@ -5,7 +5,7 @@ namespace Domain.Entities.RecurringExpenses.ValueObjects;
 
 public sealed record RecurringExpenseAmount : ValueObject
 {
-    public decimal Value { get; init; }
+    public decimal Value { get; }
 
     private RecurringExpenseAmount(decimal value)
     {

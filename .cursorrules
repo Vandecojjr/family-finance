@@ -1,112 +1,57 @@
-# Project Context & Coding Standards
+# family-finance — Project Standards
 
-You are an AI coding assistant working on the **family-finance** project. Before starting any task, read this file to understand the architecture, coding standards, frameworks, and conventions of the project. Do NOT deviate from these rules.
+## 1. Tech Stack
+- Platform: C# 13, .NET 10.0 (`net10.0`)
+- Web: ASP.NET Core Minimal APIs | Docs: Scalar (`Scalar.AspNetCore`)
+- DB: EF Core | Validation: FluentValidation (`AbstractValidator<T>`)
+- Mediator: Source-generated `Mediator` (`Mediator` namespace, handlers return `ValueTask`, NOT `MediatR`).
+- Tests: xUnit, Moq, FluentAssertions.
 
----
+## 2. Solution Structure
+- `Domain/`: Entities (`Entities/`), VOs (`Entities/[Name]/ValueObjects/`), Exceptions (`Entities/[Name]/Exceptions/`), Repository Interfaces (`Repositories/`).
+- `Application/`: CQRS (`[Entity]/UseCases/[UseCase]/`), Handlers/Validators (same folder), DTOs, `ICurrentUser`.
+- `Infrastructure/`: `AppDbContext`, EF Configs (`Data/Configurations/`), Repo implementations, Security (BCrypt, JWT).
+- `Api/`: Minimal APIs mapping via `IEndpointGroup`.
+- `Domain.Tests` / `Application.Tests`: Unit tests.
 
-## 1. Tech Stack & Frameworks
-* **Language/Platform**: C# 13, .NET 10.0 (`net10.0`)
-* **Presentation**: ASP.NET Core Minimal APIs
-* **Database/Persistence**: Entity Framework Core (EF Core)
-* **API Documentation**: Scalar (`Scalar.AspNetCore` - not Swagger)
-* **Mediation**: Source-generated `Mediator` (from packages `Mediator.Abstractions` / `Mediator.SourceGenerator` - **NOTE**: This is `Mediator`, NOT `MediatR`. It uses the `Mediator` namespace and handlers return `ValueTask` instead of `Task`).
-* **Validation**: FluentValidation (`AbstractValidator<T>`)
-* **Testing**: xUnit, Moq, FluentAssertions
+## 3. Coding Guidelines
 
----
-
-## 2. Solution Architecture (DDD & Clean Architecture)
-The solution is organized into the following projects:
-1. **Domain**: Enterprise logic. Pure C#. No external dependencies. Contains:
-   * Aggregates & Entities (under `Domain/Entities/`)
-   * Value Objects (under `Domain/Entities/[EntityName]/ValueObjects/`)
-   * Domain Exceptions (under `Domain/Entities/[EntityName]/Exceptions/`)
-   * Repository Interfaces (under `Domain/Repositories/`)
-2. **Application**: Use cases & orchestration. Contains:
-   * CQRS Commands and Queries (under `Application/[EntityName]/UseCases/[UseCaseName]/`)
-   * Handlers and Validators (under the same use case directory)
-   * DTOs / Response contracts
-   * `ICurrentUser` interface for user context
-3. **Infrastructure**: Database access, Authentication, external integrations. Contains:
-   * EF Core DbContext (`AppDbContext`)
-   * DbContext configurations (`IEntityTypeConfiguration<T>` under `Infrastructure/Data/Configurations/`)
-   * Repository implementations
-   * Security (BCrypt hashing, JWT handling)
-4. **Api**: Entry point. Maps Minimal APIs using `IEndpointGroup`.
-5. **Domain.Tests & Application.Tests**: Unit testing projects.
-
----
-
-## 3. Coding Guidelines & Patterns
-
-### 3.1. Domain Entities & Aggregates
-* **Base Class**: All entities must inherit from `Domain.Shared.Entities.Entity`.
-  * `Entity` exposes `Guid Id` (auto-initialized), `DateTime CreatedAt` (auto-initialized), `DateTime UpdatedAt`.
-  * For tracking updates, always call `SeUpdate()` inside mutating domain methods.
-* **Aggregate Roots**: Must also implement the marker interface `IAggregateRoot`.
-* **Encapsulation**: State changes must go through domain methods (e.g. `Deactivate()`, `UpdateName(...)`). Do NOT expose public properties with public setters.
-* **Constructors**: 
-  * Provide a protected parameterless constructor `#pragma warning disable CS8618 // Required for EF Core and serialization` for ORM/EF Core.
-  * Public/internal constructors should take primitive types (e.g. `string`, `int`) rather than pre-instantiated Value Objects, and perform VO instantiation internally.
-* **Naming**: Entity folders must be named in the **plural** (e.g. `Families`, `Members`, `RecurringExpenses`). Namespaces must match this pluralization.
+### 3.1. Entities & Aggregates
+- Base: Inherit from `Domain.Shared.Entities.Entity` (exposes `Guid Id`, `DateTime CreatedAt/UpdatedAt`).
+- Mutation: Call `SeUpdate()` inside mutating domain methods.
+- Aggregate Roots: Implement `IAggregateRoot`.
+- Encapsulation: Methods only (e.g., `Deactivate()`). No public setters.
+- CTORs: Protected parameterless with `#pragma warning disable CS8618` for EF. Public CTORs accept primitive types only and instantiate VOs internally.
+- Naming: Folders/namespaces must be plural (e.g., `Families`, `Members`).
 
 ### 3.2. Value Objects (VOs)
-* **Implementation**: Must be defined as C# `record` types inheriting from `ValueObject` base record.
-* **Immutability**: Properties must be read-only (using `{ get; init; }` or positional records).
-* **Instantiation**: Use a static factory method e.g. `public static ValueObject Create(primitive parameter)` to encapsulate validation rules and throw custom exceptions if invalid.
+- Type: C# `record` inheriting from `ValueObject`.
+- Immutability: Read-only properties via `{ get; init; }` or positional records.
+- Instantiation: Static factory `public static ValueObject Create(primitive)` handling validation and domain exceptions.
 
-### 3.3. Custom Domain Exceptions
-* **Base**: Must inherit from the abstract `DomainException` class.
-* **Granularity**: Do NOT throw generic framework exceptions (e.g. `ArgumentException`, `InvalidOperationException`). Create descriptive, domain-specific exceptions (e.g. `FamilyNameRequiredException`).
-* **Location**: Store custom exceptions in the `Exceptions/` folder within the relevant entity directory.
+### 3.3. Domain Exceptions
+- Base: Inherit from abstract `DomainException`. No generic system exceptions.
+- Location: `Exceptions/` folder inside the relevant entity directory.
 
-### 3.4. CQRS (Application Layer)
-* **Contracts**:
-  * Command: `public sealed record CreateSomethingCommand(...) : ICommand<Result>` or `ICommand<Result<ResponseDto>>`
-  * Query: `public sealed record GetSomethingQuery(...) : IQuery<Result<ResponseDto>>`
-  * **Important**: Inherit from `ICommand` / `IQuery` of the `Mediator` namespace.
-* **Handlers**:
-  * Inherit from `ICommandHandler<TCommand, TResult>` or `IQueryHandler<TQuery, TResult>`.
-  * Must return `ValueTask<TResult>` (e.g. `ValueTask<Result<SomethingResponse>>`) and execute asynchronously.
-* **Validation**: Define a `FluentValidation` class `AbstractValidator<TCommandOrQuery>` inside the same directory.
-* **Authorization & Safety**:
-  * Commands/Queries can implement `IAuthorizeableRequest`.
-  * Check current member boundaries: Inject `ICurrentUser` and verify that the resource being modified/read belongs to the user's `FamilyId`. Return `Result.Failure(Error.Failure("AccessDenied", "..."))` on unauthorized attempts.
-* **Response Mappers**: Decouple domain entities from responses. Create extension classes mapping `Entity` to response records (e.g., `family.ToResponse()`).
+### 3.4. CQRS (Application)
+- Contracts: `CreateSomethingCommand(...) : ICommand<Result>` or `IQuery<Result<Dto>>` from `Mediator` namespace.
+- Handlers: Inherit `ICommandHandler<T, R>` or `IQueryHandler<T, R>`. Return `ValueTask<TResult>`.
+- Validation: `AbstractValidator<T>` in the same usecase folder.
+- Security: Implement `IAuthorizeableRequest`. Check ownership via `ICurrentUser.FamilyId`. Return `Result.Failure` on access denial.
+- Mappers: Use extension classes (e.g., `family.ToResponse()`). No direct entity exposure.
 
-### 3.5. Persistence & EF Core Configurations
-* **Location**: `Infrastructure/Data/Configurations/`.
-* **Rules**:
-  * Implement `IEntityTypeConfiguration<T>`.
-  * Map Value Objects using `.HasConversion(...)` for database translation:
-    ```csharp
-    builder.Property(x => x.Name)
-        .HasConversion(name => name.Value, value => FamilyName.Create(value))
-        .IsRequired()
-        .HasMaxLength(100);
-    ```
-  * Back collections with fields to preserve encapsulation:
-    ```csharp
-    builder.HasMany(x => x.Members)
-        .WithOne(x => x.Family)
-        .HasForeignKey(x => x.FamilyId)
-        .Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field);
-    ```
+### 3.5. EF Core Configurations
+- Location: `Infrastructure/Data/Configurations/`.
+- Rule 1: Map VOs using `.HasConversion(vo => vo.Value, val => VO.Create(val))`.
+- Rule 2: Back collections with fields via `.Metadata.PrincipalToDependent.SetPropertyAccessMode(PropertyAccessMode.Field)`.
 
-### 3.6. Presentation (API Endpoints)
-* **Location**: `Api/Endpoints/`.
-* **Interface**: Implement `IEndpointGroup`.
-* **Conventions**:
-  * Use Minimal APIs with `RouteGroupBuilder`.
-  * Decouple API contracts from internal Mediator structures (use custom `Request` records for JSON payloads).
-  * Return `HttpResult` (mapped using the `result.ToResult()` extension to return correct HTTP status codes like 200, 201, 400, 403, 404).
+### 3.6. Presentation (API)
+- Location: `Api/Endpoints/` implementing `IEndpointGroup`.
+- Rules: Route auto-prefixed via class name. Decouple JSON requests from Mediator commands. Return `HttpResult` via `result.ToResult()`.
 
-### 3.7. Testing Standards
-* **Location**: `Application.Tests` and `Domain.Tests`.
-* **Libraries**: `xUnit`, `Moq`, `FluentAssertions`.
-* **Focus**: Test happy paths, boundary validations, domain exceptions, and access control blocks.
+### 3.7. Quality & Warnings
+- Strict Policy: Zero compiler warnings allowed. `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` is active.
+- Vulnerabilities: Fix NuGet audit warnings immediately by upgrading or forcing secure versions in `.csproj`.
 
-### 3.8. Compiler Warnings & Code Quality
-* **Zero Warnings Policy**: Compiler warnings are strictly prohibited in this codebase. They must either be corrected or resolved completely. Setting `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>` globally ensures compile errors occur on warning.
-* **NuGet Vulnerabilities**: NuGet audit warnings (e.g. package vulnerabilities) must be handled by upgrading the package to a secure version, or manually adding direct secure package references in `.csproj`.
-
+## 4. Post-Task Report — Token Usage
+Always append a token and cost estimation table at the very end of your response, after the change summary:

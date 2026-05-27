@@ -4,7 +4,7 @@ namespace Domain.Entities.Families.ValueObjects;
 
 public sealed record FamilyStatus : ValueObject
 {
-    public bool IsActive { get; init; }
+    public bool IsActive { get; }
 
     private FamilyStatus(bool isActive)
     {

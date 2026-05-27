@@ -14,8 +14,8 @@ public class AccountTests
         var memberId = Guid.NewGuid();
         var acc = new Account("u@mail.com", "hash", memberId);
 
-        Assert.Equal("u@mail.com", acc.Email);
-        Assert.Equal("hash", acc.PasswordHash);
+        Assert.Equal("u@mail.com", acc.Email.Value);
+        Assert.Equal("hash", acc.PasswordHash.Value);
         Assert.Equal(AccountStatus.Active, acc.Status);
         Assert.Empty(acc.RefreshTokens);
         Assert.Equal(memberId, acc.MemberId);
@@ -41,7 +41,7 @@ public class AccountTests
     {
         var acc = new Account("u@mail.com", "old", Guid.NewGuid());
         acc.ChangePassword("new");
-        Assert.Equal("new", acc.PasswordHash);
+        Assert.Equal("new", acc.PasswordHash.Value);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class AccountTests
         acc.AddRefreshToken(duplicate);
 
         Assert.Single(acc.RefreshTokens);
-        Assert.Equal("token-1", acc.RefreshTokens.First().Token);
+        Assert.Equal("token-1", acc.RefreshTokens.First().Token.Value);
     }
 
     [Fact]

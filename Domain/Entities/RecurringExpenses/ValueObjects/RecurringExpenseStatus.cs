@@ -4,7 +4,7 @@ namespace Domain.Entities.RecurringExpenses.ValueObjects;
 
 public sealed record RecurringExpenseStatus : ValueObject
 {
-    public bool IsActive { get; init; }
+    public bool IsActive { get; }
 
     private RecurringExpenseStatus(bool isActive)
     {

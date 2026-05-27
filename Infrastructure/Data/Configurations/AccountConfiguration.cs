@@ -1,4 +1,5 @@
 using Domain.AccessContext.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -13,6 +14,10 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Email)
+            .HasConversion(
+                email => email.Value,
+                value => Email.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(256);
 
@@ -20,6 +25,10 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
             .IsUnique();
 
         builder.Property(x => x.PasswordHash)
+            .HasConversion(
+                hash => hash.Value,
+                value => PasswordHash.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(500);
 

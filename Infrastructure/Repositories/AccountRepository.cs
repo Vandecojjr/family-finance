@@ -1,4 +1,5 @@
-﻿using Domain.AccessContext.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts.ValueObjects;
 using Domain.Repositories;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
         return await context.Set<Account>()
             .Include(x => x.RefreshTokens)
             .Include(x => x.Roles)
-            .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Email == Email.Create(email), cancellationToken);
     }
 
     public async Task<Account?> GetByMemberIdAsync(Guid memberId, CancellationToken cancellationToken = default)
@@ -33,7 +34,7 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await context.Set<Account>()
-            .AnyAsync(x => x.Email == email, cancellationToken);
+            .AnyAsync(x => x.Email == Email.Create(email), cancellationToken);
     }
 
     public async Task AddAsync(Account account, CancellationToken cancellationToken = default)
@@ -50,13 +51,13 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         return await context.Set<RefreshToken>()
-            .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Token == RefreshTokenValue.Create(token), cancellationToken);
     }
 
     public async Task<bool> ExistsRefreshTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         return await context.Set<RefreshToken>()
-            .AnyAsync(x => x.Token == token, cancellationToken);
+            .AnyAsync(x => x.Token == RefreshTokenValue.Create(token), cancellationToken);
     }
 
     public async Task AddRefreshTokenAsync(Guid accountId, RefreshToken token,

@@ -2,13 +2,14 @@ using Domain.Enums;
 using Domain.Shared.Aggregates.Abstractions;
 using Domain.Shared.Entities;
 using Domain.Entities.Members;
+using Domain.AccessContext.Entities.Accounts.ValueObjects;
 
 namespace Domain.AccessContext.Entities.Accounts;
 
 public class Account : Entity, IAggregateRoot
 {
-    public string Email { get; private set; }
-    public string PasswordHash { get; private set; }
+    public Email Email { get; private set; }
+    public PasswordHash PasswordHash { get; private set; }
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
 
     public Guid MemberId { get; private set; }
@@ -21,8 +22,8 @@ public class Account : Entity, IAggregateRoot
     public Account(string email, string passwordHash, Guid memberId)
     {
         MemberId = memberId;
-        Email = email;
-        PasswordHash = passwordHash;
+        Email = Email.Create(email);
+        PasswordHash = PasswordHash.Create(passwordHash);
     }
 
     public void Activate()
@@ -42,7 +43,7 @@ public class Account : Entity, IAggregateRoot
 
     public void ChangePassword(string newPasswordHash)
     {
-        PasswordHash = newPasswordHash;
+        PasswordHash = PasswordHash.Create(newPasswordHash);
     }
 
     public void AssignMember(Guid memberId)
@@ -71,7 +72,7 @@ public class Account : Entity, IAggregateRoot
 
     public void RevokeRefreshToken(string token)
     {
-        var refreshToken = RefreshTokens.FirstOrDefault(x => x.Token == token);
+        var refreshToken = RefreshTokens.FirstOrDefault(x => x.Token == RefreshTokenValue.Create(token));
         refreshToken?.Revoke();
     }
 

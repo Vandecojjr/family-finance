@@ -4,7 +4,7 @@ namespace Domain.Entities.RecurringIncomes.ValueObjects;
 
 public sealed record RecurringIncomeStatus : ValueObject
 {
-    public bool IsActive { get; init; }
+    public bool IsActive { get; }
 
     private RecurringIncomeStatus(bool isActive)
     {

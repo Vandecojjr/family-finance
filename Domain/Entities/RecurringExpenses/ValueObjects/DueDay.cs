@@ -5,7 +5,7 @@ namespace Domain.Entities.RecurringExpenses.ValueObjects;
 
 public sealed record DueDay : ValueObject
 {
-    public int Value { get; init; }
+    public int Value { get; }
 
     private DueDay(int value)
     {

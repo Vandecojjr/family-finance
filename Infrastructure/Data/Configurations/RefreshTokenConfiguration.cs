@@ -1,4 +1,5 @@
 using Domain.AccessContext.Entities.Accounts;
+using Domain.AccessContext.Entities.Accounts.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,6 +17,10 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .IsRequired();
 
         builder.Property(x => x.Token)
+            .HasConversion(
+                token => token.Value,
+                value => RefreshTokenValue.Create(value)
+            )
             .IsRequired()
             .HasMaxLength(500);
 

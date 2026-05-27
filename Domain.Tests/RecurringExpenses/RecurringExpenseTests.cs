@@ -133,37 +133,4 @@ public class RecurringExpenseTests
         Assert.Equal(newCategoryId, expense.CategoryId);
         Assert.True(expense.UpdatedAt > DateTime.MinValue);
     }
-
-    [Fact]
-    public void Deactivate_ShouldSetStatusToInactive_AndSetUpdatedAt()
-    {
-        // Arrange
-        var expense = new RecurringExpense(
-            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid());
-
-        // Act
-        expense.Deactivate();
-
-        // Assert
-        Assert.False(expense.Status.IsActive);
-        Assert.True(expense.UpdatedAt > DateTime.MinValue);
-    }
-
-    [Fact]
-    public void Activate_ShouldSetStatusToActive_AndSetUpdatedAt()
-    {
-        // Arrange
-        var expense = new RecurringExpense(
-            "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid());
-        expense.Deactivate();
-
-        var deacTime = expense.UpdatedAt;
-
-        // Act
-        expense.Activate();
-
-        // Assert
-        Assert.True(expense.Status.IsActive);
-        Assert.True(expense.UpdatedAt > deacTime);
-    }
 }

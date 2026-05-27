@@ -5,8 +5,8 @@ namespace Domain.Entities.RecurringIncomes.ValueObjects;
 
 public sealed record RecurringPeriod : ValueObject
 {
-    public DateTime StartDate { get; init; }
-    public DateTime? EndDate { get; init; }
+    public DateTime StartDate { get; }
+    public DateTime? EndDate { get; }
 
     private RecurringPeriod(DateTime startDate, DateTime? endDate)
     {

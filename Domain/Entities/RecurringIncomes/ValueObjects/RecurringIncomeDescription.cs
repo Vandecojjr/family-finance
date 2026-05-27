@@ -5,7 +5,7 @@ namespace Domain.Entities.RecurringIncomes.ValueObjects;
 
 public sealed record RecurringIncomeDescription : ValueObject
 {
-    public string Value { get; init; }
+    public string Value { get; }
 
     private RecurringIncomeDescription(string value)
     {

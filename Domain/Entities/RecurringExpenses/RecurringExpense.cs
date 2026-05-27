@@ -69,16 +69,4 @@ public class RecurringExpense : Entity, IAggregateRoot
         CategoryId = categoryId;
         SeUpdate();
     }
-
-    public void Deactivate()
-    {
-        Status = RecurringExpenseStatus.Inactive;
-        SeUpdate();
-    }
-
-    public void Activate()
-    {
-        Status = RecurringExpenseStatus.Active;
-        SeUpdate();
-    }
 }

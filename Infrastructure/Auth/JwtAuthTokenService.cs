@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,7 +33,7 @@ public sealed class JwtAuthTokenService : IAuthTokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, account.Email),
+            new(JwtRegisteredClaimNames.Email, account.Email.Value),
             new("accountId", account.Id.ToString())
         };
 

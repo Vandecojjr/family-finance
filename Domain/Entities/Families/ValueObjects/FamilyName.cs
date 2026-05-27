@@ -5,7 +5,7 @@ namespace Domain.Entities.Families.ValueObjects;
 
 public sealed record FamilyName : ValueObject
 {
-    public string Value { get; init; }
+    public string Value { get; }
 
     private FamilyName(string value)
     {

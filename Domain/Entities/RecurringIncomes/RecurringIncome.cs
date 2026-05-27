@@ -69,16 +69,4 @@ public class RecurringIncome : Entity, IAggregateRoot
         CategoryId = categoryId;
         SeUpdate();
     }
-
-    public void Deactivate()
-    {
-        Status = RecurringIncomeStatus.Inactive;
-        SeUpdate();
-    }
-
-    public void Activate()
-    {
-        Status = RecurringIncomeStatus.Active;
-        SeUpdate();
-    }
 }
