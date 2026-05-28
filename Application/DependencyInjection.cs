@@ -1,6 +1,7 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Application.Shared.Behaviors;
 using Application.Shared.Authorization;
+using Domain.Entities.RecurringExpenses.Services;
 using FluentValidation;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = Assembly.GetExecutingAssembly();
+        
+        services.AddScoped<RecurringExpensePaymentService>();
         
         services.AddMediator(o =>
         {

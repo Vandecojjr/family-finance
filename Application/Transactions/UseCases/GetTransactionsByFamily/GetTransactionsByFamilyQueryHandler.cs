@@ -2,12 +2,13 @@ using Application.Shared.Auth;
 using Application.Shared.Results;
 using Application.Transactions.UseCases.Shared;
 using Domain.Repositories;
+using Domain.Entities.Wallets;
 using Mediator;
 
 namespace Application.Transactions.UseCases.GetTransactionsByFamily;
 
 public sealed class GetTransactionsByFamilyQueryHandler(
-    ITransactionRepository transactionRepository,
+    IWalletRepository walletRepository,
     ICategoryRepository categoryRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetTransactionsByFamilyQuery, Result<List<TransactionResponse>>>
@@ -23,7 +24,7 @@ public sealed class GetTransactionsByFamilyQueryHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var transactions = await transactionRepository.GetByFamilyIdAsync(member.FamilyId, cancellationToken);
+        var transactions = await walletRepository.GetTransactionsByFamilyIdAsync(member.FamilyId, cancellationToken);
         var categories = await categoryRepository.GetByFamilyIdAsync(member.FamilyId, cancellationToken);
         var categoryDict = categories.ToDictionary(c => c.Id, c => c.Name.Value);
 
@@ -39,10 +40,10 @@ public sealed class GetTransactionsByFamilyQueryHandler(
             t.WalletId,
             t.BankAccountId,
             t.CreditCardId,
-            t.WalletName,
-            t.BankAccountName,
-            t.CreditCardDisplayName,
-            t.Notes)).ToList();
+            t.Metadata.WalletName,
+            t.Metadata.BankAccountName,
+            t.Metadata.CreditCardDisplayName,
+            t.Metadata.Notes)).ToList();
 
         return Result<List<TransactionResponse>>.Success(responseList);
     }

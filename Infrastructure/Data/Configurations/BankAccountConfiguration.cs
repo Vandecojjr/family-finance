@@ -1,3 +1,5 @@
+using Domain.Entities.BankAccounts;
+using Domain.Entities.BankAccounts.ValueObjects;
 using Domain.Entities.Wallets;
 using Domain.Entities.Wallets.ValueObjects;
 using Microsoft.EntityFrameworkCore;

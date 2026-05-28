@@ -1,8 +1,12 @@
-using Domain.Shared.Entities;
+using Domain.Entities.BankAccounts.Exceptions;
+using Domain.Entities.BankAccounts.ValueObjects;
+using Domain.Entities.CreidtCards;
+using Domain.Entities.CreidtCards.Exceptions;
+using Domain.Entities.Wallets;
 using Domain.Enums;
-using Domain.Entities.Wallets.ValueObjects;
+using Domain.Shared.Entities;
 
-namespace Domain.Entities.Wallets;
+namespace Domain.Entities.BankAccounts;
 
 public class BankAccount : Entity
 {
@@ -51,29 +55,58 @@ public class BankAccount : Entity
     public void RemoveCreditCard(Guid cardId)
     {
         var card = _creditCards.FirstOrDefault(c => c.Id == cardId);
-        if (card != null)
-        {
-            _creditCards.Remove(card);
-            SeUpdate();
-        }
+        if (card == null) 
+            return;
+        
+        _creditCards.Remove(card);
+        SeUpdate();
     }
 
-    public void AdjustBalance(decimal amount, TransactionType type)
+    public string RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId)
+    {
+        if (type == TransactionType.Income)
+            throw new CreditCardTransactionMustBeExpenseException();
+
+        var card = _creditCards.FirstOrDefault(c => c.Id == creditCardId);
+        if (card == null)
+            throw new InvalidOperationException($"Cartão de crédito com ID '{creditCardId}' não foi encontrado nesta conta.");
+
+        card.AdjustBalance(amount, type);
+
+        return $"{card.Brand.Value} •••• {card.LastFourDigits.Value}";
+    }
+
+    public void AdjustBalance(decimal amount, TransactionType type, bool? useCredit)
     {
         if (amount <= 0)
             throw new ArgumentException("O valor do ajuste deve ser maior que zero.", nameof(amount));
 
-        if (type == TransactionType.Income)
+        if (useCredit == null)
+            throw new BankAccountTransactionMustSelectSourceException();
+
+        if (useCredit.Value)
         {
-            DebitBalance += amount;
-        }
-        else if (type == TransactionType.Expense)
-        {
-            var availableFunds = DebitBalance + CreditLimit.Value;
-            if (availableFunds < amount)
+            if (type == TransactionType.Income)
+                throw new BankAccountCreditTransactionMustBeExpenseException();
+
+            if (CreditLimit.Value < amount)
                 throw new InvalidOperationException("Saldo e limite de crédito insuficientes para realizar esta transação.");
             
-            DebitBalance -= amount;
+            CreditLimit = CreditLimit.Create(CreditLimit.Value - amount);
+        }
+        else
+        {
+            if (type == TransactionType.Income)
+            {
+                DebitBalance += amount;
+            }
+            else if (type == TransactionType.Expense)
+            {
+                if (DebitBalance < amount)
+                    throw new InvalidOperationException("Saldo em conta insuficiente.");
+
+                DebitBalance -= amount;
+            }
         }
         SeUpdate();
     }

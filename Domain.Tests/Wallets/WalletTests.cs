@@ -1,3 +1,5 @@
+using Domain.Entities.BankAccounts.Exceptions;
+using Domain.Entities.CreidtCards.Exceptions;
 using Domain.Entities.Wallets;
 using Domain.Entities.Wallets.Exceptions;
 using Domain.Enums;
@@ -180,14 +182,15 @@ public class WalletTests
         var account = wallet.Accounts.First();
 
         // Act
-        account.AdjustBalance(100m, TransactionType.Income);
+        account.AdjustBalance(100m, TransactionType.Income, useCredit: false);
         // Assert
         Assert.Equal(300m, account.DebitBalance);
 
-        // Act (Uses 100m of the 500m credit limit)
-        account.AdjustBalance(400m, TransactionType.Expense);
+        // Act (Uses 400m of the 500m credit limit)
+        account.AdjustBalance(400m, TransactionType.Expense, useCredit: true);
         // Assert
-        Assert.Equal(-100m, account.DebitBalance);
+        Assert.Equal(300m, account.DebitBalance);
+        Assert.Equal(100m, account.CreditLimit.Value);
     }
 
     [Fact]
@@ -199,6 +202,42 @@ public class WalletTests
         var account = wallet.Accounts.First();
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => account.AdjustBalance(750m, TransactionType.Expense));
+        Assert.Throws<InvalidOperationException>(() => account.AdjustBalance(750m, TransactionType.Expense, useCredit: true));
+    }
+
+    [Fact]
+    public void BankAccount_ShouldThrow_WhenCreditIncomeIsAttempted()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
+        var account = wallet.Accounts.First();
+
+        // Act & Assert
+        Assert.Throws<BankAccountCreditTransactionMustBeExpenseException>(() => account.AdjustBalance(100m, TransactionType.Income, useCredit: true));
+    }
+
+    [Fact]
+    public void BankAccount_ShouldThrow_WhenSourceIsNotSelected()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
+        var account = wallet.Accounts.First();
+
+        // Act & Assert
+        Assert.Throws<BankAccountTransactionMustSelectSourceException>(() => account.AdjustBalance(100m, TransactionType.Income, useCredit: null));
+    }
+
+    [Fact]
+    public void BankAccount_ShouldThrow_WhenDebitExpenseExceedsDebitBalance()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
+        var account = wallet.Accounts.First();
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => account.AdjustBalance(250m, TransactionType.Expense, useCredit: false));
     }
 }

@@ -1,7 +1,8 @@
-using Domain.Shared.Entities;
+using Domain.Entities.BankAccounts.Exceptions;
 using Domain.Entities.Wallets.Exceptions;
+using Domain.Shared.Entities;
 
-namespace Domain.Entities.Wallets.ValueObjects;
+namespace Domain.Entities.BankAccounts.ValueObjects;
 
 public sealed record BankName : ValueObject
 {

@@ -1,3 +1,5 @@
+using Domain.Entities.CreidtCards;
+using Domain.Entities.CreidtCards.ValueObjects;
 using Domain.Entities.Wallets;
 using Domain.Entities.Wallets.ValueObjects;
 using Microsoft.EntityFrameworkCore;

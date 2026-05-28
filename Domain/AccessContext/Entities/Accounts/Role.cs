@@ -10,6 +10,12 @@ public class Role : Entity
     public ICollection<Permission> Permissions { get; private set; } = [];
     public ICollection<Account> Accounts { get; private set; } = [];
 
+    #pragma warning disable CS8618 // Required for EF Core and serialization
+    protected Role()
+    {
+    }
+    #pragma warning restore CS8618
+
     public Role(string name, string description)
     {
         Name = name;

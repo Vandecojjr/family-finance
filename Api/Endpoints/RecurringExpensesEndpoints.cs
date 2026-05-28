@@ -78,6 +78,16 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/pay", Pay)
+            .WithName("RecurringExpenses.Pay")
+            .WithSummary("Registra o pagamento de um gasto recorrente no mês atual.")
+            .WithTags("RecurringExpenses")
+            .RequireAuthorization()
+            .Produces<Result<Guid>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     public record CreateRequest(
@@ -100,6 +110,13 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         DateTime StartDate,
         DateTime? EndDate,
         Guid CategoryId);
+
+    public record PayRecurringExpenseRequest(
+        Guid WalletId,
+        decimal Amount,
+        Guid? BankAccountId = null,
+        Guid? CreditCardId = null,
+        bool? UseCredit = null);
 
     private static async Task<HttpResult> Create(
         [FromBody] CreateRequest request,
@@ -176,6 +193,23 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         CancellationToken cancellationToken)
     {
         var command = new DeleteRecurringExpenseCommand(id);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Pay(
+        [FromRoute] Guid id,
+        [FromBody] PayRecurringExpenseRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.RecurringExpenses.UseCases.PayRecurringExpense.PayRecurringExpenseCommand(
+            id,
+            request.WalletId,
+            request.Amount,
+            request.BankAccountId,
+            request.CreditCardId,
+            request.UseCredit);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }

@@ -37,5 +37,11 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasForeignKey(x => x.WalletId)
             .OnDelete(DeleteBehavior.Cascade)
             .Metadata.PrincipalToDependent!.SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(x => x.Transactions)
+            .WithOne()
+            .HasForeignKey(x => x.WalletId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .Metadata.PrincipalToDependent!.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

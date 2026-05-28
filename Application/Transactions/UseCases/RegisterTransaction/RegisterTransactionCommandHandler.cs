@@ -2,12 +2,12 @@ using Application.Shared.Auth;
 using Application.Shared.Results;
 using Domain.Entities.Transactions;
 using Domain.Repositories;
+using Domain.Shared.Exceptions;
 using Mediator;
 
 namespace Application.Transactions.UseCases.RegisterTransaction;
 
 public sealed class RegisterTransactionCommandHandler(
-    ITransactionRepository transactionRepository,
     IWalletRepository walletRepository,
     ICategoryRepository categoryRepository,
     IFamilyRepository familyRepository,
@@ -56,69 +56,30 @@ public sealed class RegisterTransactionCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem acesso a esta carteira."));
         }
 
-        string walletName = wallet.Name.Value;
-        string? bankAccountName = null;
-        string? creditCardDisplayName = null;
-
+        Transaction transaction;
         try
         {
-            if (command.BankAccountId.HasValue)
-            {
-                var account = wallet.Accounts.FirstOrDefault(a => a.Id == command.BankAccountId.Value);
-                if (account is null)
-                {
-                    return Result<Guid>.Failure(
-                        Error.NotFound("BankAccount.NotFound", $"Conta com ID '{command.BankAccountId}' não foi encontrada na carteira."));
-                }
-
-                bankAccountName = account.BankName.Value;
-
-                if (command.CreditCardId.HasValue)
-                {
-                    var card = account.CreditCards.FirstOrDefault(c => c.Id == command.CreditCardId.Value);
-                    if (card is null)
-                    {
-                        return Result<Guid>.Failure(
-                            Error.NotFound("CreditCard.NotFound", $"Cartão de crédito com ID '{command.CreditCardId}' não foi encontrado na conta."));
-                    }
-
-                    creditCardDisplayName = $"{card.Brand.Value} •••• {card.LastFourDigits.Value}";
-                }
-
-                // Call adjust balance on the account (both normal bank account or credit card transactions affect bank account balance)
-                account.AdjustBalance(command.Amount, command.Type);
-            }
-            else
-            {
-                // Physical Cash (dinheiro vivo)
-                wallet.AdjustCashBalance(command.Amount, command.Type);
-            }
+            transaction = wallet.RegisterTransaction(
+                command.Description,
+                command.Amount,
+                command.Type,
+                command.Date,
+                command.CategoryId,
+                command.BankAccountId,
+                command.CreditCardId,
+                command.UseCredit,
+                command.Notes);
+        }
+        catch (DomainException ex)
+        {
+            return Result<Guid>.Failure(Error.Validation("Transaction.InvalidOperation", ex.Message));
         }
         catch (InvalidOperationException ex)
         {
             return Result<Guid>.Failure(Error.Validation("Transaction.InvalidOperation", ex.Message));
         }
 
-        var transaction = new Transaction(
-            command.Description,
-            command.Amount,
-            command.Type,
-            command.Date,
-            member.FamilyId,
-            command.CategoryId,
-            command.WalletId,
-            command.BankAccountId,
-            command.CreditCardId,
-            walletName,
-            bankAccountName,
-            creditCardDisplayName,
-            command.Notes);
-
-        // Save wallet balance changes
         await walletRepository.UpdateAsync(wallet, cancellationToken);
-
-        // Persist transaction
-        await transactionRepository.AddAsync(transaction, cancellationToken);
 
         return Result<Guid>.Success(transaction.Id);
     }

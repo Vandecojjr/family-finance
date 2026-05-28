@@ -1,8 +1,10 @@
-using Domain.Entities.Transactions;
+using Domain.Entities.BankAccounts;
 using Domain.Entities.Transactions.ValueObjects;
 using Domain.Entities.Wallets;
 using Domain.Entities.Categories;
+using Domain.Entities.CreidtCards;
 using Domain.Entities.Families;
+using Domain.Entities.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -53,25 +55,34 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.Property(x => x.CreditCardId)
             .IsRequired(false);
 
-        builder.Property(x => x.WalletName)
-            .HasMaxLength(100)
+        builder.Property(x => x.UseCredit)
             .IsRequired(false);
 
-        builder.Property(x => x.BankAccountName)
-            .HasMaxLength(100)
-            .IsRequired(false);
+        builder.OwnsOne(x => x.Metadata, metadata =>
+        {
+            metadata.Property(m => m.WalletName)
+                .HasColumnName("WalletName")
+                .HasMaxLength(100)
+                .IsRequired(false);
 
-        builder.Property(x => x.CreditCardDisplayName)
-            .HasMaxLength(150)
-            .IsRequired(false);
+            metadata.Property(m => m.BankAccountName)
+                .HasColumnName("BankAccountName")
+                .HasMaxLength(100)
+                .IsRequired(false);
 
-        builder.Property(x => x.Notes)
-            .HasMaxLength(500)
-            .IsRequired(false);
+            metadata.Property(m => m.CreditCardDisplayName)
+                .HasColumnName("CreditCardDisplayName")
+                .HasMaxLength(150)
+                .IsRequired(false);
 
-        // Relationships with SetNull behavior
+            metadata.Property(m => m.Notes)
+                .HasColumnName("Notes")
+                .HasMaxLength(500)
+                .IsRequired(false);
+        });
+
         builder.HasOne<Wallet>()
-            .WithMany()
+            .WithMany(w => w.Transactions)
             .HasForeignKey(x => x.WalletId)
             .OnDelete(DeleteBehavior.SetNull);
 

@@ -1,7 +1,7 @@
+using Domain.Entities.BankAccounts.Exceptions;
 using Domain.Shared.Entities;
-using Domain.Entities.Wallets.Exceptions;
 
-namespace Domain.Entities.Wallets.ValueObjects;
+namespace Domain.Entities.BankAccounts.ValueObjects;
 
 public sealed record CreditLimit : ValueObject
 {

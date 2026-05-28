@@ -1,6 +1,6 @@
 using Domain.Shared.Exceptions;
 
-namespace Domain.Entities.Wallets.Exceptions;
+namespace Domain.Entities.BankAccounts.Exceptions;
 
 public class BankNameRequiredException : DomainException
 {

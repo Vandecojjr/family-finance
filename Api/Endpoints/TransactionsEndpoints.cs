@@ -49,6 +49,7 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         Guid? WalletId,
         Guid? BankAccountId,
         Guid? CreditCardId,
+        bool? UseCredit,
         string? Notes);
 
     private static async Task<HttpResult> RegisterTransaction(
@@ -65,6 +66,7 @@ public sealed class TransactionsEndpoints : IEndpointGroup
             request.WalletId,
             request.BankAccountId,
             request.CreditCardId,
+            request.UseCredit,
             request.Notes);
 
         var result = await mediator.Send(command, cancellationToken);

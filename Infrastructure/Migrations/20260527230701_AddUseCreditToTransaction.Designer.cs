@@ -3,17 +3,20 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527230701_AddUseCreditToTransaction")]
+    partial class AddUseCreditToTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -417,40 +420,6 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("RecurringExpenses", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpensePayment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("AmountPaid")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("RecurringExpenseId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecurringExpenseId");
-
-                    b.ToTable("RecurringExpensePayments", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.RecurringIncomes.RecurringIncome", b =>
                 {
                     b.Property<Guid>("Id")
@@ -744,15 +713,6 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpensePayment", b =>
-                {
-                    b.HasOne("Domain.Entities.RecurringExpenses.RecurringExpense", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("RecurringExpenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Domain.Entities.RecurringIncomes.RecurringIncome", b =>
                 {
                     b.HasOne("Domain.Entities.Categories.Category", "Category")
@@ -889,11 +849,6 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("RecurringExpenses");
 
                     b.Navigation("RecurringIncomes");
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
-                {
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("Domain.Entities.Wallets.Wallet", b =>

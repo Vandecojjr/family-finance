@@ -19,6 +19,12 @@ public class Account : Entity, IAggregateRoot
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
 
 
+    #pragma warning disable CS8618 // Required for EF Core and serialization
+    protected Account()
+    {
+    }
+    #pragma warning restore CS8618
+
     public Account(string email, string passwordHash, Guid memberId)
     {
         MemberId = memberId;

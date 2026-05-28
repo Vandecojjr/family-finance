@@ -24,8 +24,9 @@ import { recurringIncomesApi } from '@/api/endpoints/recurringIncomes';
 import { plannedIncomesApi } from '@/api/endpoints/plannedIncomes';
 import { plannedExpensesApi } from '@/api/endpoints/plannedExpenses';
 import { categoriesApi } from '@/api/endpoints/categories';
+import { walletsApi } from '@/api/endpoints/wallets';
 import { decodeJwt } from '@/utils/jwt';
-import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense } from '@/types';
+import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense, Wallet, BankAccount, CreditCard } from '@/types';
 import { useIsFocused } from '@react-navigation/native';
 import DatePicker from '@/components/DatePicker';
 
@@ -123,6 +124,12 @@ export default function RecurringExpensesScreen() {
     queryFn: () => categoriesApi.list(),
   });
 
+  // Fetch Wallets for payment selection
+  const { data: wallets } = useQuery({
+    queryKey: ['wallets'],
+    queryFn: () => walletsApi.list(),
+  });
+
   const flattenedCategories = React.useMemo(() => {
     if (!categories) return [];
     const targetType = activeTab === 'expense' ? 'Expense' : 'Income';
@@ -182,6 +189,16 @@ export default function RecurringExpensesScreen() {
   const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false);
   const [isEndDatePickerOpen, setIsEndDatePickerOpen] = useState(false);
 
+  // Pay Modal States
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [payingItem, setPayingItem] = useState<RecurringExpense | null>(null);
+  const [payAmount, setPayAmount] = useState('');
+  const [payWalletId, setPayWalletId] = useState('');
+  const [payBankAccountId, setPayBankAccountId] = useState('');
+  const [payCreditCardId, setPayCreditCardId] = useState('');
+  const [payUseCredit, setPayUseCredit] = useState(false);
+  const [isWalletSelectOpen, setIsWalletSelectOpen] = useState(false);
+
   // Mutations
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -201,33 +218,75 @@ export default function RecurringExpensesScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['recurringExpensesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomes'] });
-      queryClient.invalidateQueries({ queryKey: ['recurringIncomesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['plannedExpenses'] });
       queryClient.invalidateQueries({ queryKey: ['plannedIncomes'] });
     },
-    onError: (err: any) => {
-      Alert.alert('Erro', err.message);
+    onError: (error: any) => {
+      Alert.alert('Erro', error.message || 'Ocorreu um erro ao excluir.');
+    },
+  });
+
+  const payMutation = useMutation({
+    mutationFn: async (payload: { id: string, amount: number, walletId: string, bankAccountId?: string | null, creditCardId?: string | null, useCredit?: boolean | null }) => {
+      await recurringExpensesApi.pay(payload.id, {
+        walletId: payload.walletId,
+        amount: payload.amount,
+        bankAccountId: payload.bankAccountId,
+        creditCardId: payload.creditCardId,
+        useCredit: payload.useCredit,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      setIsPayModalOpen(false);
+      setPayingItem(null);
+      Alert.alert('Sucesso', 'Pagamento registrado com sucesso!');
+    },
+    onError: (error: any) => {
+      Alert.alert('Erro', error.message || 'Ocorreu um erro ao registrar o pagamento.');
     },
   });
 
   const handleDelete = (id: string) => {
-    const title = viewMode === 'planned'
-      ? (activeTab === 'expense' ? 'gasto previsto' : 'ganho previsto')
-      : (activeTab === 'expense' ? 'gasto recorrente' : 'ganho recorrente');
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Tem certeza de que deseja excluir este ${title}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Excluir', 
-          style: 'destructive',
-          onPress: () => deleteMutation.mutate(id) 
-        }
-      ]
-    );
+    Alert.alert('Confirmar Exclusão', 'Tem certeza que deseja excluir este item?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: () => deleteMutation.mutate(id) },
+    ]);
+  };
+
+  const openPayForm = (item: RecurringExpense) => {
+    setPayingItem(item);
+    setPayAmount(item.amount.toString());
+    setPayWalletId('');
+    setPayBankAccountId('');
+    setPayCreditCardId('');
+    setPayUseCredit(false);
+    setIsPayModalOpen(true);
+  };
+
+  const handlePaySubmit = () => {
+    if (!payingItem) return;
+    const amountNum = parseFloat(payAmount.replace(',', '.'));
+    if (isNaN(amountNum) || amountNum <= 0) {
+      Alert.alert('Erro', 'Informe um valor válido maior que zero.');
+      return;
+    }
+    if (!payWalletId) {
+      Alert.alert('Erro', 'Selecione uma carteira.');
+      return;
+    }
+
+    payMutation.mutate({
+      id: payingItem.id,
+      amount: amountNum,
+      walletId: payWalletId,
+      bankAccountId: payBankAccountId || null,
+      creditCardId: payCreditCardId || null,
+      useCredit: payUseCredit || null,
+    });
   };
 
   const saveMutation = useMutation({
@@ -337,9 +396,7 @@ export default function RecurringExpensesScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurringExpenses'] });
-      queryClient.invalidateQueries({ queryKey: ['recurringExpensesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['recurringIncomes'] });
-      queryClient.invalidateQueries({ queryKey: ['recurringIncomesTotalFixed'] });
       queryClient.invalidateQueries({ queryKey: ['plannedExpenses'] });
       queryClient.invalidateQueries({ queryKey: ['plannedIncomes'] });
       closeForm();
@@ -837,31 +894,40 @@ export default function RecurringExpensesScreen() {
                             {/* Divider */}
                             <View style={styles.cardDivider} />
 
-                            {/* Controls */}
-                            <View style={styles.expenseControls}>
-                              <View style={styles.actionGroup}>
-                                <TouchableOpacity 
-                                  style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
-                                  onPress={() => openEditForm(recItem)}
-                                >
-                                  <Ionicons 
-                                    name="create-outline" 
-                                    size={16} 
-                                    color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
-                                  />
-                                  <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
-                                    Editar
-                                  </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity 
-                                  style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
-                                  onPress={() => handleDelete(recItem.id)}
-                                >
-                                  <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                                  <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
-                                </TouchableOpacity>
-                              </View>
-                            </View>
+                                {/* Controls */}
+                                <View style={styles.expenseControls}>
+                                  <View style={styles.actionGroup}>
+                                    <TouchableOpacity 
+                                      style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
+                                      onPress={() => openEditForm(recItem)}
+                                    >
+                                      <Ionicons 
+                                        name="create-outline" 
+                                        size={16} 
+                                        color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                      />
+                                      <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                                        Editar
+                                      </Text>
+                                    </TouchableOpacity>
+                                    {activeTab === 'expense' && !recItem.isPaid && (
+                                      <TouchableOpacity 
+                                        style={[styles.iconBtn, { backgroundColor: 'rgba(74, 144, 226, 0.1)' }]} 
+                                        onPress={() => openPayForm(recItem as RecurringExpense)}
+                                      >
+                                        <Ionicons name="card-outline" size={16} color={colors.brand.primary} />
+                                        <Text style={[styles.iconBtnText, { color: colors.brand.primary }]}>Pagar</Text>
+                                      </TouchableOpacity>
+                                    )}
+                                    <TouchableOpacity 
+                                      style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
+                                      onPress={() => handleDelete(recItem.id)}
+                                    >
+                                      <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                                      <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </View>
                           </View>
                         );
                       })}
@@ -1209,6 +1275,156 @@ export default function RecurringExpensesScreen() {
           </View>
         </SafeAreaView>
       </Modal>
+
+      {/* Pay Modal */}
+      <Modal visible={isPayModalOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <SafeAreaView style={styles.formContainer}>
+              <View style={styles.formCard}>
+                <View style={styles.formHeader}>
+                  <View style={styles.formHeaderInfo}>
+                    <Text style={styles.formTitle}>Registrar Pagamento</Text>
+                  </View>
+                  <TouchableOpacity style={styles.closeBtn} onPress={() => setIsPayModalOpen(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formScrollBody}>
+                  <View style={styles.fieldWrapper}>
+                    <Text style={styles.label}>Gasto Recorrente</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: colors.bg.tertiary, color: colors.text.secondary }]}
+                      value={payingItem?.description}
+                      editable={false}
+                    />
+                  </View>
+
+                  <View style={styles.fieldWrapper}>
+                    <Text style={styles.label}>Valor (R$)</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.text.muted}
+                      keyboardType="numeric"
+                      value={payAmount}
+                      onChangeText={setPayAmount}
+                    />
+                  </View>
+
+                  <View style={styles.fieldWrapper}>
+                    <Text style={styles.label}>Carteira / Conta</Text>
+                    <TouchableOpacity style={styles.selectInput} onPress={() => setIsWalletSelectOpen(true)}>
+                      <Text style={[styles.selectInputText, !payWalletId && { color: colors.text.muted }]}>
+                        {payWalletId
+                          ? (payUseCredit 
+                              ? `Cartão de Crédito - ${wallets?.find(w => w.id === payWalletId)?.accounts.find(a => a.id === payBankAccountId)?.creditCards.find(c => c.id === payCreditCardId)?.brand}` 
+                              : payBankAccountId 
+                                ? `Conta Bancária - ${wallets?.find(w => w.id === payWalletId)?.accounts.find(a => a.id === payBankAccountId)?.bankName}`
+                                : `Dinheiro Vivo - ${wallets?.find(w => w.id === payWalletId)?.name}`)
+                          : 'Selecionar fonte de pagamento'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.saveBtn}
+                    onPress={handlePaySubmit}
+                    disabled={payMutation.isPending}
+                  >
+                    {payMutation.isPending ? (
+                      <ActivityIndicator color={colors.white} />
+                    ) : (
+                      <Text style={styles.saveBtnText}>Confirmar Pagamento</Text>
+                    )}
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </SafeAreaView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Wallet/Account Select Modal */}
+      <Modal visible={isWalletSelectOpen} transparent animationType="slide">
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.categorySelectorCard}>
+            <View style={styles.formHeader}>
+              <View style={styles.formHeaderInfo}>
+                <Text style={styles.formTitle}>Selecione a Fonte de Pagamento</Text>
+              </View>
+              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsWalletSelectOpen(false)}>
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryListContent}>
+              {wallets?.map(wallet => (
+                <View key={wallet.id} style={{ marginBottom: spacing.md }}>
+                  <Text style={styles.walletGroupTitle}>{wallet.name}</Text>
+                  
+                  {/* Dinheiro Vivo */}
+                  <TouchableOpacity 
+                    style={styles.walletOptionBtn}
+                    onPress={() => {
+                      setPayWalletId(wallet.id);
+                      setPayBankAccountId('');
+                      setPayCreditCardId('');
+                      setPayUseCredit(false);
+                      setIsWalletSelectOpen(false);
+                    }}
+                  >
+                    <Ionicons name="cash-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
+                    <Text style={styles.walletOptionText}>Dinheiro Vivo ({fmt(wallet.cashBalance)})</Text>
+                  </TouchableOpacity>
+
+                  {/* Bank Accounts */}
+                  {wallet.accounts.map(acc => (
+                    <View key={acc.id}>
+                      <TouchableOpacity 
+                        style={styles.walletOptionBtn}
+                        onPress={() => {
+                          setPayWalletId(wallet.id);
+                          setPayBankAccountId(acc.id);
+                          setPayCreditCardId('');
+                          setPayUseCredit(false);
+                          setIsWalletSelectOpen(false);
+                        }}
+                      >
+                        <Ionicons name="business-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
+                        <Text style={styles.walletOptionText}>{acc.bankName} - Conta ({fmt(acc.debitBalance)})</Text>
+                      </TouchableOpacity>
+
+                      {/* Credit Cards */}
+                      {acc.creditCards.map(card => (
+                        <TouchableOpacity 
+                          key={card.id}
+                          style={[styles.walletOptionBtn, { paddingLeft: spacing.xl }]}
+                          onPress={() => {
+                            setPayWalletId(wallet.id);
+                            setPayBankAccountId(acc.id);
+                            setPayCreditCardId(card.id);
+                            setPayUseCredit(true);
+                            setIsWalletSelectOpen(false);
+                          }}
+                        >
+                          <Ionicons name="card-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
+                          <Text style={styles.walletOptionText}>{card.brand} final {card.lastFourDigits}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -1631,5 +1847,23 @@ const styles = StyleSheet.create({
   },
   cardsGrid: {
     gap: spacing.sm,
+  },
+  walletGroupTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  walletOptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.bg.tertiary,
+    borderRadius: radius.md,
+    marginBottom: spacing.xs,
+  },
+  walletOptionText: {
+    ...typography.body,
+    color: colors.text.primary,
   },
 });

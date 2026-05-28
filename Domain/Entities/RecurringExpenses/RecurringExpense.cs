@@ -22,6 +22,9 @@ public class RecurringExpense : Entity, IAggregateRoot
     public virtual Member Member { get; private set; } = null!;
     public virtual Category Category { get; private set; } = null!;
 
+    private readonly List<RecurringExpensePayment> _payments = [];
+    public virtual IReadOnlyCollection<RecurringExpensePayment> Payments => _payments.AsReadOnly();
+
     #pragma warning disable CS8618 // Required for EF Core and serialization
     protected RecurringExpense()
     {
@@ -69,4 +72,19 @@ public class RecurringExpense : Entity, IAggregateRoot
         CategoryId = categoryId;
         SeUpdate();
     }
+
+    public RecurringExpensePayment Pay(int month, int year, decimal amount, DateTime date)
+    {
+        if (_payments.Any(p => p.Month == month && p.Year == year))
+        {
+            throw new InvalidOperationException($"O gasto recorrente já foi pago para o mês {month}/{year}.");
+        }
+
+        var payment = new RecurringExpensePayment(Id, month, year, amount, date);
+        _payments.Add(payment);
+        SeUpdate();
+        return payment;
+    }
+
+    public bool IsPaid() => _payments.Count != 0;
 }

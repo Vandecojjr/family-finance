@@ -14,7 +14,8 @@ public sealed record RecurringExpenseResponse(
     bool IsActive,
     Guid MemberId,
     Guid CategoryId,
-    string CategoryName);
+    bool isPaid,
+    string? CategoryName);
 
 public static class RecurringExpenseResponseFactory
 {
@@ -32,7 +33,9 @@ public static class RecurringExpenseResponseFactory
             expense.Status.IsActive,
             expense.MemberId,
             expense.CategoryId,
-            expense.Category?.Name?.Value ?? string.Empty);
+            expense.IsPaid(),
+            expense.Category
+            );
     }
 
     public static IReadOnlyCollection<RecurringExpenseResponse> ToResponse(this IEnumerable<RecurringExpense> expenses)

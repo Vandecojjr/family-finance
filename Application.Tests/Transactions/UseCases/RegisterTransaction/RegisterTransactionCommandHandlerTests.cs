@@ -3,7 +3,6 @@ using Application.Transactions.UseCases.RegisterTransaction;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
 using Domain.Entities.Wallets;
-using Domain.Entities.Transactions;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -14,7 +13,6 @@ namespace Application.Tests.Transactions.UseCases.RegisterTransaction;
 
 public class RegisterTransactionCommandHandlerTests
 {
-    private readonly Mock<ITransactionRepository> _transactionRepositoryMock;
     private readonly Mock<IWalletRepository> _walletRepositoryMock;
     private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
@@ -23,14 +21,12 @@ public class RegisterTransactionCommandHandlerTests
 
     public RegisterTransactionCommandHandlerTests()
     {
-        _transactionRepositoryMock = new Mock<ITransactionRepository>();
         _walletRepositoryMock = new Mock<IWalletRepository>();
         _categoryRepositoryMock = new Mock<ICategoryRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
 
         _handler = new RegisterTransactionCommandHandler(
-            _transactionRepositoryMock.Object,
             _walletRepositoryMock.Object,
             _categoryRepositoryMock.Object,
             _familyRepositoryMock.Object,
@@ -54,7 +50,11 @@ public class RegisterTransactionCommandHandlerTests
             TransactionType.Expense,
             DateTime.UtcNow,
             category.Id,
-            wallet.Id);
+            wallet.Id,
+            null,
+            null,
+            null,
+            null);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
@@ -75,9 +75,9 @@ public class RegisterTransactionCommandHandlerTests
         result.Value.Should().NotBeEmpty();
 
         wallet.CashBalance.Value.Should().Be(450m);
+        wallet.Transactions.Should().ContainSingle(t => t.Id == result.Value);
 
         _walletRepositoryMock.Verify(repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()), Times.Once);
-        _transactionRepositoryMock.Verify(repo => repo.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -100,7 +100,10 @@ public class RegisterTransactionCommandHandlerTests
             DateTime.UtcNow,
             category.Id,
             wallet.Id,
-            account.Id);
+            account.Id,
+            null,
+            false,
+            null);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
@@ -119,6 +122,7 @@ public class RegisterTransactionCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         account.DebitBalance.Should().Be(4500m);
+        wallet.Transactions.Should().ContainSingle(t => t.Id == result.Value);
 
         _walletRepositoryMock.Verify(repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()), Times.Once);
     }

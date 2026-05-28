@@ -147,6 +147,7 @@ export interface RecurringExpense {
   memberId: string;
   categoryId: string;
   categoryName: string;
+  isPaid: boolean;
 }
 
 export interface CreateRecurringExpenseRequest {
@@ -170,6 +171,14 @@ export interface UpdateRecurringExpenseRequest {
   startDate: string;
   endDate: string | null;
   categoryId: string;
+}
+
+export interface PayRecurringExpenseRequest {
+  walletId: string;
+  amount: number;
+  bankAccountId?: string | null;
+  creditCardId?: string | null;
+  useCredit?: boolean | null;
 }
 
 export interface RecurringIncome {

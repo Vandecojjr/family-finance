@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import { ApiResult, RecurringExpense, CreateRecurringExpenseRequest, UpdateRecurringExpenseRequest } from '@/types';
+import { ApiResult, RecurringExpense, CreateRecurringExpenseRequest, UpdateRecurringExpenseRequest, PayRecurringExpenseRequest } from '@/types';
 
 export const recurringExpensesApi = {
   getByMemberId: async (memberId: string): Promise<RecurringExpense[]> => {
@@ -26,6 +26,15 @@ export const recurringExpensesApi = {
       const msg = data.errors?.[0]?.description ?? 'Erro ao atualizar gasto recorrente.';
       throw new Error(msg);
     }
+  },
+
+  pay: async (id: string, payload: PayRecurringExpenseRequest): Promise<string> => {
+    const { data } = await apiClient.post<ApiResult<string>>(`/api/recurringexpenses/${id}/pay`, payload);
+    if (!data.isSuccess || !data.value) {
+      const msg = data.errors?.[0]?.description ?? 'Erro ao pagar gasto recorrente.';
+      throw new Error(msg);
+    }
+    return data.value;
   },
 
 

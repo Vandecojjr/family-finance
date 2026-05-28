@@ -1,3 +1,4 @@
+using Domain.Entities.Transactions;
 using Domain.Entities.Wallets;
 using Domain.Repositories;
 using Infrastructure.Data;
@@ -12,6 +13,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         return await context.Set<Wallet>()
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
+            .Include(x => x.Transactions)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
@@ -20,6 +22,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         var list = await context.Set<Wallet>()
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
+            .Include(x => x.Transactions)
             .Where(x => x.FamilyId == familyId)
             .ToListAsync(cancellationToken);
         return list.AsReadOnly();
@@ -39,6 +42,26 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
     public async Task DeleteAsync(Wallet wallet, CancellationToken cancellationToken = default)
     {
         context.Set<Wallet>().Remove(wallet);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Transaction?> GetTransactionByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Transaction>()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<Transaction>> GetTransactionsByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default)
+    {
+        var list = await context.Set<Transaction>()
+            .Where(x => x.FamilyId == familyId)
+            .ToListAsync(cancellationToken);
+        return list.AsReadOnly();
+    }
+
+    public async Task DeleteTransactionAsync(Transaction transaction, CancellationToken cancellationToken = default)
+    {
+        context.Set<Transaction>().Remove(transaction);
         await context.SaveChangesAsync(cancellationToken);
     }
 }

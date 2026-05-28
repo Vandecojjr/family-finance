@@ -20,6 +20,7 @@ public class RecurringExpenseRepository(AppDbContext context) : IRecurringExpens
     {
         var list = await context.Set<RecurringExpense>()
             .Include(x => x.Category)
+            .Include(x => x.Payments.Where(p => p.PaidAt.Month == DateTime.Now.Month))
             .Where(x => x.MemberId == memberId)
             .ToListAsync(cancellationToken);
         return list.AsReadOnly();

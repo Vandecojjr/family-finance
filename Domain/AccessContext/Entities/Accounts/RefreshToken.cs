@@ -12,6 +12,12 @@ public class RefreshToken : Entity
 
     public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
 
+    #pragma warning disable CS8618 // Required for EF Core and serialization
+    protected RefreshToken()
+    {
+    }
+    #pragma warning restore CS8618
+
     public RefreshToken(Guid accountId, string token, DateTime expiresAt)
     {
         AccountId = accountId;
