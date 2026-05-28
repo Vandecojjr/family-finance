@@ -36,6 +36,5 @@ public class Category : Entity, IAggregateRoot
         Name = CategoryName.Create(name);
         SeUpdate();
     }
-    
-    public static implicit operator string(Category category) => category.Name.Value;
+    public static implicit operator string?(Category? category) => category?.Name?.Value;
 }

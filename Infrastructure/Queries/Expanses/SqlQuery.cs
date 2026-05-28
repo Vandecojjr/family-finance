@@ -26,7 +26,7 @@ public sealed class SqlQuery
     {
     }
     
-    public void AddParameter(string name, object value)
+    public void AddParameter(object value)
     {
         Parameters = Parameters.Append(value).ToArray();
     }

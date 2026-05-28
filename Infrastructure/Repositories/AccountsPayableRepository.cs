@@ -1,5 +1,6 @@
 using Application.Shared.Objects;
 using Application.Shared.Repositories;
+using Domain.Enums;
 using Domain.Enums.Queries;
 using Infrastructure.Data;
 using Infrastructure.Queries.Expanses;
@@ -9,7 +10,7 @@ namespace Infrastructure.Repositories;
 
 public class AccountsPayableRepository(AppDbContext context) : IAccountsPayableRepository
 {
-    public async Task<IReadOnlyCollection<AccountsPayableDto>> GetAllByMember(Guid memberId, Date onlyDate, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<AccountsPayableDto>> GetAllByMember(Guid memberId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default)
     {
         var query = AccountsPayableSql.GetAllByMember(memberId, onlyDate);
         

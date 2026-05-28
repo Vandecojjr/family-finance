@@ -2,6 +2,7 @@ using Api.Extensions;
 using Application.Shared.Objects;
 using Application.Shared.Results;
 using Application.UseCases.AccountsPayable.GetMemberAccountsPayable;
+using Domain.Enums;
 using Domain.Enums.Queries;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ public sealed class AccountsPayableEndpoints : IEndpointGroup
 
     private async Task<HttpResult> GetByMember(
         [FromRoute] Guid memberId,
-        [FromQuery] Date onlyDate,
+        [FromQuery] RecurringFrequency onlyDate,
         IMediator mediator,
         CancellationToken cancellationToken)
     {

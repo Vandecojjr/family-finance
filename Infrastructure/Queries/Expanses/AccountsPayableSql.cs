@@ -1,42 +1,41 @@
-using System.Text;
-using Domain.Enums.Queries;
+using Domain.Enums;
 
 namespace Infrastructure.Queries.Expanses;
 
 public static class AccountsPayableSql
 {
-    public static SqlQuery GetAllByMember(Guid memberId, Date onlyDate)
+    public static SqlQuery GetAllByMember(Guid memberId, RecurringFrequency onlyDate)
     {
-        var sb = new StringBuilder();
-        sb.Append("""
-                   SELECT  
+        var dateLogic = GetDateLogic(onlyDate);
+        
+        var sql = $$"""
+                   SELECT
                        re."Description",
                        re."Amount",
                        re."Frequency",
                        c."Name" as CategoryName
-                   FROM "RecurringExpensePayments" p
-                   INNER JOIN "RecurringExpenses" re on p."RecurringExpenseId" = re."Id"
-                   INNER JOIN "Categories" c on re."CategoryId" = c."Id"
+                   FROM "RecurringExpenses" re
+                            INNER JOIN "Categories" c on re."CategoryId" = c."Id"
+                            LEFT JOIN "RecurringExpensePayments" p on re."Id" = p."RecurringExpenseId"
+                               {{dateLogic}}
                    WHERE re."MemberId" = {0}
-                   """);
+                     AND re."Frequency" = {1}
+                     AND p."Id" IS NULL
+                   """;
 
-        var dateLogic = GetDateLogic(onlyDate);
-        if (!string.IsNullOrEmpty(dateLogic))
-        {
-            sb.AppendLine();
-            sb.Append(dateLogic);
-        }
+        var sqlResult = new SqlQuery(sql, memberId);
+        sqlResult.AddParameter(onlyDate);
         
-        return new SqlQuery(sb.ToString(), memberId);
+        return sqlResult;
     }
 
-    private static string GetDateLogic(Date onlyDate)
+    private static string GetDateLogic(RecurringFrequency onlyDate)
     {
         return onlyDate switch
         {
-            Date.Week => "AND EXTRACT(WEEK FROM p.\"PaidAt\") <> EXTRACT(WEEK FROM CURRENT_DATE)",
-            Date.Month => "AND EXTRACT(MONTH FROM p.\"PaidAt\") <> EXTRACT(MONTH FROM CURRENT_DATE)",
-            Date.Year => "AND EXTRACT(YEAR FROM p.\"PaidAt\") <> EXTRACT(YEAR FROM CURRENT_DATE)",
+            RecurringFrequency.Weekly => "AND EXTRACT(WEEK FROM p.\"PaidAt\") = EXTRACT(WEEK FROM CURRENT_DATE)",
+            RecurringFrequency.Monthly => "AND EXTRACT(MONTH FROM p.\"PaidAt\") = EXTRACT(MONTH FROM CURRENT_DATE)",
+            RecurringFrequency.Yearly => "AND EXTRACT(YEAR FROM p.\"PaidAt\") = EXTRACT(YEAR FROM CURRENT_DATE)",
             _ => string.Empty
         };
     }

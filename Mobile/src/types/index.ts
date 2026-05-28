@@ -268,3 +268,10 @@ export interface UpdatePlannedExpenseRequest {
   date: string;
   categoryId: string;
 }
+
+export interface AccountsPayableDto {
+  description: string;
+  amount: number;
+  frequency: number;
+  categoryName: string;
+}
