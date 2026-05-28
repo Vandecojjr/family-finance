@@ -1,5 +1,5 @@
 using Application.Shared.Auth;
-using Application.Transactions.UseCases.DeleteTransaction;
+using Application.UseCases.Transactions.DeleteTransaction;
 using Domain.Entities.Families;
 using Domain.Entities.Transactions;
 using Domain.Entities.Wallets;

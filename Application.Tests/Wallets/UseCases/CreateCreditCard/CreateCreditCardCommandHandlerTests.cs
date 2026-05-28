@@ -1,5 +1,5 @@
 using Application.Shared.Auth;
-using Application.Wallets.UseCases.CreateCreditCard;
+using Application.UseCases.Wallets.CreateCreditCard;
 using Domain.Entities.Families;
 using Domain.Entities.Wallets;
 using Domain.Enums;

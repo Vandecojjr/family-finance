@@ -1,5 +1,5 @@
 using Application.Shared.Auth;
-using Application.Transactions.UseCases.RegisterTransaction;
+using Application.UseCases.Transactions.RegisterTransaction;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
 using Domain.Entities.Wallets;

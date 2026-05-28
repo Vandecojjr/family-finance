@@ -1,5 +1,5 @@
-using Application.Families.UseCases.GetMyFamily;
 using Application.Shared.Auth;
+using Application.UseCases.Families.GetMyFamily;
 using Domain.Entities.Families;
 using Domain.Repositories;
 using FluentAssertions;

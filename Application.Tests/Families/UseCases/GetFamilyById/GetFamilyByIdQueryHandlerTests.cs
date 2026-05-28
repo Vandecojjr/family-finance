@@ -1,6 +1,6 @@
-using Application.Families.UseCases.GetFamilyById;
 using Application.Shared.Auth;
 using Application.Shared.Results;
+using Application.UseCases.Families.GetFamilyById;
 using Domain.Entities.Families;
 using Domain.Repositories;
 using FluentAssertions;

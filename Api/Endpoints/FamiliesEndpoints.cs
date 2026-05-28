@@ -1,8 +1,8 @@
 using Api.Extensions;
-using Application.Families.UseCases.GetFamilyById;
-using Application.Families.UseCases.GetFamilyName;
-using Application.Families.UseCases.GetMyFamily;
 using Application.Shared.Results;
+using Application.UseCases.Families.GetFamilyById;
+using Application.UseCases.Families.GetFamilyName;
+using Application.UseCases.Families.GetMyFamily;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using HttpResult = Microsoft.AspNetCore.Http.IResult;

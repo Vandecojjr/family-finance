@@ -1,9 +1,9 @@
 using Api.Extensions;
-using Application.Accounts.UseCases.Login;
-using Application.Accounts.UseCases.RefreshToken;
-using Application.Accounts.UseCases.RevokeToken;
 using Application.Shared.Responses;
 using Application.Shared.Results;
+using Application.UseCases.Accounts.Login;
+using Application.UseCases.Accounts.RefreshToken;
+using Application.UseCases.Accounts.RevokeToken;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using HttpResult = Microsoft.AspNetCore.Http.IResult;

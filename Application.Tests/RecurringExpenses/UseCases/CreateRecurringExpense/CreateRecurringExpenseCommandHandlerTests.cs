@@ -1,5 +1,5 @@
-using Application.RecurringExpenses.UseCases.CreateRecurringExpense;
 using Application.Shared.Auth;
+using Application.UseCases.RecurringExpenses.CreateRecurringExpense;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
 using Domain.Entities.RecurringExpenses;

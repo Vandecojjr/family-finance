@@ -1,0 +1,49 @@
+using Application.Shared.Auth;
+using Application.Shared.Results;
+using Application.UseCases.Transactions.Shared;
+using Domain.Repositories;
+using Mediator;
+
+namespace Application.UseCases.Transactions.GetTransactionsByFamily;
+
+public sealed class GetTransactionsByFamilyQueryHandler(
+    IWalletRepository walletRepository,
+    ICategoryRepository categoryRepository,
+    IFamilyRepository familyRepository,
+    ICurrentUser currentUser) : IQueryHandler<GetTransactionsByFamilyQuery, Result<List<TransactionResponse>>>
+{
+    public async ValueTask<Result<List<TransactionResponse>>> Handle(
+        GetTransactionsByFamilyQuery query,
+        CancellationToken cancellationToken)
+    {
+        var member = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
+        if (member is null)
+        {
+            return Result<List<TransactionResponse>>.Failure(
+                Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
+        }
+
+        var transactions = await walletRepository.GetTransactionsByFamilyIdAsync(member.FamilyId, cancellationToken);
+        var categories = await categoryRepository.GetByFamilyIdAsync(member.FamilyId, cancellationToken);
+        var categoryDict = categories.ToDictionary(c => c.Id, c => c.Name.Value);
+
+        var responseList = transactions.Select(t => new TransactionResponse(
+            t.Id,
+            t.Description.Value,
+            t.Amount.Value,
+            (int)t.Type,
+            t.Date,
+            t.FamilyId,
+            t.CategoryId,
+            categoryDict.TryGetValue(t.CategoryId, out var catName) ? catName : "Sem Categoria",
+            t.WalletId,
+            t.BankAccountId,
+            t.CreditCardId,
+            t.Metadata.WalletName,
+            t.Metadata.BankAccountName,
+            t.Metadata.CreditCardDisplayName,
+            t.Metadata.Notes)).ToList();
+
+        return Result<List<TransactionResponse>>.Success(responseList);
+    }
+}

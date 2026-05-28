@@ -1,5 +1,5 @@
-using Application.RecurringExpenses.UseCases.GetRecurringExpenseById;
 using Application.Shared.Auth;
+using Application.UseCases.RecurringExpenses.GetRecurringExpenseById;
 using Domain.Entities.Families;
 using Domain.Entities.RecurringExpenses;
 using Domain.Enums;

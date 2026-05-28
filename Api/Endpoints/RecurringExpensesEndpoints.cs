@@ -1,12 +1,13 @@
 using Api.Extensions;
-using Application.RecurringExpenses.UseCases.CreateRecurringExpense;
-using Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
-using Application.RecurringExpenses.UseCases.GetRecurringExpenseById;
-using Application.RecurringExpenses.UseCases.GetRecurringExpensesByMember;
-using Application.RecurringExpenses.UseCases.GetTotalFixedExpensesByMember;
-using Application.RecurringExpenses.UseCases.DeleteRecurringExpense;
-using Application.RecurringExpenses.UseCases.Shared;
 using Application.Shared.Results;
+using Application.UseCases.RecurringExpenses.CreateRecurringExpense;
+using Application.UseCases.RecurringExpenses.DeleteRecurringExpense;
+using Application.UseCases.RecurringExpenses.GetRecurringExpenseById;
+using Application.UseCases.RecurringExpenses.GetRecurringExpensesByMember;
+using Application.UseCases.RecurringExpenses.GetTotalFixedExpensesByMember;
+using Application.UseCases.RecurringExpenses.PayRecurringExpense;
+using Application.UseCases.RecurringExpenses.Shared;
+using Application.UseCases.RecurringExpenses.UpdateRecurringExpense;
 using Domain.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
@@ -203,7 +204,7 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var command = new Application.RecurringExpenses.UseCases.PayRecurringExpense.PayRecurringExpenseCommand(
+        var command = new PayRecurringExpenseCommand(
             id,
             request.WalletId,
             request.Amount,

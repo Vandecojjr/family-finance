@@ -1,11 +1,11 @@
 using Api.Extensions;
-using Application.PlannedExpenses.UseCases.CreatePlannedExpense;
-using Application.PlannedExpenses.UseCases.UpdatePlannedExpense;
-using Application.PlannedExpenses.UseCases.GetPlannedExpenseById;
-using Application.PlannedExpenses.UseCases.GetPlannedExpensesByMember;
-using Application.PlannedExpenses.UseCases.DeletePlannedExpense;
-using Application.PlannedExpenses.UseCases.Shared;
 using Application.Shared.Results;
+using Application.UseCases.PlannedExpenses.CreatePlannedExpense;
+using Application.UseCases.PlannedExpenses.DeletePlannedExpense;
+using Application.UseCases.PlannedExpenses.GetPlannedExpenseById;
+using Application.UseCases.PlannedExpenses.GetPlannedExpensesByMember;
+using Application.UseCases.PlannedExpenses.Shared;
+using Application.UseCases.PlannedExpenses.UpdatePlannedExpense;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using HttpResult = Microsoft.AspNetCore.Http.IResult;

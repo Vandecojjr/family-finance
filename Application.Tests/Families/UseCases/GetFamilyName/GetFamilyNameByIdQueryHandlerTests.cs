@@ -1,6 +1,6 @@
-using Application.Families.UseCases.GetFamilyName;
 using Application.Shared.Auth;
 using Application.Shared.Results;
+using Application.UseCases.Families.GetFamilyName;
 using Domain.Entities.Families;
 using Domain.Entities.Families.ValueObjects;
 using Domain.Repositories;

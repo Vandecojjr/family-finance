@@ -1,7 +1,7 @@
 using Api.Extensions;
-using Application.Categories.UseCases.CreateCategory;
-using Application.Categories.UseCases.ListCategories;
 using Application.Shared.Results;
+using Application.UseCases.Categories.CreateCategory;
+using Application.UseCases.Categories.ListCategories;
 using Domain.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;

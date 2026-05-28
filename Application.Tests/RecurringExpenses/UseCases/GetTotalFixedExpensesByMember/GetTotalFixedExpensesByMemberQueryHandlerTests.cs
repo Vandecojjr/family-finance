@@ -1,5 +1,5 @@
-using Application.RecurringExpenses.UseCases.GetTotalFixedExpensesByMember;
 using Application.Shared.Auth;
+using Application.UseCases.RecurringExpenses.GetTotalFixedExpensesByMember;
 using Domain.Entities.Families;
 using Domain.Repositories;
 using FluentAssertions;

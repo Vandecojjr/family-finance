@@ -1,4 +1,4 @@
-using Application.Families.UseCases.GetFamilyById;
+using Application.UseCases.Families.GetFamilyById;
 using FluentValidation.TestHelper;
 using Xunit;
 

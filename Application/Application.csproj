@@ -23,8 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Accounts\UseCases\" />
-      <Folder Include="Families\UseCases\" />
+      <Folder Include="UseCases\" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
-using Application.Categories.UseCases.ListCategories;
 using Application.Shared.Auth;
 using Application.Shared.Authorization;
+using Application.UseCases.Categories.ListCategories;
 using Domain.Entities.Categories;
 using Domain.Entities.Families;
 using Domain.Enums;

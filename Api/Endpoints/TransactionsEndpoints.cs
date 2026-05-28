@@ -1,9 +1,9 @@
 using Api.Extensions;
-using Application.Transactions.UseCases.RegisterTransaction;
-using Application.Transactions.UseCases.DeleteTransaction;
-using Application.Transactions.UseCases.GetTransactionsByFamily;
-using Application.Transactions.UseCases.Shared;
 using Application.Shared.Results;
+using Application.UseCases.Transactions.DeleteTransaction;
+using Application.UseCases.Transactions.GetTransactionsByFamily;
+using Application.UseCases.Transactions.RegisterTransaction;
+using Application.UseCases.Transactions.Shared;
 using Domain.Enums;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;

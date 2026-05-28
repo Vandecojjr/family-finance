@@ -1,11 +1,11 @@
 using Api.Extensions;
-using Application.PlannedIncomes.UseCases.CreatePlannedIncome;
-using Application.PlannedIncomes.UseCases.UpdatePlannedIncome;
-using Application.PlannedIncomes.UseCases.GetPlannedIncomeById;
-using Application.PlannedIncomes.UseCases.GetPlannedIncomesByMember;
-using Application.PlannedIncomes.UseCases.DeletePlannedIncome;
-using Application.PlannedIncomes.UseCases.Shared;
 using Application.Shared.Results;
+using Application.UseCases.PlannedIncomes.CreatePlannedIncome;
+using Application.UseCases.PlannedIncomes.DeletePlannedIncome;
+using Application.UseCases.PlannedIncomes.GetPlannedIncomeById;
+using Application.UseCases.PlannedIncomes.GetPlannedIncomesByMember;
+using Application.UseCases.PlannedIncomes.Shared;
+using Application.UseCases.PlannedIncomes.UpdatePlannedIncome;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using HttpResult = Microsoft.AspNetCore.Http.IResult;

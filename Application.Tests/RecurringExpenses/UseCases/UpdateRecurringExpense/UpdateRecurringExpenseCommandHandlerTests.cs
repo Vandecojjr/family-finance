@@ -1,5 +1,5 @@
-using Application.RecurringExpenses.UseCases.UpdateRecurringExpense;
 using Application.Shared.Auth;
+using Application.UseCases.RecurringExpenses.UpdateRecurringExpense;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
 using Domain.Entities.RecurringExpenses;

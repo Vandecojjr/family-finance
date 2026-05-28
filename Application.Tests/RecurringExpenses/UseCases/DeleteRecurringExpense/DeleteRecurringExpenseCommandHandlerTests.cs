@@ -1,5 +1,5 @@
-using Application.RecurringExpenses.UseCases.DeleteRecurringExpense;
 using Application.Shared.Auth;
+using Application.UseCases.RecurringExpenses.DeleteRecurringExpense;
 using Domain.Entities.Families;
 using Domain.Entities.RecurringExpenses;
 using Domain.Enums;
