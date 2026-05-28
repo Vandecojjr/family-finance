@@ -1,4 +1,5 @@
 using Application.Shared.Auth;
+using Application.Shared.Repositories;
 using Infrastructure.Auth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IPlannedExpenseRepository, PlannedExpenseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<IAccountsPayableRepository, AccountsPayableRepository>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
