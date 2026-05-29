@@ -54,3 +54,4 @@ public sealed class CreateCreditCardCommandHandler(
         return Result<Guid>.Success(cardId);
     }
 }
+

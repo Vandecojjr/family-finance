@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.PlannedExpenses.UpdatePlannedExpense;
 
 public sealed class UpdatePlannedExpenseCommandHandler(
-    IPlannedExpenseRepository plannedExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<UpdatePlannedExpenseCommand, Result>
@@ -22,11 +22,11 @@ public sealed class UpdatePlannedExpenseCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedExpense = await plannedExpenseRepository.GetByIdAsync(command.Id, cancellationToken);
+        var plannedExpense = await expenseRepository.GetByIdAsync(command.Id, cancellationToken);
         if (plannedExpense is null)
         {
             return Result.Failure(
-                Error.NotFound("PlannedExpense.NotFound", $"Gasto previsto com ID '{command.Id}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto previsto com ID '{command.Id}' não foi encontrado."));
         }
 
         var targetMember = await familyRepository.GetMemberByIdAsync(plannedExpense.MemberId, cancellationToken);
@@ -55,14 +55,15 @@ public sealed class UpdatePlannedExpenseCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
         }
 
-        plannedExpense.Update(
+        plannedExpense.UpdatePlanned(
             command.Description,
             command.Amount,
             command.Date,
             command.CategoryId);
 
-        await plannedExpenseRepository.UpdateAsync(plannedExpense, cancellationToken);
+        await expenseRepository.UpdateAsync(plannedExpense, cancellationToken);
 
         return Result.Success();
     }
 }
+

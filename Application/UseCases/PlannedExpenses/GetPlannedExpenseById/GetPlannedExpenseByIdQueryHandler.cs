@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.PlannedExpenses.GetPlannedExpenseById;
 
 public sealed class GetPlannedExpenseByIdQueryHandler(
-    IPlannedExpenseRepository plannedExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetPlannedExpenseByIdQuery, Result<PlannedExpenseResponse>>
 {
@@ -22,11 +22,11 @@ public sealed class GetPlannedExpenseByIdQueryHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedExpense = await plannedExpenseRepository.GetByIdAsync(query.Id, cancellationToken);
+        var plannedExpense = await expenseRepository.GetByIdAsync(query.Id, cancellationToken);
         if (plannedExpense is null)
         {
             return Result<PlannedExpenseResponse>.Failure(
-                Error.NotFound("PlannedExpense.NotFound", $"Gasto previsto com ID '{query.Id}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto previsto com ID '{query.Id}' não foi encontrado."));
         }
 
         var targetMember = await familyRepository.GetMemberByIdAsync(plannedExpense.MemberId, cancellationToken);
@@ -39,3 +39,4 @@ public sealed class GetPlannedExpenseByIdQueryHandler(
         return Result<PlannedExpenseResponse>.Success(plannedExpense.ToResponse());
     }
 }
+

@@ -10,3 +10,4 @@ public sealed class GetFamilyByIdQueryValidator : AbstractValidator<GetFamilyByI
             .NotEmpty().WithMessage("O ID da família é obrigatório.");
     }
 }
+

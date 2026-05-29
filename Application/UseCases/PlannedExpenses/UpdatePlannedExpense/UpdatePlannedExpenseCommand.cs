@@ -14,3 +14,4 @@ public sealed record UpdatePlannedExpenseCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseUpdate];
 }
+

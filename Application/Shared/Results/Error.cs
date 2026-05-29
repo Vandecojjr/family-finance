@@ -28,3 +28,4 @@ public enum ErrorType
     Conflict = 3,
     Forbidden = 4
 }
+

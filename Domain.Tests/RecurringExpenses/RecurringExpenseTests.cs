@@ -1,14 +1,14 @@
-using Domain.Entities.RecurringExpenses;
-using Domain.Entities.RecurringExpenses.Exceptions;
+using Domain.Entities.Expenses;
+using Domain.Entities.Expenses.Exceptions;
 using Domain.Enums;
 using Xunit;
 
-namespace Domain.Tests.RecurringExpenses;
+namespace Domain.Tests.Expenses;
 
-public class RecurringExpenseTests
+public class ExpenseTests
 {
     [Fact]
-    public void RecurringExpense_ShouldCreate_WhenValuesAreValid()
+    public void Expense_ShouldCreate_WhenValuesAreValid()
     {
         // Arrange
         var description = "Netflix";
@@ -22,7 +22,7 @@ public class RecurringExpenseTests
         var categoryId = Guid.NewGuid();
 
         // Act
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             description,
             amount,
             type,
@@ -36,42 +36,46 @@ public class RecurringExpenseTests
         // Assert
         Assert.Equal(description, expense.Description.Value);
         Assert.Equal(amount, expense.Amount.Value);
-        Assert.Equal(type, expense.Type);
+        Assert.Equal(ExpenseType.Recurring, expense.Type);
+        Assert.Equal(type, expense.RecurringType);
         Assert.Equal(frequency, expense.Frequency);
+        Assert.NotNull(expense.DueDay);
         Assert.Equal(dueDay, expense.DueDay.Value);
+        Assert.NotNull(expense.Period);
         Assert.Equal(startDate, expense.Period.StartDate);
         Assert.Null(expense.Period.EndDate);
+        Assert.NotNull(expense.Status);
         Assert.True(expense.Status.IsActive);
         Assert.Equal(memberId, expense.MemberId);
         Assert.Equal(categoryId, expense.CategoryId);
     }
 
     [Fact]
-    public void Constructor_ShouldThrowDescriptionRequiredException_WhenDescriptionIsNull()
+    public void Constructor_ShouldThrowExpenseDescriptionRequiredException_WhenDescriptionIsNull()
     {
-        Assert.Throws<DescriptionRequiredException>(() => new RecurringExpense(
+        Assert.Throws<ExpenseDescriptionRequiredException>(() => Expense.CreateRecurring(
             null!, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
-    public void Constructor_ShouldThrowDescriptionRequiredException_WhenDescriptionIsEmpty()
+    public void Constructor_ShouldThrowExpenseDescriptionRequiredException_WhenDescriptionIsEmpty()
     {
-        Assert.Throws<DescriptionRequiredException>(() => new RecurringExpense(
+        Assert.Throws<ExpenseDescriptionRequiredException>(() => Expense.CreateRecurring(
             "", 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
-    public void Constructor_ShouldThrowDescriptionTooLongException_WhenDescriptionExceedsLimit()
+    public void Constructor_ShouldThrowExpenseDescriptionTooLongException_WhenDescriptionExceedsLimit()
     {
         var longDesc = new string('a', 201);
-        Assert.Throws<DescriptionTooLongException>(() => new RecurringExpense(
+        Assert.Throws<ExpenseDescriptionTooLongException>(() => Expense.CreateRecurring(
             longDesc, 100m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
-    public void Constructor_ShouldThrowInvalidAmountException_WhenAmountIsNegative()
+    public void Constructor_ShouldThrowExpenseAmountException_WhenAmountIsNegative()
     {
-        Assert.Throws<InvalidAmountException>(() => new RecurringExpense(
+        Assert.Throws<ExpenseAmountException>(() => Expense.CreateRecurring(
             "Netflix", -10m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
@@ -80,17 +84,17 @@ public class RecurringExpenseTests
     [InlineData(32)]
     public void Constructor_ShouldThrowInvalidDueDayException_WhenDueDayIsInvalid(int invalidDueDay)
     {
-        Assert.Throws<InvalidDueDayException>(() => new RecurringExpense(
+        Assert.Throws<InvalidDueDayException>(() => Expense.CreateRecurring(
             "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, invalidDueDay, DateTime.UtcNow, null, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
-    public void Constructor_ShouldThrowInvalidPeriodException_WhenEndDateIsBeforeStartDate()
+    public void Constructor_ShouldThrowInvalidRecurringPeriodException_WhenEndDateIsBeforeStartDate()
     {
         var startDate = DateTime.UtcNow;
         var endDate = startDate.AddDays(-1);
 
-        Assert.Throws<InvalidPeriodException>(() => new RecurringExpense(
+        Assert.Throws<InvalidRecurringPeriodException>(() => Expense.CreateRecurring(
             "Netflix", 50m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 15, startDate, endDate, Guid.NewGuid(), Guid.NewGuid()));
     }
 
@@ -99,7 +103,7 @@ public class RecurringExpenseTests
     {
         // Arrange
         var categoryId = Guid.NewGuid();
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Netflix", 55.90m, RecurringExpenseType.Fixed, RecurringFrequency.Monthly, 10, DateTime.UtcNow, null, Guid.NewGuid(), categoryId);
 
         var newDescription = "Amazon Prime";
@@ -112,7 +116,7 @@ public class RecurringExpenseTests
         var newCategoryId = Guid.NewGuid();
 
         // Act
-        expense.Update(
+        expense.UpdateRecurring(
             newDescription,
             newAmount,
             newType,
@@ -125,12 +129,17 @@ public class RecurringExpenseTests
         // Assert
         Assert.Equal(newDescription, expense.Description.Value);
         Assert.Equal(newAmount, expense.Amount.Value);
-        Assert.Equal(newType, expense.Type);
+        Assert.Equal(ExpenseType.Recurring, expense.Type);
+        Assert.Equal(newType, expense.RecurringType);
         Assert.Equal(newFrequency, expense.Frequency);
+        Assert.NotNull(expense.DueDay);
         Assert.Equal(newDueDay, expense.DueDay.Value);
+        Assert.NotNull(expense.Period);
         Assert.Equal(newStartDate, expense.Period.StartDate);
         Assert.Equal(newEndDate, expense.Period.EndDate);
         Assert.Equal(newCategoryId, expense.CategoryId);
         Assert.True(expense.UpdatedAt > DateTime.MinValue);
     }
 }
+
+

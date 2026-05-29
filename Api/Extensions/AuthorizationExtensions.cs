@@ -17,3 +17,4 @@ public static class AuthorizationExtensions
         return builder.RequireAuthorization(new AuthorizeAttribute { Roles = role });
     }
 }
+

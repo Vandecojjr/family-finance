@@ -38,3 +38,4 @@ public sealed class DeleteTransactionCommandHandler(
             Error.Validation("Transaction.CannotBeDeleted", "Transações pertencem a uma Wallet e nunca podem ser deletadas."));
     }
 }
+

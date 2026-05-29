@@ -50,3 +50,4 @@ public sealed class RefreshTokenCommandHandler(
         return Result<TokenPairResponse>.Success(response);
     }
 }
+

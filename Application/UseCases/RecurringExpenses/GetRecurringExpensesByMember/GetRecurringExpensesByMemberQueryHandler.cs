@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.RecurringExpenses.GetRecurringExpensesByMember;
 
 public sealed class GetRecurringExpensesByMemberQueryHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) 
     : IQueryHandler<GetRecurringExpensesByMemberQuery, Result<IReadOnlyCollection<RecurringExpenseResponse>>>
@@ -36,8 +36,9 @@ public sealed class GetRecurringExpensesByMemberQueryHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar os gastos recorrentes deste membro."));
         }
 
-        var expenses = await recurringExpenseRepository.GetByMemberIdAsync(query.MemberId, cancellationToken);
+        var expenses = await expenseRepository.GetAllByMemberAsync(query.MemberId, cancellationToken);
 
         return Result<IReadOnlyCollection<RecurringExpenseResponse>>.Success(expenses.ToResponse());
     }
 }
+

@@ -132,3 +132,5 @@ public class CreateBankAccountCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e.Code == "Family.AccessDenied");
     }
 }
+
+

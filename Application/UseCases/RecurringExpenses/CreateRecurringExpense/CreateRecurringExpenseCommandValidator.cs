@@ -37,3 +37,4 @@ public sealed class CreateRecurringExpenseCommandValidator : AbstractValidator<C
             .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
 }
+

@@ -136,3 +136,5 @@ public class ListCategoriesQueryHandlerTests
         result.Errors[0].Code.Should().Be("User.MemberNotFound");
     }
 }
+
+

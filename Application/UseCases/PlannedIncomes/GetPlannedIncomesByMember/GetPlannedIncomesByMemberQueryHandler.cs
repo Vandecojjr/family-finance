@@ -40,3 +40,4 @@ public sealed class GetPlannedIncomesByMemberQueryHandler(
         return Result<IReadOnlyCollection<PlannedIncomeResponse>>.Success(plannedIncomes.ToResponse());
     }
 }
+

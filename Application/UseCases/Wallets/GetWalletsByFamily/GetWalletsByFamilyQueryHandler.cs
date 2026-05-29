@@ -47,3 +47,4 @@ public sealed class GetWalletsByFamilyQueryHandler(
         return Result<List<WalletResponse>>.Success(response);
     }
 }
+

@@ -10,3 +10,4 @@ public sealed record GetTotalFixedIncomesByMemberQuery(Guid MemberId)
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeView];
 }
+

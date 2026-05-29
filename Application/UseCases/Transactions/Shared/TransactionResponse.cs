@@ -16,3 +16,4 @@ public sealed record TransactionResponse(
     string? BankAccountName,
     string? CreditCardDisplayName,
     string? Notes);
+

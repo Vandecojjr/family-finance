@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.RecurringExpenses.UpdateRecurringExpense;
 
 public sealed class UpdateRecurringExpenseCommandHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<UpdateRecurringExpenseCommand, Result>
@@ -22,11 +22,11 @@ public sealed class UpdateRecurringExpenseCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var expense = await recurringExpenseRepository.GetByIdAsync(command.Id, cancellationToken);
+        var expense = await expenseRepository.GetByIdAsync(command.Id, cancellationToken);
         if (expense is null)
         {
             return Result.Failure(
-                Error.NotFound("RecurringExpense.NotFound", $"Gasto recorrente com ID '{command.Id}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto recorrente com ID '{command.Id}' não foi encontrado."));
         }
 
         if (expense.Member is null || expense.Member.FamilyId != currentMember.FamilyId)
@@ -54,7 +54,7 @@ public sealed class UpdateRecurringExpenseCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
         }
 
-        expense.Update(
+        expense.UpdateRecurring(
             command.Description,
             command.Amount,
             command.Type,
@@ -64,8 +64,9 @@ public sealed class UpdateRecurringExpenseCommandHandler(
             command.EndDate,
             command.CategoryId);
 
-        await recurringExpenseRepository.UpdateAsync(expense, cancellationToken);
+        await expenseRepository.UpdateAsync(expense, cancellationToken);
 
         return Result.Success();
     }
 }
+

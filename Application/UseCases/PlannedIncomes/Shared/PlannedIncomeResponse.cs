@@ -30,3 +30,4 @@ public static class PlannedIncomeResponseFactory
         return incomes.Select(ToResponse).ToList();
     }
 }
+

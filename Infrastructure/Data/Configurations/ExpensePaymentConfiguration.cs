@@ -1,14 +1,14 @@
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Configurations;
 
-public class RecurringExpensePaymentConfiguration : IEntityTypeConfiguration<RecurringExpensePayment>
+public class ExpensePaymentConfiguration : IEntityTypeConfiguration<ExpensePayment>
 {
-    public void Configure(EntityTypeBuilder<RecurringExpensePayment> builder)
+    public void Configure(EntityTypeBuilder<ExpensePayment> builder)
     {
-        builder.ToTable("RecurringExpensePayments");
+        builder.ToTable("ExpensePayments");
 
         builder.HasKey(x => x.Id);
 
@@ -25,9 +25,9 @@ public class RecurringExpensePaymentConfiguration : IEntityTypeConfiguration<Rec
         builder.Property(x => x.PaidAt)
             .IsRequired();
 
-        builder.HasOne<RecurringExpense>()
+        builder.HasOne<Expense>()
             .WithMany(re => re.Payments)
-            .HasForeignKey(x => x.RecurringExpenseId)
+            .HasForeignKey(x => x.ExpenseId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

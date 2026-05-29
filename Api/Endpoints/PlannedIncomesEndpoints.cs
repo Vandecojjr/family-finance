@@ -139,3 +139,4 @@ public sealed class PlannedIncomesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+

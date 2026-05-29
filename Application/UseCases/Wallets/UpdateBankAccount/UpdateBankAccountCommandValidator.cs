@@ -23,3 +23,4 @@ public sealed class UpdateBankAccountCommandValidator : AbstractValidator<Update
             .GreaterThanOrEqualTo(0).WithMessage("O limite de crédito deve ser maior ou igual a zero.");
     }
 }
+

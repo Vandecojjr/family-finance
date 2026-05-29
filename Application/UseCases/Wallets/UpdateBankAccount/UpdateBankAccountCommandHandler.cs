@@ -53,3 +53,4 @@ public sealed class UpdateBankAccountCommandHandler(
         return Result.Success();
     }
 }
+

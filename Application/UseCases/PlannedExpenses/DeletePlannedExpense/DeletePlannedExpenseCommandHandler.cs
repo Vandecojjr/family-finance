@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.PlannedExpenses.DeletePlannedExpense;
 
 public sealed class DeletePlannedExpenseCommandHandler(
-    IPlannedExpenseRepository plannedExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<DeletePlannedExpenseCommand, Result>
 {
@@ -21,11 +21,11 @@ public sealed class DeletePlannedExpenseCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedExpense = await plannedExpenseRepository.GetByIdAsync(command.Id, cancellationToken);
+        var plannedExpense = await expenseRepository.GetByIdAsync(command.Id, cancellationToken);
         if (plannedExpense is null)
         {
             return Result.Failure(
-                Error.NotFound("PlannedExpense.NotFound", $"Gasto previsto com ID '{command.Id}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto previsto com ID '{command.Id}' não foi encontrado."));
         }
 
         var targetMember = await familyRepository.GetMemberByIdAsync(plannedExpense.MemberId, cancellationToken);
@@ -35,8 +35,9 @@ public sealed class DeletePlannedExpenseCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para remover gastos previstos para este membro."));
         }
 
-        await plannedExpenseRepository.DeleteAsync(plannedExpense, cancellationToken);
+        await expenseRepository.DeleteAsync(plannedExpense, cancellationToken);
 
         return Result.Success();
     }
 }
+

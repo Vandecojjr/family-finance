@@ -82,3 +82,5 @@ public class MemberTests
         Assert.Throws<MemberNotFoundException>(() => family.RemoveMember(Guid.NewGuid()));
     }
 }
+
+

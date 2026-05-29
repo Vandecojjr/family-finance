@@ -1,6 +1,6 @@
 using Domain.Shared.Entities;
 
-namespace Domain.Entities.RecurringExpenses.ValueObjects;
+namespace Domain.Entities.Expenses.ValueObjects;
 
 public sealed record RecurringExpenseStatus : ValueObject
 {

@@ -6,3 +6,4 @@ namespace Application.UseCases.Accounts.RefreshToken;
 
 public sealed record RefreshTokenCommand(string RefreshToken)
     : ICommand<Result<TokenPairResponse>>;
+

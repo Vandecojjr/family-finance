@@ -1,18 +1,18 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
-using Domain.Entities.RecurringExpenses.Services;
 using Domain.Entities.Transactions;
 using Domain.Repositories;
+using Domain.Services;
 using Mediator;
 
 namespace Application.UseCases.RecurringExpenses.PayRecurringExpense;
 
 public sealed class PayRecurringExpenseCommandHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IWalletRepository walletRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser,
-    RecurringExpensePaymentService paymentService) : ICommandHandler<PayRecurringExpenseCommand, Result<Guid>>
+    ExpensePaymentService expensePaymentService) : ICommandHandler<PayRecurringExpenseCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(
         PayRecurringExpenseCommand command,
@@ -25,11 +25,11 @@ public sealed class PayRecurringExpenseCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var recurringExpense = await recurringExpenseRepository.GetByIdAsync(command.RecurringExpenseId, cancellationToken);
+        var recurringExpense = await expenseRepository.GetByIdAsync(command.RecurringExpenseId, cancellationToken);
         if (recurringExpense is null)
         {
             return Result<Guid>.Failure(
-                Error.NotFound("RecurringExpense.NotFound", $"Gasto recorrente com ID '{command.RecurringExpenseId}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto recorrente com ID '{command.RecurringExpenseId}' não foi encontrado."));
         }
 
         if (recurringExpense.Member.FamilyId != member.FamilyId)
@@ -54,7 +54,7 @@ public sealed class PayRecurringExpenseCommandHandler(
         Transaction transaction;
         try
         {
-            var result = paymentService.ExecutePayment(
+            var result = expensePaymentService.ProcessPayment(
                 recurringExpense,
                 wallet,
                 command.Amount,
@@ -71,8 +71,9 @@ public sealed class PayRecurringExpenseCommandHandler(
         }
 
         await walletRepository.UpdateAsync(wallet, cancellationToken);
-        await recurringExpenseRepository.UpdateAsync(recurringExpense, cancellationToken);
+        await expenseRepository.UpdateAsync(recurringExpense, cancellationToken);
 
         return Result<Guid>.Success(transaction.Id);
     }
 }
+

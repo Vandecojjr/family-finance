@@ -133,3 +133,5 @@ public class DeleteTransactionCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e.Code == "Family.AccessDenied");
     }
 }
+
+

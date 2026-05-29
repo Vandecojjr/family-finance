@@ -47,3 +47,4 @@ public sealed class GetTransactionsByFamilyQueryHandler(
         return Result<List<TransactionResponse>>.Success(responseList);
     }
 }
+

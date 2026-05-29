@@ -1,4 +1,4 @@
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 
 namespace Application.UseCases.RecurringExpenses.Shared;
 
@@ -7,7 +7,7 @@ public sealed record RecurringExpenseResponse(
     string Description,
     decimal Amount,
     int Type,
-    int Frequency,
+    int? Frequency,
     int DueDay,
     DateTime StartDate,
     DateTime? EndDate,
@@ -19,27 +19,28 @@ public sealed record RecurringExpenseResponse(
 
 public static class RecurringExpenseResponseFactory
 {
-    public static RecurringExpenseResponse ToResponse(this RecurringExpense expense)
+    public static RecurringExpenseResponse ToResponse(this Expense expense)
     {
         return new RecurringExpenseResponse(
             expense.Id,
             expense.Description.Value,
             expense.Amount.Value,
             (int)expense.Type,
-            (int)expense.Frequency,
-            expense.DueDay.Value,
-            expense.Period.StartDate,
-            expense.Period.EndDate,
-            expense.Status.IsActive,
+            (int?)expense.Frequency,
+            expense.DueDay?.Value ?? 1,
+            expense.Period?.StartDate ?? DateTime.UtcNow,
+            expense.Period?.EndDate,
+            expense.Status?.IsActive ?? false,
             expense.MemberId,
             expense.CategoryId,
             expense.IsPaid(),
-            expense.Category
+            expense.Category?.Name.Value
             );
     }
 
-    public static IReadOnlyCollection<RecurringExpenseResponse> ToResponse(this IEnumerable<RecurringExpense> expenses)
+    public static IReadOnlyCollection<RecurringExpenseResponse> ToResponse(this IEnumerable<Expense> expenses)
     {
         return expenses.Select(ToResponse).ToList();
     }
 }
+

@@ -1,7 +1,7 @@
 using Application.Shared.Auth;
 using Application.UseCases.RecurringExpenses.DeleteRecurringExpense;
 using Domain.Entities.Families;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -12,18 +12,18 @@ namespace Application.Tests.RecurringExpenses.UseCases.DeleteRecurringExpense;
 
 public class DeleteRecurringExpenseCommandHandlerTests
 {
-    private readonly Mock<IRecurringExpenseRepository> _recurringExpenseRepositoryMock;
+    private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly DeleteRecurringExpenseCommandHandler _handler;
 
     public DeleteRecurringExpenseCommandHandlerTests()
     {
-        _recurringExpenseRepositoryMock = new Mock<IRecurringExpenseRepository>();
+        _expenseRepositoryMock = new Mock<IExpenseRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _handler = new DeleteRecurringExpenseCommandHandler(
-            _recurringExpenseRepositoryMock.Object,
+            _expenseRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _currentUserMock.Object);
     }
@@ -37,7 +37,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         var currentMember = family.Members.First();
 
         var targetMember = currentMember;
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -51,7 +51,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _familyRepositoryMock
@@ -66,7 +66,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        _recurringExpenseRepositoryMock.Verify(repo => repo.DeleteAsync(expense, It.IsAny<CancellationToken>()), Times.Once);
+        _expenseRepositoryMock.Verify(repo => repo.DeleteAsync(expense, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -74,9 +74,9 @@ public class DeleteRecurringExpenseCommandHandlerTests
     {
         // Arrange
         var command = new DeleteRecurringExpenseCommand(Guid.NewGuid());
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RecurringExpense?)null);
+            .ReturnsAsync((Expense?)null);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -84,7 +84,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
-        result.Errors[0].Code.Should().Be("RecurringExpense.NotFound");
+        result.Errors[0].Code.Should().Be("Expense.NotFound");
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         var family = new Family("Silva");
         family.AddMember("John Doe");
         var targetMember = family.Members.First();
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -108,7 +108,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(Guid.NewGuid());
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _familyRepositoryMock
@@ -136,7 +136,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         family2.AddMember("Jane Doe");
         var targetMember = family2.Members.First();
 
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -150,7 +150,7 @@ public class DeleteRecurringExpenseCommandHandlerTests
         var command = new DeleteRecurringExpenseCommand(expense.Id);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _familyRepositoryMock
@@ -169,3 +169,5 @@ public class DeleteRecurringExpenseCommandHandlerTests
         result.Errors[0].Code.Should().Be("Family.AccessDenied");
     }
 }
+
+

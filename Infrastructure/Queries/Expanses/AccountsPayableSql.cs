@@ -10,16 +10,23 @@ public static class AccountsPayableSql
         
         var sql = $$"""
                    SELECT
+                       re."Id",
                        re."Description",
                        re."Amount",
                        re."Frequency",
-                       c."Name" as CategoryName
-                   FROM "RecurringExpenses" re
+                       c."Name" as CategoryName,
+                       re."DueDay",
+                       CASE
+                           WHEN EXTRACT(DAY FROM CURRENT_DATE) > re."DueDay" THEN true
+                           ELSE false
+                        END AS IsLate
+                   FROM "Expenses" re
                             INNER JOIN "Categories" c on re."CategoryId" = c."Id"
-                            LEFT JOIN "RecurringExpensePayments" p on re."Id" = p."RecurringExpenseId"
+                            LEFT JOIN "ExpensePayments" p on re."Id" = p."ExpenseId"
                                {{dateLogic}}
                    WHERE re."MemberId" = {0}
                      AND re."Frequency" = {1}
+                     AND re."Type" = 2
                      AND p."Id" IS NULL
                    """;
 

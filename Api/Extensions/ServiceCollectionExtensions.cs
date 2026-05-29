@@ -1,4 +1,4 @@
-﻿using Application;
+using Application;
 using Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Infrastructure.Auth.Authorization;
@@ -78,3 +78,4 @@ public static class ServiceCollectionExtensions
         return services;
     }
 }
+

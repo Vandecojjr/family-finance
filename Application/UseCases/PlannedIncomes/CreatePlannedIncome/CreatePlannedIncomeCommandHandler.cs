@@ -67,3 +67,4 @@ public sealed class CreatePlannedIncomeCommandHandler(
         return Result<Guid>.Success(plannedIncome.Id);
     }
 }
+

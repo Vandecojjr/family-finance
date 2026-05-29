@@ -16,3 +16,4 @@ public sealed class PayRecurringExpenseCommandValidator : AbstractValidator<PayR
             .GreaterThan(0).WithMessage("O valor pago deve ser maior que zero.");
     }
 }
+

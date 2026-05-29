@@ -39,3 +39,4 @@ public sealed class DeleteWalletCommandHandler(
         return Result.Success();
     }
 }
+

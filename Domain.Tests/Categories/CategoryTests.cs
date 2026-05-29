@@ -65,3 +65,5 @@ public class CategoryTests
         Assert.True(category.UpdatedAt > DateTime.MinValue);
     }
 }
+
+

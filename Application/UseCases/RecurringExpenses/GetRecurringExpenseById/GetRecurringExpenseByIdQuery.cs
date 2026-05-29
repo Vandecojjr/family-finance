@@ -10,3 +10,4 @@ public sealed record GetRecurringExpenseByIdQuery(Guid Id) : IQuery<Result<Recur
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseView];
 }
+

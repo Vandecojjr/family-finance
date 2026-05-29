@@ -54,3 +54,4 @@ public sealed class DeleteCreditCardCommandHandler(
         return Result.Success();
     }
 }
+

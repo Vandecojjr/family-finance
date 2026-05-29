@@ -1,4 +1,4 @@
-﻿using Domain.Shared.Entities;
+using Domain.Shared.Entities;
 using Xunit;
 
 namespace Domain.Tests.Shared;
@@ -30,3 +30,5 @@ public class EntityTests
         Assert.True(entity.UpdatedAt > DateTime.MinValue);
     }
 }
+
+

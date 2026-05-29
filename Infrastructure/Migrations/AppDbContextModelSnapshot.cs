@@ -244,6 +244,99 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("CreditCards", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Expenses.Expense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("DueDay")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Frequency")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("MemberId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("RecurringType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("Status");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("MemberId1");
+
+                    b.ToTable("Expenses", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Expenses.ExpensePayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ExpenseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseId");
+
+                    b.ToTable("ExpensePayments", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Families.Family", b =>
                 {
                     b.Property<Guid>("Id")
@@ -294,44 +387,6 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("Members", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.PlannedExpenses.PlannedExpense", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("PlannedExpenses", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.PlannedIncomes.PlannedIncome", b =>
                 {
                     b.Property<Guid>("Id")
@@ -368,87 +423,6 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("MemberId");
 
                     b.ToTable("PlannedIncomes", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("DueDay")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Frequency")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("MemberId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("RecurringExpenses", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpensePayment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("AmountPaid")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("RecurringExpenseId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecurringExpenseId");
-
-                    b.ToTable("RecurringExpensePayments", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.RecurringIncomes.RecurringIncome", b =>
@@ -652,18 +626,7 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("BankAccount");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Members.Member", b =>
-                {
-                    b.HasOne("Domain.Entities.Families.Family", "Family")
-                        .WithMany("Members")
-                        .HasForeignKey("FamilyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Family");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PlannedExpenses.PlannedExpense", b =>
+            modelBuilder.Entity("Domain.Entities.Expenses.Expense", b =>
                 {
                     b.HasOne("Domain.Entities.Categories.Category", "Category")
                         .WithMany()
@@ -677,9 +640,56 @@ namespace Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Members.Member", null)
+                        .WithMany("Expenses")
+                        .HasForeignKey("MemberId1");
+
+                    b.OwnsOne("Domain.Entities.Expenses.ValueObjects.RecurringPeriod", "Period", b1 =>
+                        {
+                            b1.Property<Guid>("ExpenseId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime?>("EndDate")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("EndDate");
+
+                            b1.Property<DateTime>("StartDate")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("StartDate");
+
+                            b1.HasKey("ExpenseId");
+
+                            b1.ToTable("Expenses");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExpenseId");
+                        });
+
                     b.Navigation("Category");
 
                     b.Navigation("Member");
+
+                    b.Navigation("Period");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Expenses.ExpensePayment", b =>
+                {
+                    b.HasOne("Domain.Entities.Expenses.Expense", null)
+                        .WithMany("Payments")
+                        .HasForeignKey("ExpenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Members.Member", b =>
+                {
+                    b.HasOne("Domain.Entities.Families.Family", "Family")
+                        .WithMany("Members")
+                        .HasForeignKey("FamilyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Family");
                 });
 
             modelBuilder.Entity("Domain.Entities.PlannedIncomes.PlannedIncome", b =>
@@ -699,58 +709,6 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Member");
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
-                {
-                    b.HasOne("Domain.Entities.Categories.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Members.Member", "Member")
-                        .WithMany("RecurringExpenses")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("Domain.Entities.RecurringExpenses.ValueObjects.RecurringPeriod", "Period", b1 =>
-                        {
-                            b1.Property<Guid>("RecurringExpenseId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTime?>("EndDate")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("EndDate");
-
-                            b1.Property<DateTime>("StartDate")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("StartDate");
-
-                            b1.HasKey("RecurringExpenseId");
-
-                            b1.ToTable("RecurringExpenses");
-
-                            b1.WithOwner()
-                                .HasForeignKey("RecurringExpenseId");
-                        });
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Member");
-
-                    b.Navigation("Period")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpensePayment", b =>
-                {
-                    b.HasOne("Domain.Entities.RecurringExpenses.RecurringExpense", null)
-                        .WithMany("Payments")
-                        .HasForeignKey("RecurringExpenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.RecurringIncomes.RecurringIncome", b =>
@@ -877,6 +835,11 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("SubCategories");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Expenses.Expense", b =>
+                {
+                    b.Navigation("Payments");
+                });
+
             modelBuilder.Entity("Domain.Entities.Families.Family", b =>
                 {
                     b.Navigation("Members");
@@ -886,14 +849,9 @@ namespace Infrastructure.Data.Migrations
                 {
                     b.Navigation("Account");
 
-                    b.Navigation("RecurringExpenses");
+                    b.Navigation("Expenses");
 
                     b.Navigation("RecurringIncomes");
-                });
-
-            modelBuilder.Entity("Domain.Entities.RecurringExpenses.RecurringExpense", b =>
-                {
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("Domain.Entities.Wallets.Wallet", b =>

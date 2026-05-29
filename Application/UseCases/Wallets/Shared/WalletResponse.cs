@@ -20,3 +20,4 @@ public sealed record CreditCardResponse(
     string Brand,
     string LastFourDigits,
     decimal TotalLimit);
+

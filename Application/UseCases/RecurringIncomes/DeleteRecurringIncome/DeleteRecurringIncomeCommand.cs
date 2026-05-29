@@ -10,3 +10,4 @@ public sealed record DeleteRecurringIncomeCommand(Guid Id)
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeDelete];
 }
+

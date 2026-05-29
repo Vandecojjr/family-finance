@@ -2,7 +2,7 @@ using Domain.AccessContext.Entities.Accounts;
 using Domain.Entities.Members.ValueObjects;
 using Domain.Shared.Entities;
 using Domain.Entities.Families;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Entities.RecurringIncomes;
 
 namespace Domain.Entities.Members;
@@ -15,8 +15,8 @@ public class Member : Entity
     public Family Family { get; private set; } = null!;
     public Account? Account { get; private set; }
 
-    private readonly List<RecurringExpense> _recurringExpenses = [];
-    public virtual IReadOnlyCollection<RecurringExpense> RecurringExpenses => _recurringExpenses.AsReadOnly();
+    private readonly List<Expense> _expenses = [];
+    public virtual IReadOnlyCollection<Expense> Expenses => _expenses.AsReadOnly();
 
     private readonly List<RecurringIncome> _recurringIncomes = [];
     public virtual IReadOnlyCollection<RecurringIncome> RecurringIncomes => _recurringIncomes.AsReadOnly();

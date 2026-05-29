@@ -1,7 +1,7 @@
 using Application.Shared.Auth;
 using Application.UseCases.RecurringExpenses.GetRecurringExpenseById;
 using Domain.Entities.Families;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -12,25 +12,25 @@ namespace Application.Tests.RecurringExpenses.UseCases.GetRecurringExpenseById;
 
 public class GetRecurringExpenseByIdQueryHandlerTests
 {
-    private readonly Mock<IRecurringExpenseRepository> _recurringExpenseRepositoryMock;
+    private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly GetRecurringExpenseByIdQueryHandler _handler;
 
     public GetRecurringExpenseByIdQueryHandlerTests()
     {
-        _recurringExpenseRepositoryMock = new Mock<IRecurringExpenseRepository>();
+        _expenseRepositoryMock = new Mock<IExpenseRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _handler = new GetRecurringExpenseByIdQueryHandler(
-            _recurringExpenseRepositoryMock.Object,
+            _expenseRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _currentUserMock.Object);
     }
 
-    private static void SetMember(RecurringExpense expense, Domain.Entities.Members.Member member)
+    private static void SetMember(Expense expense, Domain.Entities.Members.Member member)
     {
-        var property = typeof(RecurringExpense).GetProperty(nameof(RecurringExpense.Member));
+        var property = typeof(Expense).GetProperty(nameof(Expense.Member));
         property?.SetValue(expense, member);
     }
 
@@ -42,7 +42,7 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -60,7 +60,7 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
 
@@ -111,9 +111,9 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expenseId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RecurringExpense?)null);
+            .ReturnsAsync((Expense?)null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -121,7 +121,7 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
-        result.Errors[0].Code.Should().Be("RecurringExpense.NotFound");
+        result.Errors[0].Code.Should().Be("Expense.NotFound");
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         family2.AddMember("Jane Doe");
         var targetMember = family2.Members.First();
 
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -154,7 +154,7 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
 
@@ -167,3 +167,5 @@ public class GetRecurringExpenseByIdQueryHandlerTests
         result.Errors[0].Code.Should().Be("Family.AccessDenied");
     }
 }
+
+

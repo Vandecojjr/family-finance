@@ -1,13 +1,13 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Repositories;
 using Mediator;
 
 namespace Application.UseCases.RecurringExpenses.CreateRecurringExpense;
 
 public sealed class CreateRecurringExpenseCommandHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<CreateRecurringExpenseCommand, Result<Guid>>
@@ -55,7 +55,7 @@ public sealed class CreateRecurringExpenseCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
         }
 
-        var recurringExpense = new RecurringExpense(
+        var recurringExpense = Expense.CreateRecurring(
             command.Description,
             command.Amount,
             command.Type,
@@ -66,8 +66,9 @@ public sealed class CreateRecurringExpenseCommandHandler(
             command.MemberId,
             command.CategoryId);
 
-        await recurringExpenseRepository.AddAsync(recurringExpense, cancellationToken);
+        await expenseRepository.AddAsync(recurringExpense, cancellationToken);
 
         return Result<Guid>.Success(recurringExpense.Id);
     }
 }
+

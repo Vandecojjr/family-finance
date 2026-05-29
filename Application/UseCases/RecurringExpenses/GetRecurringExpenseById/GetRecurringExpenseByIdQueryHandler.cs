@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.RecurringExpenses.GetRecurringExpenseById;
 
 public sealed class GetRecurringExpenseByIdQueryHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetRecurringExpenseByIdQuery, Result<RecurringExpenseResponse>>
 {
@@ -22,11 +22,11 @@ public sealed class GetRecurringExpenseByIdQueryHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var expense = await recurringExpenseRepository.GetByIdAsync(query.Id, cancellationToken);
+        var expense = await expenseRepository.GetByIdAsync(query.Id, cancellationToken);
         if (expense is null)
         {
             return Result<RecurringExpenseResponse>.Failure(
-                Error.NotFound("RecurringExpense.NotFound", $"Gasto recorrente com ID '{query.Id}' não foi encontrado."));
+                Error.NotFound("Expense.NotFound", $"Gasto recorrente com ID '{query.Id}' não foi encontrado."));
         }
 
         if (expense.Member is null || expense.Member.FamilyId != currentMember.FamilyId)
@@ -38,3 +38,4 @@ public sealed class GetRecurringExpenseByIdQueryHandler(
         return Result<RecurringExpenseResponse>.Success(expense.ToResponse());
     }
 }
+

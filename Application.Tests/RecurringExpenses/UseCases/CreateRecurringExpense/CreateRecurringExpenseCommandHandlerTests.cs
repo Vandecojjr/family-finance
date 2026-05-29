@@ -2,7 +2,7 @@ using Application.Shared.Auth;
 using Application.UseCases.RecurringExpenses.CreateRecurringExpense;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -13,7 +13,7 @@ namespace Application.Tests.RecurringExpenses.UseCases.CreateRecurringExpense;
 
 public class CreateRecurringExpenseCommandHandlerTests
 {
-    private readonly Mock<IRecurringExpenseRepository> _recurringExpenseRepositoryMock;
+    private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
@@ -21,12 +21,12 @@ public class CreateRecurringExpenseCommandHandlerTests
 
     public CreateRecurringExpenseCommandHandlerTests()
     {
-        _recurringExpenseRepositoryMock = new Mock<IRecurringExpenseRepository>();
+        _expenseRepositoryMock = new Mock<IExpenseRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _categoryRepositoryMock = new Mock<ICategoryRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _handler = new CreateRecurringExpenseCommandHandler(
-            _recurringExpenseRepositoryMock.Object,
+            _expenseRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _categoryRepositoryMock.Object,
             _currentUserMock.Object);
@@ -68,8 +68,8 @@ public class CreateRecurringExpenseCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.AddAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -102,8 +102,8 @@ public class CreateRecurringExpenseCommandHandlerTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("User.MemberNotFound");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.AddAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -142,8 +142,8 @@ public class CreateRecurringExpenseCommandHandlerTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Member.NotFound");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.AddAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -186,8 +186,8 @@ public class CreateRecurringExpenseCommandHandlerTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Family.AccessDenied");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.AddAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.AddAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -304,3 +304,5 @@ public class CreateRecurringExpenseCommandHandlerTests
         result.Errors[0].Code.Should().Be("Category.InvalidType");
     }
 }
+
+

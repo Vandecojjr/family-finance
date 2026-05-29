@@ -9,3 +9,4 @@ public sealed record CreateCreditCardCommand(
     string Brand,
     string LastFourDigits,
     decimal TotalLimit) : ICommand<Result<Guid>>;
+

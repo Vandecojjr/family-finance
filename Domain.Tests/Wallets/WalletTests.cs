@@ -241,3 +241,5 @@ public class WalletTests
         Assert.Throws<InvalidOperationException>(() => account.AdjustBalance(250m, TransactionType.Expense, useCredit: false));
     }
 }
+
+

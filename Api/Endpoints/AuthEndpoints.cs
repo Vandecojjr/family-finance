@@ -78,3 +78,4 @@ public sealed class AuthEndpoints : IEndpointGroup
     }
 }
 
+

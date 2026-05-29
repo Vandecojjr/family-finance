@@ -38,3 +38,4 @@ public sealed class CreateRecurringIncomeCommandValidator : AbstractValidator<Cr
             .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
 }
+

@@ -10,3 +10,4 @@ public sealed record GetRecurringIncomeByIdQuery(Guid Id) : IQuery<Result<Recurr
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeView];
 }
+

@@ -1,13 +1,13 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
-using Domain.Entities.PlannedExpenses;
+using Domain.Entities.Expenses;
 using Domain.Repositories;
 using Mediator;
 
 namespace Application.UseCases.PlannedExpenses.CreatePlannedExpense;
 
 public sealed class CreatePlannedExpenseCommandHandler(
-    IPlannedExpenseRepository plannedExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<CreatePlannedExpenseCommand, Result<Guid>>
@@ -55,15 +55,16 @@ public sealed class CreatePlannedExpenseCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Gasto."));
         }
 
-        var plannedExpense = new PlannedExpense(
+        var plannedExpense = Expense.CreatePlanned(
             command.Description,
             command.Amount,
             command.Date,
             command.MemberId,
             command.CategoryId);
 
-        await plannedExpenseRepository.AddAsync(plannedExpense, cancellationToken);
+        await expenseRepository.AddAsync(plannedExpense, cancellationToken);
 
         return Result<Guid>.Success(plannedExpense.Id);
     }
 }
+

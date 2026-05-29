@@ -15,3 +15,4 @@ public sealed record PayRecurringExpenseCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseUpdate];
 }
+

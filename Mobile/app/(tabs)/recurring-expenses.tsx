@@ -910,9 +910,9 @@ export default function RecurringExpensesScreen() {
                                         Editar
                                       </Text>
                                     </TouchableOpacity>
-                                    {activeTab === 'expense' && !recItem.isPaid && (
-                                      <TouchableOpacity 
-                                        style={[styles.iconBtn, { backgroundColor: 'rgba(74, 144, 226, 0.1)' }]} 
+                                     {activeTab === 'expense' && !(recItem as RecurringExpense).isPaid && (
+                                       <TouchableOpacity 
+                                         style={[styles.iconBtn, { backgroundColor: 'rgba(74, 144, 226, 0.1)' }]} 
                                         onPress={() => openPayForm(recItem as RecurringExpense)}
                                       >
                                         <Ionicons name="card-outline" size={16} color={colors.brand.primary} />
@@ -1298,7 +1298,7 @@ export default function RecurringExpensesScreen() {
                   <View style={styles.fieldWrapper}>
                     <Text style={styles.label}>Gasto Recorrente</Text>
                     <TextInput
-                      style={[styles.input, { backgroundColor: colors.bg.tertiary, color: colors.text.secondary }]}
+                      style={[styles.input, { backgroundColor: colors.bg.elevated, color: colors.text.secondary }]}
                       value={payingItem?.description}
                       editable={false}
                     />
@@ -1858,7 +1858,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
-    backgroundColor: colors.bg.tertiary,
+    backgroundColor: colors.bg.elevated,
     borderRadius: radius.md,
     marginBottom: spacing.xs,
   },

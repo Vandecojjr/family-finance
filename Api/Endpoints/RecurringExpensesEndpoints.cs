@@ -215,3 +215,4 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+

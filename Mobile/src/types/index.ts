@@ -270,8 +270,11 @@ export interface UpdatePlannedExpenseRequest {
 }
 
 export interface AccountsPayableDto {
+  id: string;
   description: string;
   amount: number;
   frequency: number;
   categoryName: string;
+  dueDay: number;
+  isLate: boolean;
 }

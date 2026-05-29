@@ -23,3 +23,4 @@ public sealed class CreatePlannedExpenseCommandValidator : AbstractValidator<Cre
             .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
 }
+

@@ -40,3 +40,4 @@ public sealed class DeleteRecurringIncomeCommandHandler(
         return Result.Success();
     }
 }
+

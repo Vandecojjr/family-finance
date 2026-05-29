@@ -9,3 +9,4 @@ public sealed record DeletePlannedIncomeCommand(Guid Id) : ICommand<Result>, IAu
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeDelete];
 }
+

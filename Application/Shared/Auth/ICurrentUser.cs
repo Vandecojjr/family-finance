@@ -12,3 +12,4 @@ public interface ICurrentUser
     bool IsAuthenticated { get; }
     bool HasPermission(Permission permission);
 }
+

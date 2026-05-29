@@ -10,3 +10,4 @@ public sealed record GetPlannedExpensesByMemberQuery(Guid MemberId) : IQuery<Res
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseView];
 }
+

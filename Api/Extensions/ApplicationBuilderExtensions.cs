@@ -36,3 +36,4 @@ public static class ApplicationBuilderExtensions
         return app;
     }
 }
+

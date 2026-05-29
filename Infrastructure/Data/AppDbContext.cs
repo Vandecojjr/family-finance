@@ -1,12 +1,11 @@
 using Domain.Entities.BankAccounts;
 using Domain.Entities.Categories;
-using Domain.Entities.CreidtCards;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Entities.RecurringIncomes;
 using Domain.Entities.PlannedIncomes;
-using Domain.Entities.PlannedExpenses;
 using Domain.Entities.Transactions;
 using Domain.Entities.Wallets;
+using Domain.Entities.CreidtCards;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
@@ -14,11 +13,10 @@ namespace Infrastructure.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Category> Categories { get; set; } = null!;
-    public DbSet<RecurringExpense> RecurringExpenses { get; set; } = null!;
-    public DbSet<RecurringExpensePayment> RecurringExpensePayments { get; set; } = null!;
+    public DbSet<Expense> Expenses { get; set; } = null!;
+    public DbSet<ExpensePayment> ExpensePayments { get; set; } = null!;
     public DbSet<RecurringIncome> RecurringIncomes { get; set; } = null!;
     public DbSet<PlannedIncome> PlannedIncomes { get; set; } = null!;
-    public DbSet<PlannedExpense> PlannedExpenses { get; set; } = null!;
     public DbSet<Wallet> Wallets { get; set; } = null!;
     public DbSet<BankAccount> BankAccounts { get; set; } = null!;
     public DbSet<CreditCard> CreditCards { get; set; } = null!;

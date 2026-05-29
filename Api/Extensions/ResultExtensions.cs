@@ -59,3 +59,4 @@ public static class ResultExtensions
             _ => StatusCodes.Status500InternalServerError
         };
 }
+

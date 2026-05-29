@@ -14,3 +14,4 @@ public sealed class CreateWalletCommandValidator : AbstractValidator<CreateWalle
             .GreaterThanOrEqualTo(0).WithMessage("O saldo em dinheiro vivo deve ser maior ou igual a zero.");
     }
 }
+

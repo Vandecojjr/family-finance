@@ -31,3 +31,4 @@ public sealed class ListCategoriesQueryHandler(
         return Result<IReadOnlyCollection<CategoryResponse>>.Success(response);
     }
 }
+

@@ -26,3 +26,4 @@ public sealed class RevokeTokenCommandHandler(IAccountRepository accountReposito
         return Result.Success();
     }
 }
+

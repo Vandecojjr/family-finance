@@ -102,3 +102,5 @@ public class CreateCreditCardCommandHandlerTests
         result.Errors.Should().ContainSingle(e => e.Code == "BankAccount.NotFound");
     }
 }
+
+

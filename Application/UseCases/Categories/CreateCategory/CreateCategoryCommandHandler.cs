@@ -61,3 +61,4 @@ public sealed class CreateCategoryCommandHandler(
         return Result<Guid>.Success(category.Id);
     }
 }
+

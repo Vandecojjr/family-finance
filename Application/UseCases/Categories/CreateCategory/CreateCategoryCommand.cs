@@ -12,3 +12,4 @@ public sealed record CreateCategoryCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.CategoryCreate];
 }
+

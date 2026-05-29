@@ -10,3 +10,4 @@ public sealed record DeleteRecurringExpenseCommand(Guid Id)
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseDelete];
 }
+

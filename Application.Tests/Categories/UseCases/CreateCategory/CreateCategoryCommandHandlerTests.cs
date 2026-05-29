@@ -235,3 +235,5 @@ public class CreateCategoryCommandHandlerTests
         result.Errors[0].Code.Should().Be("Category.TypeMismatch");
     }
 }
+
+

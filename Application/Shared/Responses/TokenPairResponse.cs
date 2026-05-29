@@ -1,4 +1,4 @@
-﻿namespace Application.Shared.Responses;
+namespace Application.Shared.Responses;
 
 public sealed record TokenPairResponse(
     string AccessToken,
@@ -6,3 +6,4 @@ public sealed record TokenPairResponse(
     string RefreshToken,
     DateTime RefreshTokenExpiresAt
 );
+

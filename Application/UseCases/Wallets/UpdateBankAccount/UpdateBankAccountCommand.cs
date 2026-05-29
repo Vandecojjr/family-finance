@@ -11,3 +11,4 @@ public sealed record UpdateBankAccountCommand(
     AccountType Type,
     decimal DebitBalance,
     decimal CreditLimit) : ICommand<Result>;
+

@@ -14,3 +14,4 @@ public sealed class CreateCategoryCommandValidator : AbstractValidator<CreateCat
             .IsInEnum().WithMessage("O tipo de categoria informado é inválido.");
     }
 }
+

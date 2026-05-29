@@ -45,3 +45,4 @@ public sealed class LoginCommandHandler(
         return Result<TokenPairResponse>.Success(response);
     }
 }
+

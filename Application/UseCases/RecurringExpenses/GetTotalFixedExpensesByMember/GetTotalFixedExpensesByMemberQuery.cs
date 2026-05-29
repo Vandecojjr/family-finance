@@ -10,3 +10,4 @@ public sealed record GetTotalFixedExpensesByMemberQuery(Guid MemberId)
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseView];
 }
+

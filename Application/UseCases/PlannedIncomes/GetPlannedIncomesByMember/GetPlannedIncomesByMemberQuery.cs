@@ -10,3 +10,4 @@ public sealed record GetPlannedIncomesByMemberQuery(Guid MemberId) : IQuery<Resu
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeView];
 }
+

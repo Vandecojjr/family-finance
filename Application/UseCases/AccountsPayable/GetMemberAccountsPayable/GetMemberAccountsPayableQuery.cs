@@ -8,3 +8,4 @@ namespace Application.UseCases.AccountsPayable.GetMemberAccountsPayable;
 
 public sealed record GetMemberAccountsPayableQuery(Guid MemberId, RecurringFrequency OnlyDate) : IQuery<Result<IReadOnlyCollection<AccountsPayableDto>>>;
 
+

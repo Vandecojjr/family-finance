@@ -18,3 +18,4 @@ public sealed record UpdateRecurringIncomeCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeUpdate];
 }
+

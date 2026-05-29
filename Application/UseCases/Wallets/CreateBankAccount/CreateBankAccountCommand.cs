@@ -10,3 +10,4 @@ public sealed record CreateBankAccountCommand(
     AccountType Type,
     decimal DebitBalance,
     decimal CreditLimit) : ICommand<Result<Guid>>;
+

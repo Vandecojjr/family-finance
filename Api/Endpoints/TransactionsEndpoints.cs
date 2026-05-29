@@ -92,3 +92,4 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+

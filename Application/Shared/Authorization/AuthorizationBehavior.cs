@@ -34,3 +34,4 @@ public class AuthorizationBehavior<TRequest, TResponse>(ICurrentUser currentUser
         return await next(message, cancellationToken);
     }
 }
+

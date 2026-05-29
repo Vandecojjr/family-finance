@@ -23,3 +23,4 @@ public sealed class CreatePlannedIncomeCommandValidator : AbstractValidator<Crea
             .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
 }
+

@@ -45,3 +45,4 @@ public static partial class FluentValidationExtensions
         return cpf.EndsWith(digit1.ToString() + digit2.ToString());
     }
 }
+

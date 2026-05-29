@@ -10,3 +10,4 @@ internal sealed class RevokeTokenCommandValidator : AbstractValidator<RevokeToke
             .NotEmpty().WithMessage("O refresh token é obrigatório.");
     }
 }
+

@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.RecurringExpenses.GetTotalFixedExpensesByMember;
 
 public sealed class GetTotalFixedExpensesByMemberQueryHandler(
-    IRecurringExpenseRepository recurringExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) 
     : IQueryHandler<GetTotalFixedExpensesByMemberQuery, Result<decimal>>
@@ -35,8 +35,10 @@ public sealed class GetTotalFixedExpensesByMemberQueryHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar os gastos recorrentes deste membro."));
         }
 
-        var total = await recurringExpenseRepository.GetTotalFixedExpensesByMemberIdAsync(query.MemberId, cancellationToken);
+        var expenses = await expenseRepository.GetAllByMemberAsync(query.MemberId, cancellationToken);
+        var total = expenses.Where(x => x.RecurringType == Domain.Enums.RecurringExpenseType.Fixed).Sum(x => x.Amount.Value);
 
         return Result<decimal>.Success(total);
     }
 }
+

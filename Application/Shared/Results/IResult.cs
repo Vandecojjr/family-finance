@@ -1,4 +1,4 @@
-﻿namespace Application.Shared.Results;
+namespace Application.Shared.Results;
 
 public interface IResult
 {
@@ -6,3 +6,4 @@ public interface IResult
     bool IsFailure => !IsSuccess;
     IReadOnlyList<Error> Errors { get; }
 }
+

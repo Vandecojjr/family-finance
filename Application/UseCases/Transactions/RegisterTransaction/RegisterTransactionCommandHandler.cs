@@ -84,3 +84,4 @@ public sealed class RegisterTransactionCommandHandler(
         return Result<Guid>.Success(transaction.Id);
     }
 }
+

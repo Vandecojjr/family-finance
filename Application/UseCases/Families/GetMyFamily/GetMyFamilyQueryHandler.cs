@@ -32,3 +32,4 @@ public sealed class GetMyFamilyQueryHandler(IFamilyRepository familyRepository, 
         return Result<FamilyResponse>.Success(family.ToResponse());
     }
 }
+

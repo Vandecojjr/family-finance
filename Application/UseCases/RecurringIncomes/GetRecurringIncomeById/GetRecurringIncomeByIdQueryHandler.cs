@@ -38,3 +38,4 @@ public sealed class GetRecurringIncomeByIdQueryHandler(
         return Result<RecurringIncomeResponse>.Success(income.ToResponse());
     }
 }
+

@@ -18,3 +18,4 @@ public sealed record CreateRecurringExpenseCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseCreate];
 }
+

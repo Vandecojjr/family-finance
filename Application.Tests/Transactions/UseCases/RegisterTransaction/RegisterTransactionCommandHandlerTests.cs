@@ -127,3 +127,5 @@ public class RegisterTransactionCommandHandlerTests
         _walletRepositoryMock.Verify(repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
+
+

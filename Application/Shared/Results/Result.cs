@@ -59,3 +59,4 @@ public static class ResultFactory
 
     private static Result<T> FailureGeneric<T>(IEnumerable<Error> errors) => Result<T>.Failure(errors);
 }
+

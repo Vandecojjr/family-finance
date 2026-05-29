@@ -14,3 +14,4 @@ public sealed record CreatePlannedIncomeCommand(
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeCreate];
 }
+

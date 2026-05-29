@@ -48,3 +48,4 @@ public static class CategoryResponseFactory
         )).ToList().AsReadOnly();
     }
 }
+

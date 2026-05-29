@@ -2,7 +2,7 @@ using Application.Shared.Auth;
 using Application.UseCases.RecurringExpenses.UpdateRecurringExpense;
 using Domain.Entities.Families;
 using Domain.Entities.Categories;
-using Domain.Entities.RecurringExpenses;
+using Domain.Entities.Expenses;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -13,7 +13,7 @@ namespace Application.Tests.RecurringExpenses.UseCases.UpdateRecurringExpense;
 
 public class UpdateRecurringExpenseCommandHandlerTests
 {
-    private readonly Mock<IRecurringExpenseRepository> _recurringExpenseRepositoryMock;
+    private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
@@ -21,20 +21,20 @@ public class UpdateRecurringExpenseCommandHandlerTests
 
     public UpdateRecurringExpenseCommandHandlerTests()
     {
-        _recurringExpenseRepositoryMock = new Mock<IRecurringExpenseRepository>();
+        _expenseRepositoryMock = new Mock<IExpenseRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _categoryRepositoryMock = new Mock<ICategoryRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _handler = new UpdateRecurringExpenseCommandHandler(
-            _recurringExpenseRepositoryMock.Object,
+            _expenseRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _categoryRepositoryMock.Object,
             _currentUserMock.Object);
     }
 
-    private static void SetMember(RecurringExpense expense, Domain.Entities.Members.Member member)
+    private static void SetMember(Expense expense, Domain.Entities.Members.Member member)
     {
-        var property = typeof(RecurringExpense).GetProperty(nameof(RecurringExpense.Member));
+        var property = typeof(Expense).GetProperty(nameof(Expense.Member));
         property?.SetValue(expense, member);
     }
 
@@ -47,7 +47,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         var currentMember = family.Members.First();
 
         var category = new Category("Energia", CategoryType.Expense, family.Id);
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -76,7 +76,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _categoryRepositoryMock
@@ -90,10 +90,10 @@ public class UpdateRecurringExpenseCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         expense.Description.Value.Should().Be("Internet Fibra");
         expense.Amount.Value.Should().Be(120.00m);
-        expense.DueDay.Value.Should().Be(15);
+        expense.DueDay!.Value.Should().Be(15);
         expense.CategoryId.Should().Be(newCategory.Id);
 
-        _recurringExpenseRepositoryMock.Verify(
+        _expenseRepositoryMock.Verify(
             repo => repo.UpdateAsync(expense, It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -127,8 +127,8 @@ public class UpdateRecurringExpenseCommandHandlerTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("User.MemberNotFound");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -156,9 +156,9 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expenseId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RecurringExpense?)null);
+            .ReturnsAsync((Expense?)null);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -166,10 +166,10 @@ public class UpdateRecurringExpenseCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
-        result.Errors[0].Code.Should().Be("RecurringExpense.NotFound");
+        result.Errors[0].Code.Should().Be("Expense.NotFound");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -185,7 +185,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         family2.AddMember("Jane Doe");
         var targetMember = family2.Members.First();
 
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -212,7 +212,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
 
@@ -224,8 +224,8 @@ public class UpdateRecurringExpenseCommandHandlerTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Family.AccessDenied");
 
-        _recurringExpenseRepositoryMock.Verify(
-            repo => repo.UpdateAsync(It.IsAny<RecurringExpense>(), It.IsAny<CancellationToken>()),
+        _expenseRepositoryMock.Verify(
+            repo => repo.UpdateAsync(It.IsAny<Expense>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -238,7 +238,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         var currentMember = family.Members.First();
 
         var category = new Category("Energia", CategoryType.Expense, family.Id);
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -265,7 +265,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _categoryRepositoryMock
@@ -290,7 +290,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         var currentMember = family1.Members.First();
 
         var category = new Category("Energia", CategoryType.Expense, family1.Id);
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -320,7 +320,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _categoryRepositoryMock
@@ -345,7 +345,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         var currentMember = family.Members.First();
 
         var category = new Category("Energia", CategoryType.Expense, family.Id);
-        var expense = new RecurringExpense(
+        var expense = Expense.CreateRecurring(
             "Internet",
             100.00m,
             RecurringExpenseType.Fixed,
@@ -374,7 +374,7 @@ public class UpdateRecurringExpenseCommandHandlerTests
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
-        _recurringExpenseRepositoryMock
+        _expenseRepositoryMock
             .Setup(repo => repo.GetByIdAsync(expense.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expense);
         _categoryRepositoryMock
@@ -390,3 +390,5 @@ public class UpdateRecurringExpenseCommandHandlerTests
         result.Errors[0].Code.Should().Be("Category.InvalidType");
     }
 }
+
+

@@ -71,3 +71,4 @@ public sealed class CreateRecurringIncomeCommandHandler(
         return Result<Guid>.Success(recurringIncome.Id);
     }
 }
+

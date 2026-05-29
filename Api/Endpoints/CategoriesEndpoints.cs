@@ -67,3 +67,4 @@ public sealed record CreateCategoryRequest(
     string Name,
     CategoryType Type,
     Guid? ParentId = null);
+

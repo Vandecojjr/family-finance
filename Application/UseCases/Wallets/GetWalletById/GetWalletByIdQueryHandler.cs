@@ -58,3 +58,4 @@ public sealed class GetWalletByIdQueryHandler(
         return Result<WalletResponse>.Success(response);
     }
 }
+

@@ -29,3 +29,4 @@ public static class EndpointExtensions
         return app;
     }
 }
+

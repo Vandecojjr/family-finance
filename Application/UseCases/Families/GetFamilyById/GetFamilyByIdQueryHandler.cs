@@ -31,3 +31,4 @@ public sealed class GetFamilyByIdQueryHandler(IFamilyRepository familyRepository
         return Result<FamilyResponse>.Success(family.ToResponse());
     }
 }
+

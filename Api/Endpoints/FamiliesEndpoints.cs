@@ -74,3 +74,4 @@ public sealed class FamiliesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+

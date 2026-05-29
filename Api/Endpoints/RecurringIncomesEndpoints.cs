@@ -180,3 +180,4 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+

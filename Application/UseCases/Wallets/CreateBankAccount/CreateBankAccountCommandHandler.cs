@@ -48,3 +48,4 @@ public sealed class CreateBankAccountCommandHandler(
         return Result<Guid>.Success(accountId);
     }
 }
+

@@ -66,3 +66,4 @@ public sealed class UpdatePlannedIncomeCommandHandler(
         return Result.Success();
     }
 }
+

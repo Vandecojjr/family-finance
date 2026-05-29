@@ -40,3 +40,4 @@ public static class RecurringIncomeResponseFactory
         return incomes.Select(ToResponse).ToList();
     }
 }
+

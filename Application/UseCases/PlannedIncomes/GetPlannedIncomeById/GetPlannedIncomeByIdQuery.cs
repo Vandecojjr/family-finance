@@ -10,3 +10,4 @@ public sealed record GetPlannedIncomeByIdQuery(Guid Id) : IQuery<Result<PlannedI
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringIncomeView];
 }
+

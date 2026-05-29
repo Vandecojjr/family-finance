@@ -40,3 +40,4 @@ public sealed class GetTotalFixedIncomesByMemberQueryHandler(
         return Result<decimal>.Success(total);
     }
 }
+

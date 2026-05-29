@@ -9,3 +9,4 @@ public sealed record ListCategoriesQuery() : IQuery<Result<IReadOnlyCollection<C
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.CategoryView];
 }
+

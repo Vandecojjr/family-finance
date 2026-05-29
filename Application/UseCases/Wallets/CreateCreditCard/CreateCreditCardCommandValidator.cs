@@ -25,3 +25,4 @@ public sealed class CreateCreditCardCommandValidator : AbstractValidator<CreateC
             .GreaterThanOrEqualTo(0).WithMessage("O limite total do cartão deve ser maior ou igual a zero.");
     }
 }
+

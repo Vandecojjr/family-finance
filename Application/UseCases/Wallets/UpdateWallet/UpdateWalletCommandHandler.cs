@@ -40,3 +40,4 @@ public sealed class UpdateWalletCommandHandler(
         return Result.Success();
     }
 }
+

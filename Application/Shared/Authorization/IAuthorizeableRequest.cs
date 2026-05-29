@@ -6,3 +6,4 @@ public interface IAuthorizeableRequest
 {
     IReadOnlyCollection<Permission> RequiredPermissions { get; }
 }
+

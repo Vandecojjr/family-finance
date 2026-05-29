@@ -25,3 +25,5 @@ public class GetFamilyByIdQueryValidatorTests
             .WithErrorMessage("O ID da família é obrigatório.");
     }
 }
+
+

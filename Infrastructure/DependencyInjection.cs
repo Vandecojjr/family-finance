@@ -24,12 +24,11 @@ public static class DependencyInjection
 
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IFamilyRepository, FamilyRepository>();
-        services.AddScoped<IRecurringExpenseRepository, RecurringExpenseRepository>();
-        services.AddScoped<IRecurringIncomeRepository, RecurringIncomeRepository>();
-        services.AddScoped<IPlannedIncomeRepository, PlannedIncomeRepository>();
-        services.AddScoped<IPlannedExpenseRepository, PlannedExpenseRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IExpenseRepository, ExpenseRepository>();
+        services.AddScoped<IRecurringIncomeRepository, RecurringIncomeRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<IPlannedIncomeRepository, PlannedIncomeRepository>();
         services.AddScoped<IAccountsPayableRepository, AccountsPayableRepository>();
 
         services.AddHttpContextAccessor();

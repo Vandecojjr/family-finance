@@ -20,3 +20,4 @@ public sealed class CreateBankAccountCommandValidator : AbstractValidator<Create
             .GreaterThanOrEqualTo(0).WithMessage("O limite de crédito deve ser maior ou igual a zero.");
     }
 }
+

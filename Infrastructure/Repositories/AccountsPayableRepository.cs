@@ -1,7 +1,6 @@
 using Application.Shared.Objects;
 using Application.Shared.Repositories;
 using Domain.Enums;
-using Domain.Enums.Queries;
 using Infrastructure.Data;
 using Infrastructure.Queries.Expanses;
 using Microsoft.EntityFrameworkCore;

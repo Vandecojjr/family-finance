@@ -41,3 +41,4 @@ public sealed class GetRecurringIncomesByMemberQueryHandler(
         return Result<IReadOnlyCollection<RecurringIncomeResponse>>.Success(incomes.ToResponse());
     }
 }
+

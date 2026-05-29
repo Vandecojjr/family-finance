@@ -32,3 +32,4 @@ public sealed class CreateWalletCommandHandler(
         return Result<Guid>.Success(wallet.Id);
     }
 }
+

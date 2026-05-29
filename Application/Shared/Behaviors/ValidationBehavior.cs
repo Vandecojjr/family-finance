@@ -1,4 +1,4 @@
-﻿using Application.Shared.Results;
+using Application.Shared.Results;
 using FluentValidation;
 using Mediator;
 
@@ -41,3 +41,4 @@ public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IValidat
         return await next(message, cancellationToken);
     }
 }
+

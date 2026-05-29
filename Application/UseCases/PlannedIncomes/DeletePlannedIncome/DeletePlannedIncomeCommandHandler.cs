@@ -40,3 +40,4 @@ public sealed class DeletePlannedIncomeCommandHandler(
         return Result.Success();
     }
 }
+

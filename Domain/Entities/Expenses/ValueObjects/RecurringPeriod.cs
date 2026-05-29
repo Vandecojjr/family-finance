@@ -1,7 +1,7 @@
 using Domain.Shared.Entities;
-using Domain.Entities.RecurringExpenses.Exceptions;
+using Domain.Entities.Expenses.Exceptions;
 
-namespace Domain.Entities.RecurringExpenses.ValueObjects;
+namespace Domain.Entities.Expenses.ValueObjects;
 
 public sealed record RecurringPeriod : ValueObject
 {
@@ -27,7 +27,7 @@ public sealed record RecurringPeriod : ValueObject
             : (DateTime?)null;
 
         if (utcEndDate.HasValue && utcEndDate.Value < utcStartDate)
-            throw new InvalidPeriodException();
+            throw new InvalidRecurringPeriodException("A data de término do gasto recorrente deve ser posterior ou igual à data de início.");
 
         return new RecurringPeriod(utcStartDate, utcEndDate);
     }

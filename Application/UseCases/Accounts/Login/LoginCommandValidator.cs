@@ -15,3 +15,4 @@ internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
             .MinimumLength(6).WithMessage("A senha deve ter ao menos 6 caracteres.");
     }
 }
+

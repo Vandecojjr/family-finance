@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.PlannedExpenses.GetPlannedExpensesByMember;
 
 public sealed class GetPlannedExpensesByMemberQueryHandler(
-    IPlannedExpenseRepository plannedExpenseRepository,
+    IExpenseRepository expenseRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetPlannedExpensesByMemberQuery, Result<IReadOnlyCollection<PlannedExpenseResponse>>>
 {
@@ -35,8 +35,9 @@ public sealed class GetPlannedExpensesByMemberQueryHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar gastos previstos para este membro."));
         }
 
-        var plannedExpenses = await plannedExpenseRepository.GetByMemberIdAsync(query.MemberId, cancellationToken);
+        var plannedExpenses = await expenseRepository.GetAllByMemberAsync(query.MemberId, cancellationToken);
 
         return Result<IReadOnlyCollection<PlannedExpenseResponse>>.Success(plannedExpenses.ToResponse());
     }
 }
+

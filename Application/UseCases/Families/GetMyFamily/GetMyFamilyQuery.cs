@@ -5,3 +5,4 @@ using Mediator;
 namespace Application.UseCases.Families.GetMyFamily;
 
 public sealed record GetMyFamilyQuery() : IQuery<Result<FamilyResponse>>;
+
