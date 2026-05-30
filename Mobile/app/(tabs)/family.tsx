@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { familyApi, FamilyMemberResponse } from '@/api/endpoints/family';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
 import { recurringIncomesApi } from '@/api/endpoints/recurringIncomes';
@@ -45,7 +45,7 @@ const formatDateDisplay = (dateStr: string) => {
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function FamilyScreen() {
-  const { logout } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -73,9 +73,19 @@ export default function FamilyScreen() {
 
   // Queries
   const { data: family, isLoading: isLoadingFamily, error: familyError, refetch: refetchFamily } = useQuery({
-    queryKey: ['family'],
+    queryKey: ['family', isAuthenticated],
     queryFn: () => familyApi.getMyFamily(),
+    enabled: isAuthenticated,
   });
+
+  // Refetch data every time the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        refetchFamily();
+      }
+    }, [refetchFamily, isAuthenticated])
+  );
 
   const { data: expenses, isLoading: isLoadingExpenses } = useQuery({
     queryKey: ['recurringExpenses', selectedMember?.id],

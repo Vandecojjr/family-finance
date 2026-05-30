@@ -1,4 +1,5 @@
 using Domain.Entities.Expenses;
+using Domain.Enums;
 using Domain.Repositories;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,8 +18,23 @@ public class ExpenseRepository(AppDbContext context) : IExpenseRepository
     public async Task<IReadOnlyCollection<Expense>> GetAllByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
         return await context.Expenses
-            .Include(x => x.Payments)
             .Where(x => x.MemberId == memberId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<Expense>> GetAllRecurringByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
+    {
+        return await context.Expenses
+            .Include(x => x.Payments)
+            .Where(x => x.MemberId == memberId && x.Type == ExpenseType.Recurring)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<Expense>> GetAllPlannedByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
+    {
+        return await context.Expenses
+            .Include(x => x.Payments)
+            .Where(x => x.MemberId == memberId && x.Type == ExpenseType.Planned)
             .ToListAsync(cancellationToken);
     }
 

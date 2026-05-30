@@ -62,6 +62,7 @@ export interface CreditCard {
   brand: string;
   lastFourDigits: string;
   totalLimit: number;
+  remainingLimit: number;
 }
 
 export interface CreateWalletRequest {
@@ -277,4 +278,18 @@ export interface AccountsPayableDto {
   categoryName: string;
   dueDay: number;
   isLate: boolean;
+}
+
+export interface DashboardGeneral {
+  totalExpensed: number;
+  totalIncomed: number;
+  totalProjectedExpenditure: number;
+  totalProjectedIncome: number;
+  totalBalance: number;
+  totalCreditLimit: number;
+  totalCreditExpensed: number;
+}
+
+export interface DashboardResponse {
+  general: DashboardGeneral;
 }

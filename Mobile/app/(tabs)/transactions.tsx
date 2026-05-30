@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores/authStore';
 import { transactionsApi } from '@/api/endpoints/transactions';
 import { categoriesApi } from '@/api/endpoints/categories';
 import { walletsApi } from '@/api/endpoints/wallets';
@@ -29,28 +30,34 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 
 export default function TransactionsScreen() {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthStore();
 
   // Queries
   const { data: transactions = [], isLoading: isLoadingTransactions, isError: isErrorTransactions, refetch: refetchTransactions } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', isAuthenticated],
     queryFn: () => transactionsApi.list(),
+    enabled: isAuthenticated,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', isAuthenticated],
     queryFn: () => categoriesApi.list(),
+    enabled: isAuthenticated,
   });
 
   const { data: wallets = [] } = useQuery({
-    queryKey: ['wallets'],
+    queryKey: ['wallets', isAuthenticated],
     queryFn: () => walletsApi.list(),
+    enabled: isAuthenticated,
   });
 
   // Refetch data every time the tab is focused
   useFocusEffect(
     useCallback(() => {
-      refetchTransactions();
-    }, [refetchTransactions])
+      if (isAuthenticated) {
+        refetchTransactions();
+      }
+    }, [refetchTransactions, isAuthenticated])
   );
 
   // Calculate Metrics

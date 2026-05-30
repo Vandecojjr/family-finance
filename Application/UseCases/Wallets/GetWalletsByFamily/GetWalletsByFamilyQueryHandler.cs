@@ -39,7 +39,8 @@ public sealed class GetWalletsByFamilyQueryHandler(
                     c.Id,
                     c.Brand.Value,
                     c.LastFourDigits.Value,
-                    c.TotalLimit.Value
+                    c.TotalLimit.Value,
+                    c.RemainingLimit.Value
                 )).ToList()
             )).ToList()
         )).ToList();

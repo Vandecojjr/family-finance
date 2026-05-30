@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from 'expo-router';
+import { useAuthStore } from '@/stores/authStore';
 import { walletsApi } from '@/api/endpoints/wallets';
 import { Wallet, BankAccount, CreditCard } from '@/types';
 
@@ -24,12 +26,23 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 
 export default function WalletsScreen() {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthStore();
 
   // Queries
   const { data: wallets = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['wallets'],
+    queryKey: ['wallets', isAuthenticated],
     queryFn: () => walletsApi.list(),
+    enabled: isAuthenticated,
   });
+
+  // Refetch data every time the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated) {
+        refetch();
+      }
+    }, [refetch, isAuthenticated])
+  );
 
   // Calculate Metrics
   const metrics = React.useMemo(() => {
@@ -55,6 +68,26 @@ export default function WalletsScreen() {
       netWorth: totalCash + totalDebit,
     };
   }, [wallets]);
+
+  // Wallet Collapse/Expand State
+  const [collapsedWallets, setCollapsedWallets] = useState<Record<string, boolean>>({});
+
+  const toggleWalletCollapse = (walletId: string) => {
+    setCollapsedWallets((prev) => ({
+      ...prev,
+      [walletId]: !prev[walletId],
+    }));
+  };
+
+  // BankAccount Collapse/Expand State (for credit cards list)
+  const [collapsedAccounts, setCollapsedAccounts] = useState<Record<string, boolean>>({});
+
+  const toggleAccountCollapse = (accountId: string) => {
+    setCollapsedAccounts((prev) => ({
+      ...prev,
+      [accountId]: !prev[accountId],
+    }));
+  };
 
   // Wallet Modal State
   const [walletModalOpen, setWalletModalOpen] = useState(false);
@@ -307,12 +340,28 @@ export default function WalletsScreen() {
     );
   };
 
+  // Helper to determine credit card colors based on brand name
+  const getCardGradient = (brand: string): [string, string] => {
+    const b = brand.toLowerCase();
+    if (b.includes('nubank') || b.includes('roxo') || b.includes('nu')) return ['#8a05be', '#4c006a'];
+    if (b.includes('inter') || b.includes('laranja')) return ['#ff9000', '#b85f00'];
+    if (b.includes('black') || b.includes('mastercard')) return ['#2d2d30', '#0a0a0b'];
+    if (b.includes('gold') || b.includes('visa') || b.includes('ouro')) return ['#d4af37', '#8c6b00'];
+    if (b.includes('bb') || b.includes('brasil')) return ['#ffd400', '#003399'];
+    if (b.includes('bradesco')) return ['#cc092f', '#770014'];
+    if (b.includes('santander')) return ['#ec0000', '#880000'];
+    return ['#1e1e35', '#131325']; // Default dark premium gradient
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Carteiras</Text>
+        <View>
+          <Text style={styles.title}>Minhas Finanças</Text>
+          <Text style={styles.subtitle}>Gerencie suas carteiras e contas</Text>
+        </View>
         <TouchableOpacity style={styles.addBtn} onPress={() => handleOpenWalletModal()}>
-          <Ionicons name="add" size={22} color={colors.white} />
+          <Ionicons name="add" size={24} color={colors.white} />
         </TouchableOpacity>
       </View>
 
@@ -340,181 +389,256 @@ export default function WalletsScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Summary/Patrimonio Card */}
-          <LinearGradient colors={colors.gradient.primary} style={styles.totalCard}>
-            <View style={styles.totalRow}>
-              <View>
-                <Text style={styles.totalLabel}>Patrimônio Líquido Geral</Text>
-                <Text style={styles.totalValue}>{fmt(metrics.netWorth)}</Text>
+          {/* Patrimonio Líquido Header */}
+          <View style={styles.patrimonioHeaderContainer}>
+            <Text style={styles.patrimonioLabel}>Patrimônio Líquido Geral</Text>
+            <Text style={styles.patrimonioValue}>{fmt(metrics.netWorth)}</Text>
+            
+            <View style={styles.patrimonioSummaryRow}>
+              <View style={styles.patrimonioSummaryItem}>
+                <Text style={styles.patrimonioSummaryLabel}>Dinheiro Vivo</Text>
+                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalCash)}</Text>
               </View>
-              <Ionicons name="shield-checkmark" size={36} color="rgba(255,255,255,0.3)" />
-            </View>
-
-            <View style={styles.dividerLine} />
-
-            <View style={styles.metricsGrid}>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Dinheiro Vivo</Text>
-                <Text style={styles.metricVal}>{fmt(metrics.totalCash)}</Text>
+              <View style={styles.patrimonioSummaryDivider} />
+              <View style={styles.patrimonioSummaryItem}>
+                <Text style={styles.patrimonioSummaryLabel}>Contas</Text>
+                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalDebit)}</Text>
               </View>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Saldos em Conta</Text>
-                <Text style={styles.metricVal}>{fmt(metrics.totalDebit)}</Text>
-              </View>
-              <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>Crédito Total</Text>
-                <Text style={styles.metricVal}>{fmt(metrics.totalCredit)}</Text>
+              <View style={styles.patrimonioSummaryDivider} />
+              <View style={styles.patrimonioSummaryItem}>
+                <Text style={styles.patrimonioSummaryLabel}>Créditos</Text>
+                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalCredit)}</Text>
               </View>
             </View>
-          </LinearGradient>
+          </View>
 
           {/* List of Wallets */}
-          {wallets.map((w) => (
-            <View key={w.id} style={styles.walletGroup}>
-              {/* Wallet Header Card */}
-              <View style={styles.walletHeader}>
-                <View style={styles.walletHeaderLeft}>
-                  <View style={styles.walletIconContainer}>
-                    <Ionicons name="wallet" size={20} color={colors.brand.primary} />
-                  </View>
-                  <View>
-                    <Text style={styles.walletName}>{w.name}</Text>
-                    <Text style={styles.walletCash}>
-                      Dinheiro Vivo: <Text style={styles.walletCashValue}>{fmt(w.cashBalance)}</Text>
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.walletActions}>
-                  <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleOpenWalletModal(w)}>
-                    <Ionicons name="pencil-outline" size={16} color={colors.text.secondary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleConfirmDeleteWallet(w)}>
-                    <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Accounts & Cards section */}
-              <View style={styles.accountsSection}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeaderTitle}>Contas e Cartões</Text>
-                  <TouchableOpacity
-                    style={styles.addAccountLink}
-                    onPress={() => handleOpenAccountModal(w.id)}
+          {wallets.map((w) => {
+            const isCollapsed = collapsedWallets[w.id];
+            return (
+              <View key={w.id} style={styles.walletGroup}>
+                {/* Wallet Header Card */}
+                <View style={styles.walletHeader}>
+                  <TouchableOpacity 
+                    style={styles.walletHeaderLeft}
+                    onPress={() => toggleWalletCollapse(w.id)}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="add" size={14} color={colors.brand.teal} />
-                    <Text style={styles.addAccountLinkText}>Nova Conta</Text>
+                    <LinearGradient 
+                      colors={['rgba(124, 106, 255, 0.2)', 'rgba(94, 79, 255, 0.08)']} 
+                      style={styles.walletIconContainer}
+                    >
+                      <Ionicons name="wallet-sharp" size={18} color={colors.brand.primary} />
+                    </LinearGradient>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+                        <Text style={styles.walletName}>{w.name}</Text>
+                        <Ionicons 
+                          name={isCollapsed ? 'chevron-down' : 'chevron-up'} 
+                          size={14} 
+                          color={colors.text.secondary} 
+                        />
+                      </View>
+                      <Text style={styles.walletCash}>
+                        Dinheiro físico: <Text style={styles.walletCashValue}>{fmt(w.cashBalance)}</Text>
+                      </Text>
+                    </View>
                   </TouchableOpacity>
+
+                  <View style={styles.walletActions}>
+                    <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleOpenWalletModal(w)}>
+                      <Ionicons name="pencil-sharp" size={13} color={colors.text.secondary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleConfirmDeleteWallet(w)}>
+                      <Ionicons name="trash-sharp" size={13} color={colors.danger} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                {w.accounts.length === 0 ? (
-                  <Text style={styles.noAccountsText}>Nenhuma conta bancária vinculada a esta carteira.</Text>
-                ) : (
-                  w.accounts.map((acc) => (
-                    <View key={acc.id} style={styles.accountRowContainer}>
-                      {/* Account details card */}
-                      <View style={styles.accountCard}>
-                        <View style={styles.accountMainInfo}>
-                          <View style={styles.bankAvatar}>
-                            <Ionicons
-                              name={acc.type === 5 ? 'save' : 'business'}
-                              size={16}
-                              color={colors.text.primary}
-                            />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <View style={styles.bankNameRow}>
-                              <Text style={styles.bankNameText}>{acc.bankName}</Text>
-                              <View
-                                style={[
-                                  styles.typeBadge,
-                                  {
-                                    backgroundColor:
-                                      acc.type === 5
-                                        ? `${colors.brand.teal}22`
-                                        : `${colors.brand.primary}22`,
-                                  },
-                                ]}
+                {/* Accounts & Cards section */}
+                {!isCollapsed && (
+                  <View style={styles.accountsSection}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionHeaderTitle}>Contas e Cartões</Text>
+                      <TouchableOpacity
+                        style={styles.addAccountLink}
+                        onPress={() => handleOpenAccountModal(w.id)}
+                      >
+                        <Ionicons name="add-circle" size={16} color={colors.brand.teal} />
+                        <Text style={styles.addAccountLinkText}>Nova Conta</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {w.accounts.length === 0 ? (
+                      <View style={styles.emptyAccountsBox}>
+                        <Ionicons name="card-outline" size={24} color={colors.text.muted} />
+                        <Text style={styles.noAccountsText}>Nenhuma conta cadastrada</Text>
+                      </View>
+                    ) : (
+                      w.accounts.map((acc) => {
+                        const hasCards = acc.creditCards && acc.creditCards.length > 0;
+                        const isAccountCollapsed = collapsedAccounts[acc.id];
+                        return (
+                          <View key={acc.id} style={styles.accountRowContainer}>
+                            {/* Account details card - redesigned to be clean, modern, and space-saving */}
+                            <View style={styles.accountCard}>
+                              <TouchableOpacity 
+                                style={styles.accountMainInfo}
+                                onPress={hasCards ? () => toggleAccountCollapse(acc.id) : undefined}
+                                activeOpacity={hasCards ? 0.7 : 1}
                               >
-                                <Text
+                                <View 
                                   style={[
-                                    styles.typeBadgeText,
-                                    { color: acc.type === 5 ? colors.brand.teal : colors.brand.primary },
+                                    styles.bankAvatar, 
+                                    { backgroundColor: acc.type === 5 ? 'rgba(0, 212, 170, 0.08)' : 'rgba(124, 106, 255, 0.08)' }
                                   ]}
                                 >
-                                  {acc.type === 5 ? 'Poupança' : 'Corrente'}
-                                </Text>
-                              </View>
-                            </View>
-                            <View style={styles.balancesRow}>
-                              <Text style={styles.balanceDebit}>
-                                Saldo: <Text style={styles.boldText}>{fmt(acc.debitBalance)}</Text>
-                              </Text>
-                              {acc.creditLimit > 0 && (
-                                <Text style={styles.balanceCredit}>
-                                  Limite: <Text style={styles.boldText}>{fmt(acc.creditLimit)}</Text>
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                        </View>
-
-                        <View style={styles.accountActions}>
-                          <TouchableOpacity
-                            style={[styles.accountActionBtn, { borderColor: `${colors.brand.teal}44` }]}
-                            onPress={() => handleOpenCardModal(w.id, acc.id)}
-                          >
-                            <Ionicons name="card" size={14} color={colors.brand.teal} />
-                            <Text style={styles.accountActionBtnText}>+ Cartão</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.accountActionBtnIcon}
-                            onPress={() => handleOpenAccountModal(w.id, acc)}
-                          >
-                            <Ionicons name="pencil" size={14} color={colors.text.secondary} />
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.accountActionBtnIcon}
-                            onPress={() => handleConfirmDeleteAccount(w.id, acc)}
-                          >
-                            <Ionicons name="trash" size={14} color={colors.danger} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      {/* Credit Cards list */}
-                      {acc.creditCards && acc.creditCards.length > 0 && (
-                        <View style={styles.cardsSubList}>
-                          {acc.creditCards.map((card) => (
-                            <View key={card.id} style={styles.cardItem}>
-                              <View style={styles.cardItemLeft}>
-                                <Ionicons name="card-outline" size={16} color={colors.brand.accent} />
-                                <Text style={styles.cardNameText}>
-                                  {card.brand} •••• {card.lastFourDigits}
-                                </Text>
-                                <Text style={styles.cardLimitText}>
-                                  (Limite: {fmt(card.totalLimit)})
-                                </Text>
-                              </View>
-                              <TouchableOpacity
-                                style={styles.cardDeleteBtn}
-                                onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
-                              >
-                                <Ionicons name="trash-outline" size={12} color={colors.danger} />
+                                  <Ionicons
+                                    name={acc.type === 5 ? 'save-outline' : 'business-outline'}
+                                    size={14}
+                                    color={acc.type === 5 ? colors.brand.teal : colors.brand.primary}
+                                  />
+                                </View>
+                                <View style={styles.accountDetails}>
+                                  <View style={styles.bankNameRow}>
+                                    <Text style={styles.bankNameText}>{acc.bankName}</Text>
+                                    <View
+                                      style={[
+                                        styles.typeBadge,
+                                        {
+                                          backgroundColor:
+                                            acc.type === 5
+                                              ? 'rgba(0, 212, 170, 0.1)'
+                                              : 'rgba(124, 106, 255, 0.1)',
+                                        },
+                                      ]}
+                                    >
+                                      <Text
+                                        style={[
+                                          styles.typeBadgeText,
+                                          { color: acc.type === 5 ? colors.brand.teal : colors.brand.primary },
+                                        ]}
+                                      >
+                                        {acc.type === 5 ? 'Poupança' : 'Corrente'}
+                                      </Text>
+                                    </View>
+                                    {hasCards && (
+                                      <Ionicons 
+                                        name={isAccountCollapsed ? 'chevron-down' : 'chevron-up'} 
+                                        size={14} 
+                                        color={colors.text.secondary} 
+                                        style={{ marginLeft: 2 }}
+                                      />
+                                    )}
+                                  </View>
+                                  <Text style={styles.accountBalanceText}>
+                                    Saldo: <Text style={styles.boldText}>{fmt(acc.debitBalance)}</Text>
+                                  </Text>
+                                  {acc.creditLimit > 0 && (
+                                    <Text style={styles.accountLimitText}>
+                                      Crédito da conta: <Text style={styles.boldText}>{fmt(acc.creditLimit)}</Text>
+                                    </Text>
+                                  )}
+                                </View>
                               </TouchableOpacity>
+ 
+                              <View style={styles.accountActionsGroup}>
+                                <TouchableOpacity
+                                  style={[styles.accountActionCircle, { borderColor: 'rgba(0, 212, 170, 0.25)', backgroundColor: 'rgba(0, 212, 170, 0.05)' }]}
+                                  onPress={() => handleOpenCardModal(w.id, acc.id)}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="card-outline" size={12} color={colors.brand.teal} />
+                                </TouchableOpacity>
+ 
+                                <TouchableOpacity
+                                  style={styles.accountActionCircle}
+                                  onPress={() => handleOpenAccountModal(w.id, acc)}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="pencil-sharp" size={12} color={colors.text.secondary} />
+                                </TouchableOpacity>
+ 
+                                <TouchableOpacity
+                                  style={styles.accountActionCircle}
+                                  onPress={() => handleConfirmDeleteAccount(w.id, acc)}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="trash-sharp" size={12} color={colors.danger} />
+                                </TouchableOpacity>
+                              </View>
                             </View>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  ))
+ 
+                            {/* Credit Cards list - horizontal carousel */}
+                            {hasCards && !isAccountCollapsed && (
+                              <View style={styles.cardsCarouselContainer}>
+                                <ScrollView
+                                  horizontal
+                                  showsHorizontalScrollIndicator={false}
+                                  contentContainerStyle={styles.cardsScrollContent}
+                                >
+                                  {acc.creditCards.map((card) => (
+                                    <LinearGradient
+                                      key={card.id}
+                                      colors={getCardGradient(card.brand)}
+                                      start={{ x: 0, y: 0 }}
+                                      end={{ x: 1, y: 1 }}
+                                      style={styles.creditCardMini}
+                                    >
+                                      <View style={styles.cardGlossyShine} />
+                                      
+                                      <View style={styles.miniCardHeader}>
+                                        <View style={styles.miniCardBrandRow}>
+                                          <Ionicons name="card" size={14} color="rgba(255, 255, 255, 0.7)" />
+                                          <Text style={styles.miniCardBrandText}>{card.brand.toUpperCase()}</Text>
+                                        </View>
+                                        <TouchableOpacity
+                                          style={styles.cardDeleteBtnGlass}
+                                          onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
+                                        >
+                                          <Ionicons name="trash-sharp" size={11} color="rgba(255, 255, 255, 0.95)" />
+                                        </TouchableOpacity>
+                                      </View>
+ 
+                                      <View style={styles.miniCardBody}>
+                                        <View style={styles.miniCardChip}>
+                                          <View style={styles.miniCardChipLine} />
+                                        </View>
+                                        <Ionicons name="wifi-sharp" size={14} color="rgba(255,255,255,0.4)" style={styles.cardWifiIcon} />
+                                      </View>
+
+                                      <View style={styles.miniCardFooter}>
+                                        <View style={{ flex: 1 }}>
+                                          <Text style={styles.miniCardNumbers}>
+                                            ••••  ••••  ••••  {card.lastFourDigits}
+                                          </Text>
+                                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginRight: spacing.sm, alignItems: 'flex-end' }}>
+                                            <View>
+                                              <Text style={styles.miniCardLabel}>Disponível</Text>
+                                              <Text style={styles.miniCardValue}>{fmt(card.remainingLimit)}</Text>
+                                            </View>
+                                            <View>
+                                              <Text style={styles.miniCardLabel}>Limite</Text>
+                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>{fmt(card.totalLimit)}</Text>
+                                            </View>
+                                          </View>
+                                        </View>
+                                        <Text style={styles.premiumCardBadge}>PLATINUM</Text>
+                                      </View>
+                                    </LinearGradient>
+                                  ))}
+                                </ScrollView>
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
                 )}
               </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
 
@@ -529,8 +653,8 @@ export default function WalletsScreen() {
               <Text style={styles.modalTitle}>
                 {walletForm.id ? 'Editar Carteira' : 'Nova Carteira'}
               </Text>
-              <TouchableOpacity onPress={() => setWalletModalOpen(false)}>
-                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              <TouchableOpacity onPress={() => setWalletModalOpen(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -546,7 +670,7 @@ export default function WalletsScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Saldo Físico (Dinheiro Vivo em Mãos)</Text>
+              <Text style={styles.label}>Saldo Físico (Dinheiro em Mãos)</Text>
               <TextInput
                 style={styles.input}
                 placeholder="0.00"
@@ -583,8 +707,8 @@ export default function WalletsScreen() {
               <Text style={styles.modalTitle}>
                 {accountForm.id ? 'Editar Conta Bancária' : 'Nova Conta Bancária'}
               </Text>
-              <TouchableOpacity onPress={() => setAccountModalOpen(false)}>
-                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              <TouchableOpacity onPress={() => setAccountModalOpen(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -634,7 +758,7 @@ export default function WalletsScreen() {
                 />
               </View>
 
-              <View style={[styles.formGroup, { flex: 1, marginLeft: spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1, marginLeft: spacing.md }]}>
                 <Text style={styles.label}>Limite de Crédito</Text>
                 <TextInput
                   style={styles.input}
@@ -671,8 +795,8 @@ export default function WalletsScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Novo Cartão de Crédito</Text>
-              <TouchableOpacity onPress={() => setCardModalOpen(false)}>
-                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              <TouchableOpacity onPress={() => setCardModalOpen(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -701,7 +825,7 @@ export default function WalletsScreen() {
                 />
               </View>
 
-              <View style={[styles.formGroup, { flex: 1, marginLeft: spacing.sm }]}>
+              <View style={[styles.formGroup, { flex: 1, marginLeft: spacing.md }]}>
                 <Text style={styles.label}>Limite Total</Text>
                 <TextInput
                   style={styles.input}
@@ -742,15 +866,16 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
   },
-  title: { ...typography.h2, color: colors.text.primary },
+  title: { ...typography.h2, color: colors.text.primary, fontWeight: '800' },
+  subtitle: { ...typography.bodySmall, color: colors.text.secondary, marginTop: 2 },
   addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
+    width: 46,
+    height: 46,
+    borderRadius: radius.md,
     backgroundColor: colors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadow.sm,
+    ...shadow.md,
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
   loadingText: { ...typography.body, color: colors.text.secondary },
@@ -776,140 +901,310 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   createBtnText: { ...typography.button, color: colors.white },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
-  totalCard: { borderRadius: radius.xl, padding: spacing.xl, marginBottom: spacing.sm, ...shadow.lg },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { ...typography.caption, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1 },
-  totalValue: { ...typography.h1, color: colors.white, marginTop: spacing.xs },
-  dividerLine: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: spacing.md },
-  metricsGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-  metricItem: { flex: 1 },
-  metricLabel: { ...typography.caption, color: 'rgba(255,255,255,0.6)' },
-  metricVal: { ...typography.body, color: colors.white, fontWeight: '700', marginTop: 2 },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl },
+  
+  // Patrimonio Líquido Header
+  patrimonioHeaderContainer: {
+    paddingVertical: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  patrimonioLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  patrimonioValue: {
+    ...typography.h1,
+    color: colors.text.primary,
+    fontSize: 32,
+    fontWeight: '800',
+    marginTop: spacing.xs,
+  },
+  patrimonioSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.md,
+    ...shadow.sm,
+  },
+  patrimonioSummaryItem: {
+    flex: 1,
+  },
+  patrimonioSummaryLabel: {
+    fontSize: 9,
+    color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  patrimonioSummaryValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text.primary,
+    marginTop: 2,
+  },
+  patrimonioSummaryDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.xs,
+  },
+  
+  // Wallet group
   walletGroup: {
     backgroundColor: colors.bg.secondary,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
-    marginBottom: spacing.xs,
+    ...shadow.sm,
   },
   walletHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.bg.card,
-    padding: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
     borderColor: colors.border,
   },
   walletHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
   walletIconContainer: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: radius.sm,
-    backgroundColor: `${colors.brand.primary}18`,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  walletName: { ...typography.h4, color: colors.text.primary },
+  walletName: { ...typography.h4, color: colors.text.primary, fontWeight: '700' },
   walletCash: { ...typography.caption, color: colors.text.secondary, marginTop: 1 },
-  walletCashValue: { color: colors.success, fontWeight: '600' },
+  walletCashValue: { color: colors.success, fontWeight: '700' },
   walletActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   actionBtnIcon: {
-    padding: spacing.xs,
     width: 32,
     height: 32,
     borderRadius: radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  accountsSection: { padding: spacing.md, gap: spacing.sm },
+  
+  // Accounts Section
+  accountsSection: { padding: spacing.md, gap: spacing.md },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
   },
-  sectionHeaderTitle: { ...typography.caption, color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionHeaderTitle: { ...typography.caption, color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '700' },
   addAccountLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  addAccountLinkText: { ...typography.caption, color: colors.brand.teal, fontWeight: '700' },
-  noAccountsText: { ...typography.bodySmall, color: colors.text.muted, fontStyle: 'italic', paddingVertical: spacing.xs },
-  accountRowContainer: { marginBottom: spacing.sm },
+  addAccountLinkText: { ...typography.caption, color: colors.brand.teal, fontWeight: '800' },
+  emptyAccountsBox: { 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingVertical: spacing.xl, 
+    borderWidth: 1, 
+    borderStyle: 'dashed', 
+    borderColor: colors.border, 
+    borderRadius: radius.md,
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.01)',
+  },
+  noAccountsText: { ...typography.bodySmall, color: colors.text.muted, fontStyle: 'italic' },
+  
+  accountRowContainer: { marginBottom: spacing.md },
   accountCard: {
-    backgroundColor: colors.bg.elevated,
+    backgroundColor: colors.bg.card,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.sm,
+    padding: spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    ...shadow.sm,
   },
-  accountMainInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
+  accountMainInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
   bankAvatar: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderRadius: radius.sm,
-    backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bankNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  bankNameText: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
-  typeBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+  accountDetails: {
+    flex: 1,
+    gap: 1,
   },
-  typeBadgeText: { fontSize: 9, fontWeight: '700' },
-  balancesRow: { flexDirection: 'row', gap: spacing.md, marginTop: 2 },
-  balanceDebit: { ...typography.bodySmall, color: colors.text.secondary },
-  balanceCredit: { ...typography.bodySmall, color: colors.text.secondary },
-  boldText: { color: colors.text.primary, fontWeight: '600' },
-  accountActions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: spacing.sm },
-  accountActionBtn: {
+  bankNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
+    gap: spacing.xs,
   },
-  accountActionBtnText: { fontSize: 10, color: colors.brand.teal, fontWeight: '700' },
-  accountActionBtnIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
+  bankNameText: { ...typography.body, color: colors.text.primary, fontWeight: '700' },
+  typeBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  typeBadgeText: { 
+    fontSize: 9, 
+    fontWeight: '800', 
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  accountBalanceText: { fontSize: 12, color: colors.text.secondary, marginTop: 2 },
+  accountLimitText: { fontSize: 12, color: colors.text.secondary },
+  boldText: { color: colors.text.secondary, fontWeight: '700' },
+  
+  // Actions
+  accountActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: spacing.sm,
+  },
+  accountActionCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardsSubList: {
-    marginLeft: spacing.lg,
-    marginTop: spacing.xs,
-    paddingLeft: spacing.sm,
-    borderLeftWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
+  
+  // Credit Cards Horizontal Carousel
+  cardsCarouselContainer: {
+    marginTop: spacing.sm,
+    paddingLeft: spacing.xs,
   },
-  cardItem: {
+  cardsScrollContent: {
+    paddingRight: spacing.md,
+    gap: spacing.sm,
+  },
+  creditCardMini: {
+    width: 250,
+    height: 140,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'space-between',
+    marginRight: spacing.xs,
+    ...shadow.sm,
+  },
+  cardGlossyShine: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    transform: [{ rotate: '-45deg' }, { translateY: -60 }],
+    height: 300,
+    width: 100,
+    left: '30%',
+  },
+  miniCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: `${colors.bg.card}aa`,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 0.5,
-    borderColor: colors.border,
   },
-  cardItemLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flex: 1 },
-  cardNameText: { ...typography.bodySmall, color: colors.text.primary, fontWeight: '500' },
-  cardLimitText: { ...typography.caption, color: colors.text.secondary, marginLeft: 4 },
-  cardDeleteBtn: { padding: spacing.xs },
+  miniCardBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  miniCardBrandText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.white,
+    letterSpacing: 1,
+  },
+  cardDeleteBtnGlass: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  miniCardBody: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: spacing.xs,
+  },
+  miniCardChip: {
+    width: 28,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: '#ffd700',
+    position: 'relative',
+    borderWidth: 0.5,
+    borderColor: '#d4af37',
+  },
+  miniCardChipLine: {
+    position: 'absolute',
+    left: 13,
+    top: 0,
+    bottom: 0,
+    width: 0.5,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  cardWifiIcon: {
+    transform: [{ rotate: '90deg' }],
+  },
+  miniCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  miniCardNumbers: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 1.5,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    marginBottom: spacing.xs,
+  },
+  miniCardLabel: {
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  miniCardValue: {
+    fontSize: 12,
+    color: colors.white,
+    fontWeight: '700',
+  },
+  premiumCardBadge: {
+    fontSize: 8,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  
+  // Modals
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -930,10 +1225,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
-  modalTitle: { ...typography.h3, color: colors.text.primary },
+  modalTitle: { ...typography.h3, color: colors.text.primary, fontWeight: '700' },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   formGroup: { marginBottom: spacing.md },
   formRow: { flexDirection: 'row', marginBottom: spacing.md },
-  label: { ...typography.caption, color: colors.text.secondary, marginBottom: spacing.xs },
+  label: { ...typography.caption, color: colors.text.secondary, marginBottom: spacing.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
   input: {
     backgroundColor: colors.bg.card,
     borderColor: colors.border,

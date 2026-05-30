@@ -53,13 +53,10 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(currentMember);
-        _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(targetMember.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(targetMember);
+            .Setup(repo => repo.ExistsMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _expenseRepositoryMock
-            .Setup(repo => repo.GetAllByMemberAsync(targetMember.Id, It.IsAny<CancellationToken>()))
+            .Setup(repo => repo.GetAllRecurringByMemberAsync(targetMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expensesList.AsReadOnly());
 
         // Act
@@ -81,8 +78,8 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
         var currentMemberId = Guid.NewGuid();
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMemberId);
         _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Domain.Entities.Members.Member?)null);
+            .Setup(repo => repo.ExistsMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -94,7 +91,7 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ShouldReturnFailureResult_WhenTargetMemberNotFound()
+    public async Task Handle_ShouldReturnFailureResult_WhenTargetMemberIsDifferentFromCurrentUser()
     {
         // Arrange
         var family = new Family("Silva");
@@ -105,42 +102,8 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(currentMember);
-        _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(query.MemberId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Domain.Entities.Members.Member?)null);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Errors.Should().ContainSingle();
-        result.Errors[0].Code.Should().Be("Member.NotFound");
-    }
-
-    [Fact]
-    public async Task Handle_ShouldReturnFailureResult_WhenTargetMemberBelongsToDifferentFamily()
-    {
-        // Arrange
-        var family1 = new Family("Silva");
-        family1.AddMember("John Doe");
-        var currentMember = family1.Members.First();
-
-        var family2 = new Family("Other");
-        family2.AddMember("Jane Doe");
-        var targetMember = family2.Members.First();
-
-        var query = new GetRecurringExpensesByMemberQuery(targetMember.Id);
-
-        _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
-        _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(currentMember);
-        _familyRepositoryMock
-            .Setup(repo => repo.GetMemberByIdAsync(targetMember.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(targetMember);
+            .Setup(repo => repo.ExistsMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -151,5 +114,3 @@ public class GetRecurringExpensesByMemberQueryHandlerTests
         result.Errors[0].Code.Should().Be("Family.AccessDenied");
     }
 }
-
-

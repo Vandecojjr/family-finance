@@ -35,7 +35,7 @@ const getFrequencyLabel = (freq: number) => {
 };
 
 export default function AccountsPayableScreen() {
-  const { tokens } = useAuthStore();
+  const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   
@@ -71,8 +71,9 @@ export default function AccountsPayableScreen() {
   });
 
   const { data: wallets } = useQuery({
-    queryKey: ['wallets'],
+    queryKey: ['wallets', isAuthenticated],
     queryFn: () => walletsApi.list(),
+    enabled: isAuthenticated,
   });
 
   const payMutation = useMutation({
@@ -282,6 +283,7 @@ export default function AccountsPayableScreen() {
                       setPayBankAccountId('');
                       setPayCreditCardId('');
                       setPayUseCredit(false);
+                      setIsDetailModalOpen(false);
                       setIsPayModalOpen(true);
                     }
                   }}
@@ -308,7 +310,10 @@ export default function AccountsPayableScreen() {
                   <View style={styles.formHeaderInfo}>
                     <Text style={styles.formTitle}>Registrar Pagamento</Text>
                   </View>
-                  <TouchableOpacity style={styles.closeBtn} onPress={() => setIsPayModalOpen(false)}>
+                  <TouchableOpacity style={styles.closeBtn} onPress={() => {
+                    setIsPayModalOpen(false);
+                    setIsDetailModalOpen(true);
+                  }}>
                     <Ionicons name="close" size={24} color={colors.text.primary} />
                   </TouchableOpacity>
                 </View>
@@ -337,7 +342,10 @@ export default function AccountsPayableScreen() {
 
                   <View style={styles.fieldWrapper}>
                     <Text style={styles.label}>Carteira / Conta</Text>
-                    <TouchableOpacity style={styles.selectInput} onPress={() => setIsWalletSelectOpen(true)}>
+                    <TouchableOpacity style={styles.selectInput} onPress={() => {
+                      setIsPayModalOpen(false);
+                      setIsWalletSelectOpen(true);
+                    }}>
                       <Text style={[styles.selectInputText, !payWalletId && { color: colors.text.muted }]}>
                         {payWalletId
                           ? (payUseCredit 
@@ -377,7 +385,10 @@ export default function AccountsPayableScreen() {
               <View style={styles.formHeaderInfo}>
                 <Text style={styles.formTitle}>Selecione a Fonte de Pagamento</Text>
               </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsWalletSelectOpen(false)}>
+              <TouchableOpacity style={styles.closeBtn} onPress={() => {
+                setIsWalletSelectOpen(false);
+                setIsPayModalOpen(true);
+              }}>
                 <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
@@ -395,6 +406,7 @@ export default function AccountsPayableScreen() {
                       setPayCreditCardId('');
                       setPayUseCredit(false);
                       setIsWalletSelectOpen(false);
+                      setIsPayModalOpen(true);
                     }}
                   >
                     <Ionicons name="cash-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
@@ -412,6 +424,7 @@ export default function AccountsPayableScreen() {
                           setPayCreditCardId('');
                           setPayUseCredit(false);
                           setIsWalletSelectOpen(false);
+                          setIsPayModalOpen(true);
                         }}
                       >
                         <Ionicons name="business-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
@@ -429,6 +442,7 @@ export default function AccountsPayableScreen() {
                             setPayCreditCardId(card.id);
                             setPayUseCredit(true);
                             setIsWalletSelectOpen(false);
+                            setIsPayModalOpen(true);
                           }}
                         >
                           <Ionicons name="card-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />

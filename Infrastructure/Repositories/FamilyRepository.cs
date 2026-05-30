@@ -52,4 +52,12 @@ public class FamilyRepository(AppDbContext context) : IFamilyRepository
         return await context.Set<Member>()
             .AnyAsync(x => x.Id == memberId, cancellationToken);
     }
+
+    public async Task<Guid> GetFamilyIdByMemberIdAsync(Guid memberId, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Member>()
+            .Where(x => x.Id == memberId)
+            .Select(x => x.FamilyId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

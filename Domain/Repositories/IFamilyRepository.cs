@@ -15,4 +15,5 @@ public interface IFamilyRepository : IRepository<Family>
 
     Task<Member?> GetMemberByIdAsync(Guid memberId, CancellationToken cancellationToken = default);
     Task<bool> ExistsMemberByIdAsync(Guid memberId, CancellationToken cancellationToken = default);
+    Task<Guid> GetFamilyIdByMemberIdAsync(Guid memberId, CancellationToken cancellationToken = default);
 }

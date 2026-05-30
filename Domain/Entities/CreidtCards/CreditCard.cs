@@ -15,6 +15,7 @@ public class CreditCard : Entity
     public CreditCardBrand Brand { get; private set; } = null!;
     public LastFourDigits LastFourDigits { get; private set; } = null!;
     public CreditCardLimit TotalLimit { get; private set; } = null!;
+    public CreditCardLimit RemainingLimit { get; private set; } = null!;
 
     public virtual BankAccount BankAccount { get; private set; } = null!;
 
@@ -29,6 +30,7 @@ public class CreditCard : Entity
         Brand = CreditCardBrand.Create(brand);
         LastFourDigits = LastFourDigits.Create(lastFourDigits);
         TotalLimit = CreditCardLimit.Create(totalLimit);
+        RemainingLimit = CreditCardLimit.Create(totalLimit);
         BankAccountId = bankAccountId;
     }
 
@@ -40,9 +42,9 @@ public class CreditCard : Entity
         if (type == TransactionType.Income)
             throw new BankAccountCreditTransactionMustBeExpenseException();
 
-        if (TotalLimit.Value < amount)
+        if (RemainingLimit.Value < amount)
             throw new InvalidOperationException("Saldo e limite de crédito insuficientes para realizar esta transação.");
             
-        TotalLimit = CreditCardLimit.Create(TotalLimit.Value - amount);
+        RemainingLimit = CreditCardLimit.Create(RemainingLimit.Value - amount);
     }
 }

@@ -39,5 +39,13 @@ public class CreditCardConfiguration : IEntityTypeConfiguration<CreditCard>
             )
             .IsRequired()
             .HasPrecision(18, 2);
+
+        builder.Property(x => x.RemainingLimit)
+            .HasConversion(
+                remainingLimit => remainingLimit.Value,
+                value => CreditCardLimit.Create(value)
+            )
+            .IsRequired()
+            .HasPrecision(18, 2);
     }
 }

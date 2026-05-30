@@ -49,7 +49,7 @@ const formatDateDisplay = (dateStr: string) => {
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function RecurringExpensesScreen() {
-  const { tokens } = useAuthStore();
+  const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const isFocused = useIsFocused();
 
@@ -74,8 +74,9 @@ export default function RecurringExpensesScreen() {
 
   // Fetch Family to list members
   const { data: family, isLoading: isLoadingFamily } = useQuery({
-    queryKey: ['family'],
+    queryKey: ['family', isAuthenticated],
     queryFn: () => familyApi.getMyFamily(),
+    enabled: isAuthenticated,
   });
 
   // Set default selected member to logged-in user when family data is loaded
@@ -120,14 +121,16 @@ export default function RecurringExpensesScreen() {
 
   // Fetch Categories for selection
   const { data: categories } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', isAuthenticated],
     queryFn: () => categoriesApi.list(),
+    enabled: isAuthenticated,
   });
 
   // Fetch Wallets for payment selection
   const { data: wallets } = useQuery({
-    queryKey: ['wallets'],
+    queryKey: ['wallets', isAuthenticated],
     queryFn: () => walletsApi.list(),
+    enabled: isAuthenticated,
   });
 
   const flattenedCategories = React.useMemo(() => {
@@ -1318,7 +1321,10 @@ export default function RecurringExpensesScreen() {
 
                   <View style={styles.fieldWrapper}>
                     <Text style={styles.label}>Carteira / Conta</Text>
-                    <TouchableOpacity style={styles.selectInput} onPress={() => setIsWalletSelectOpen(true)}>
+                    <TouchableOpacity style={styles.selectInput} onPress={() => {
+                      setIsPayModalOpen(false);
+                      setIsWalletSelectOpen(true);
+                    }}>
                       <Text style={[styles.selectInputText, !payWalletId && { color: colors.text.muted }]}>
                         {payWalletId
                           ? (payUseCredit 
@@ -1358,7 +1364,10 @@ export default function RecurringExpensesScreen() {
               <View style={styles.formHeaderInfo}>
                 <Text style={styles.formTitle}>Selecione a Fonte de Pagamento</Text>
               </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsWalletSelectOpen(false)}>
+              <TouchableOpacity style={styles.closeBtn} onPress={() => {
+                setIsWalletSelectOpen(false);
+                setIsPayModalOpen(true);
+              }}>
                 <Ionicons name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
@@ -1376,6 +1385,7 @@ export default function RecurringExpensesScreen() {
                       setPayCreditCardId('');
                       setPayUseCredit(false);
                       setIsWalletSelectOpen(false);
+                      setIsPayModalOpen(true);
                     }}
                   >
                     <Ionicons name="cash-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
@@ -1393,6 +1403,7 @@ export default function RecurringExpensesScreen() {
                           setPayCreditCardId('');
                           setPayUseCredit(false);
                           setIsWalletSelectOpen(false);
+                          setIsPayModalOpen(true);
                         }}
                       >
                         <Ionicons name="business-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
@@ -1410,6 +1421,7 @@ export default function RecurringExpensesScreen() {
                             setPayCreditCardId(card.id);
                             setPayUseCredit(true);
                             setIsWalletSelectOpen(false);
+                            setIsPayModalOpen(true);
                           }}
                         >
                           <Ionicons name="card-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />

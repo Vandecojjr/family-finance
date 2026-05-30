@@ -1,3 +1,4 @@
+using System.Data;
 using Application.Shared.Auth;
 using Application.Shared.Repositories;
 using Infrastructure.Auth;
@@ -22,6 +23,10 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+        services.AddScoped<IDbConnection>(sp => 
+            sp.GetRequiredService<ISqlConnectionFactory>().CreateConnection());
+
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IFamilyRepository, FamilyRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -30,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<IPlannedIncomeRepository, PlannedIncomeRepository>();
         services.AddScoped<IAccountsPayableRepository, AccountsPayableRepository>();
+        services.AddScoped<IDashboardRepository, DashboardReposiroty>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();

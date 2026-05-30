@@ -66,7 +66,7 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
             .IsRequired(false);
 
         builder.HasOne(x => x.Member)
-            .WithMany()
+            .WithMany(m => m.Expenses)
             .HasForeignKey(x => x.MemberId)
             .OnDelete(DeleteBehavior.Cascade);
 

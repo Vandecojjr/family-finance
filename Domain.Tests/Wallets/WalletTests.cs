@@ -131,6 +131,7 @@ public class WalletTests
         Assert.Equal("Visa", card.Brand.Value);
         Assert.Equal("4321", card.LastFourDigits.Value);
         Assert.Equal(5000m, card.TotalLimit.Value);
+        Assert.Equal(5000m, card.RemainingLimit.Value);
     }
 
     [Fact]
@@ -144,6 +145,24 @@ public class WalletTests
         // Act & Assert
         Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "432", 5000m));
         Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
+    }
+
+    [Fact]
+    public void BankAccount_ShouldAdjustCreditCardRemainingLimit_WhenCardIsCharged()
+    {
+        // Arrange
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
+        var account = wallet.Accounts.First();
+        account.AddCreditCard("Visa", "4321", 5000m);
+        var card = account.CreditCards.First();
+
+        // Act
+        account.RegisterCreditCardTransaction(1500m, TransactionType.Expense, card.Id);
+
+        // Assert
+        Assert.Equal(5000m, card.TotalLimit.Value);
+        Assert.Equal(3500m, card.RemainingLimit.Value);
     }
 
     [Fact]

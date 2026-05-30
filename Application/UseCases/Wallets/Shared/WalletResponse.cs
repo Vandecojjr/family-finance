@@ -19,5 +19,6 @@ public sealed record CreditCardResponse(
     Guid Id,
     string Brand,
     string LastFourDigits,
-    decimal TotalLimit);
+    decimal TotalLimit,
+    decimal RemainingLimit);
 

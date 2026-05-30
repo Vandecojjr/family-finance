@@ -6,30 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useQuery } from '@tanstack/react-query';
-import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
+import { dashboardApi } from '@/api/endpoints/dashboard';
+import { familyApi } from '@/api/endpoints/family';
 import { decodeJwt } from '@/utils/jwt';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-
-// Dados mock — serão substituídos por queries React Query futuramente
-const MOCK_SUMMARY = { income: 8500, expense: 3240, balance: 12650 };
-const MOCK_TRANSACTIONS = [
-  { id: '1', description: 'Salário', amount: 8500, type: 'Income' as const, date: '2026-05-01', category: 'Renda' },
-  { id: '2', description: 'Supermercado', amount: -420, type: 'Expense' as const, date: '2026-05-10', category: 'Alimentação' },
-  { id: '3', description: 'Conta de luz', amount: -180, type: 'Expense' as const, date: '2026-05-12', category: 'Utilidades' },
-  { id: '4', description: 'Freelance', amount: 1200, type: 'Income' as const, date: '2026-05-15', category: 'Renda Extra' },
-  { id: '5', description: 'Farmácia', amount: -95, type: 'Expense' as const, date: '2026-05-18', category: 'Saúde' },
-];
-const MOCK_WALLETS = [
-  { id: '1', name: 'Conta Principal', balance: 8400, icon: 'business-outline' as const },
-  { id: '2', name: 'Poupança', balance: 4250, icon: 'save-outline' as const },
-];
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -38,8 +26,6 @@ export default function DashboardScreen() {
   const { logout, tokens } = useAuthStore();
   const router = useRouter();
   const isFocused = useIsFocused();
-
-  // Decode memberId from tokens
   const [memberId, setMemberId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,43 +37,78 @@ export default function DashboardScreen() {
     }
   }, [tokens]);
 
-  // Query total fixed recurring expenses
-  const { data: totalRecurring = 0, refetch } = useQuery({
-    queryKey: ['recurringExpensesTotalFixed', memberId],
-    queryFn: () => recurringExpensesApi.getTotalFixedByMemberId(memberId!),
+  // Query dashboard data
+  const { data: dashboardData, refetch: refetchDashboard, isLoading: loadingDashboard } = useQuery({
+    queryKey: ['dashboardData', memberId],
+    queryFn: () => dashboardApi.getInitialDashboard(),
+    enabled: !!memberId,
+  });
+
+  // Query family data for member name lookup
+  const { data: familyData, refetch: refetchFamily, isLoading: loadingFamily } = useQuery({
+    queryKey: ['myFamily', memberId],
+    queryFn: () => familyApi.getMyFamily(),
     enabled: !!memberId,
   });
 
   useEffect(() => {
     if (isFocused && memberId) {
-      refetch();
+      refetchDashboard();
+      refetchFamily();
     }
-  }, [isFocused, memberId, refetch]);
+  }, [isFocused, memberId, refetchDashboard, refetchFamily]);
+
+  const memberName = familyData?.members?.find(m => m.id === memberId)?.name ?? 'Membro';
+  
+  // Dashboard values
+  const general = dashboardData?.general;
+  const totalBalance = general?.totalBalance ?? 0;
+  const totalIncomed = general?.totalIncomed ?? 0;
+  const totalExpensed = general?.totalExpensed ?? 0;
+  
+  const totalProjectedIncome = general?.totalProjectedIncome ?? 0;
+  const totalProjectedExpenditure = general?.totalProjectedExpenditure ?? 0;
+  const projectedNet = totalProjectedIncome - totalProjectedExpenditure;
+
+  const totalCreditLimit = general?.totalCreditLimit ?? 0;
+  const totalCreditExpensed = general?.totalCreditExpensed ?? 0;
+  const creditUsagePercentage = totalCreditLimit > 0 
+    ? Math.min((totalCreditExpensed / totalCreditLimit) * 100, 100) 
+    : 0;
+
+  if (loadingDashboard && !dashboardData) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.brand.primary} />
+        <Text style={styles.loadingText}>Carregando painel financeiro...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
+        
         {/* ── Header ──────────────────────────────────────── */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Olá, bem-vindo! 👋</Text>
-            <Text style={styles.subtitle}>Aqui está seu resumo financeiro</Text>
+            <Text style={styles.greeting}>Olá, {memberName}! 👋</Text>
+            <Text style={styles.subtitle}>Resumo financeiro da família</Text>
           </View>
           <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
             <Ionicons name="log-out-outline" size={22} color={colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
-        {/* ── Card de Saldo ────────────────────────────────── */}
+        {/* ── Saldo Geral Consolidado ─────────────────────── */}
         <LinearGradient
           colors={colors.gradient.primary}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.balanceCard}
         >
-          <Text style={styles.balanceLabel}>Saldo Total</Text>
-          <Text style={styles.balanceValue}>{fmt(MOCK_SUMMARY.balance)}</Text>
+          <Text style={styles.balanceLabel}>Saldo Consolidado</Text>
+          <Text style={styles.balanceValue}>{fmt(totalBalance)}</Text>
 
           <View style={styles.balanceRow}>
             <View style={styles.balanceItem}>
@@ -95,8 +116,8 @@ export default function DashboardScreen() {
                 <Ionicons name="arrow-up-circle" size={16} color={colors.success} />
               </View>
               <View>
-                <Text style={styles.balanceItemLabel}>Receitas</Text>
-                <Text style={styles.balanceItemValue}>{fmt(MOCK_SUMMARY.income)}</Text>
+                <Text style={styles.balanceItemLabel}>Receitas do Mês</Text>
+                <Text style={styles.balanceItemValue}>{fmt(totalIncomed)}</Text>
               </View>
             </View>
             <View style={styles.balanceDivider} />
@@ -105,88 +126,108 @@ export default function DashboardScreen() {
                 <Ionicons name="arrow-down-circle" size={16} color={colors.danger} />
               </View>
               <View>
-                <Text style={styles.balanceItemLabel}>Despesas</Text>
-                <Text style={styles.balanceItemValue}>{fmt(MOCK_SUMMARY.expense)}</Text>
+                <Text style={styles.balanceItemLabel}>Despesas do Mês</Text>
+                <Text style={styles.balanceItemValue}>{fmt(totalExpensed)}</Text>
               </View>
             </View>
           </View>
         </LinearGradient>
 
-        {/* ── Card de Gastos Recorrentes ────────────────────── */}
-        <TouchableOpacity
-          style={styles.recurringCard}
-          activeOpacity={0.85}
-          onPress={() => router.push('/recurring-expenses')}
-        >
-          <View style={styles.recurringContent}>
-            <View style={styles.recurringIconWrapper}>
-              <Ionicons name="calendar" size={22} color={colors.brand.accent} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.recurringLabel}>Gastos Fixos Previstos</Text>
-              <Text style={styles.recurringValue}>{fmt(totalRecurring)}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.text.secondary} />
-          </View>
-        </TouchableOpacity>
-
-        {/* ── Carteiras ───────────────────────────────────── */}
+        {/* ── Cartão de Crédito ────────────────────────────── */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Carteiras</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>Ver todas</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.walletsList}>
-            {MOCK_WALLETS.map((w) => (
-              <View key={w.id} style={styles.walletCard}>
-                <LinearGradient colors={colors.gradient.card} style={styles.walletCardInner}>
-                  <View style={styles.walletIcon}>
-                    <Ionicons name={w.icon} size={20} color={colors.brand.primary} />
-                  </View>
-                  <Text style={styles.walletName}>{w.name}</Text>
-                  <Text style={styles.walletBalance}>{fmt(w.balance)}</Text>
-                </LinearGradient>
+          <Text style={styles.sectionTitle}>Cartão de Crédito</Text>
+          <View style={styles.creditCard}>
+            <View style={styles.creditHeader}>
+              <View style={styles.creditIconWrapper}>
+                <Ionicons name="card" size={22} color={colors.brand.accent} />
               </View>
-            ))}
-            <TouchableOpacity style={styles.addWalletCard}>
-              <Ionicons name="add-circle-outline" size={28} color={colors.brand.primary} />
-              <Text style={styles.addWalletText}>Nova{'\n'}carteira</Text>
-            </TouchableOpacity>
-          </ScrollView>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.creditLabel}>Crédito Utilizado</Text>
+                <Text style={styles.creditValue}>{fmt(totalCreditExpensed)}</Text>
+              </View>
+              <Text style={styles.creditLimitText}>Limite: {fmt(totalCreditLimit)}</Text>
+            </View>
+
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: `${creditUsagePercentage}%` }]} />
+              </View>
+              <Text style={styles.progressPercentage}>{creditUsagePercentage.toFixed(0)}% utilizado</Text>
+            </View>
+          </View>
         </View>
 
-        {/* ── Últimas Transações ──────────────────────────── */}
-        <View style={[styles.section, { marginBottom: spacing.xl }]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Últimas Transações</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>Ver todas</Text>
-            </TouchableOpacity>
-          </View>
+        {/* ── Projeções Financeiras (Planejamento) ─────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Projeções do Mês</Text>
+          <View style={styles.projectionsContainer}>
+            <View style={styles.projectionGrid}>
+              <View style={styles.projectionBox}>
+                <View style={styles.projectionHeader}>
+                  <Ionicons name="trending-up" size={18} color={colors.success} />
+                  <Text style={styles.projectionBoxLabel}>Receita Prevista</Text>
+                </View>
+                <Text style={styles.projectionBoxValue}>{fmt(totalProjectedIncome)}</Text>
+              </View>
 
-          {MOCK_TRANSACTIONS.map((tx) => (
-            <View key={tx.id} style={styles.txCard}>
-              <View style={[styles.txIcon, { backgroundColor: tx.type === 'Income' ? `${colors.success}22` : `${colors.danger}22` }]}>
-                <Ionicons
-                  name={tx.type === 'Income' ? 'trending-up' : 'trending-down'}
-                  size={18}
-                  color={tx.type === 'Income' ? colors.success : colors.danger}
-                />
-              </View>
-              <View style={styles.txInfo}>
-                <Text style={styles.txDescription}>{tx.description}</Text>
-                <Text style={styles.txCategory}>{tx.category}</Text>
-              </View>
-              <View style={styles.txRight}>
-                <Text style={[styles.txAmount, { color: tx.type === 'Income' ? colors.success : colors.danger }]}>
-                  {tx.type === 'Income' ? '+' : ''}{fmt(tx.amount)}
-                </Text>
-                <Text style={styles.txDate}>{new Date(tx.date).toLocaleDateString('pt-BR')}</Text>
+              <View style={styles.projectionBox}>
+                <View style={styles.projectionHeader}>
+                  <Ionicons name="trending-down" size={18} color={colors.danger} />
+                  <Text style={styles.projectionBoxLabel}>Despesa Prevista</Text>
+                </View>
+                <Text style={styles.projectionBoxValue}>{fmt(totalProjectedExpenditure)}</Text>
               </View>
             </View>
-          ))}
+
+            <View style={styles.projectedNetWrapper}>
+              <Text style={styles.projectedNetLabel}>Resultado Previsto do Mês:</Text>
+              <Text 
+                style={[
+                  styles.projectedNetValue, 
+                  { color: projectedNet >= 0 ? colors.success : colors.danger }
+                ]}
+              >
+                {fmt(projectedNet)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Atalhos de Acesso Rápido ─────────────────────── */}
+        <View style={[styles.section, { marginBottom: spacing.xl }]}>
+          <Text style={styles.sectionTitle}>Acesso Rápido</Text>
+          <View style={styles.shortcutsGrid}>
+            <TouchableOpacity 
+              style={styles.shortcutCard} 
+              onPress={() => router.push('/accounts-payable')}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
+                <Ionicons name="receipt-outline" size={24} color={colors.brand.primary} />
+              </View>
+              <Text style={styles.shortcutText}>Contas a Pagar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.shortcutCard} 
+              onPress={() => router.push('/recurring-expenses')}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(255, 107, 157, 0.12)' }]}>
+                <Ionicons name="repeat-outline" size={24} color={colors.brand.accent} />
+              </View>
+              <Text style={styles.shortcutText}>Gastos Fixos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.shortcutCard} 
+              onPress={() => router.push('/wallets')}
+            >
+              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.12)' }]}>
+                <Ionicons name="wallet-outline" size={24} color={colors.brand.teal} />
+              </View>
+              <Text style={styles.shortcutText}>Minhas Carteiras</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
       </ScrollView>
@@ -197,6 +238,10 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },
   container: { flex: 1, paddingHorizontal: spacing.lg },
+  
+  // Loading
+  loadingContainer: { flex: 1, backgroundColor: colors.bg.primary, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
+  loadingText: { ...typography.body, color: colors.text.secondary },
 
   // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing.lg },
@@ -217,46 +262,23 @@ const styles = StyleSheet.create({
 
   // Sections
   section: { marginBottom: spacing.lg },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  sectionTitle: { ...typography.h4, color: colors.text.primary },
-  seeAll: { ...typography.bodySmall, color: colors.brand.primary, fontWeight: '600' },
+  sectionTitle: { ...typography.h4, color: colors.text.primary, marginBottom: spacing.md },
 
-  // Wallet cards
-  walletsList: { paddingRight: spacing.md, gap: spacing.md },
-  walletCard: { width: 160, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, ...shadow.sm },
-  walletCardInner: { padding: spacing.md, gap: spacing.sm },
-  walletIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: `${colors.brand.primary}22`, justifyContent: 'center', alignItems: 'center' },
-  walletName: { ...typography.bodySmall, color: colors.text.secondary },
-  walletBalance: { ...typography.h4, color: colors.text.primary },
-  addWalletCard: { width: 100, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', gap: spacing.xs },
-  addWalletText: { ...typography.caption, color: colors.text.muted, textAlign: 'center' },
-
-  // Transactions
-  txCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg.card, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border, gap: spacing.md },
-  txIcon: { width: 40, height: 40, borderRadius: radius.sm, justifyContent: 'center', alignItems: 'center' },
-  txInfo: { flex: 1 },
-  txDescription: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
-  txCategory: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
-  txRight: { alignItems: 'flex-end' },
-  txAmount: { ...typography.body, fontWeight: '700' },
-  txDate: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
-
-  // Recurring Card
-  recurringCard: {
+  // Credit Card
+  creditCard: {
     backgroundColor: colors.bg.card,
     borderRadius: radius.lg,
     padding: spacing.md,
-    marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadow.sm,
   },
-  recurringContent: {
+  creditHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  recurringIconWrapper: {
+  creditIconWrapper: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
@@ -264,6 +286,114 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  recurringLabel: { ...typography.caption, color: colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  recurringValue: { ...typography.h4, color: colors.text.primary, fontWeight: '700', marginTop: 2 },
+  creditLabel: { ...typography.caption, color: colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  creditValue: { ...typography.h4, color: colors.text.primary, fontWeight: '700', marginTop: 2 },
+  creditLimitText: { ...typography.caption, color: colors.text.muted },
+
+  // Progress Bar
+  progressContainer: {
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.brand.accent,
+    borderRadius: radius.full,
+  },
+  progressPercentage: {
+    ...typography.caption,
+    color: colors.text.muted,
+    textAlign: 'right',
+  },
+
+  // Projections
+  projectionsContainer: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.md,
+    ...shadow.sm,
+  },
+  projectionGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  projectionBox: {
+    flex: 1,
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  projectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  projectionBoxLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  projectionBoxValue: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '700',
+  },
+  projectedNetWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.md,
+  },
+  projectedNetLabel: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+  },
+  projectedNetValue: {
+    ...typography.body,
+    fontWeight: '700',
+  },
+
+  // Shortcuts Grid
+  shortcutsGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  shortcutCard: {
+    flex: 1,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+    ...shadow.sm,
+  },
+  shortcutIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  shortcutText: {
+    ...typography.caption,
+    color: colors.text.primary,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
 });
