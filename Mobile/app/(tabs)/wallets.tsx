@@ -618,6 +618,10 @@ export default function WalletsScreen() {
                                               <Text style={styles.miniCardValue}>{fmt(card.remainingLimit)}</Text>
                                             </View>
                                             <View>
+                                              <Text style={styles.miniCardLabel}>Utilizado</Text>
+                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.85)' }]}>{fmt(card.usedLimit ?? 0)}</Text>
+                                            </View>
+                                            <View>
                                               <Text style={styles.miniCardLabel}>Limite</Text>
                                               <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>{fmt(card.totalLimit)}</Text>
                                             </View>

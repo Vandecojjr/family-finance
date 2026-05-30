@@ -35,26 +35,7 @@ public sealed class GetWalletByIdQueryHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar esta carteira."));
         }
 
-        var response = new WalletResponse(
-            wallet.Id,
-            wallet.Name.Value,
-            wallet.CashBalance.Value,
-            wallet.FamilyId,
-            wallet.Accounts.Select(a => new BankAccountResponse(
-                a.Id,
-                a.BankName.Value,
-                (int)a.Type,
-                a.DebitBalance,
-                a.CreditLimit.Value,
-                a.CreditCards.Select(c => new CreditCardResponse(
-                    c.Id,
-                    c.Brand.Value,
-                    c.LastFourDigits.Value,
-                    c.TotalLimit.Value,
-                    c.RemainingLimit.Value
-                )).ToList()
-            )).ToList()
-        );
+        var response = wallet.ToResponse();
 
         return Result<WalletResponse>.Success(response);
     }

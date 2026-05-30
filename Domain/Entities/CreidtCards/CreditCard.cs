@@ -47,4 +47,6 @@ public class CreditCard : Entity
             
         RemainingLimit = CreditCardLimit.Create(RemainingLimit.Value - amount);
     }
+    
+    public decimal UsagetotalLimit() => TotalLimit.Value - RemainingLimit.Value;
 }

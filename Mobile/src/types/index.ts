@@ -63,6 +63,7 @@ export interface CreditCard {
   lastFourDigits: string;
   totalLimit: number;
   remainingLimit: number;
+  usedLimit: number;
 }
 
 export interface CreateWalletRequest {

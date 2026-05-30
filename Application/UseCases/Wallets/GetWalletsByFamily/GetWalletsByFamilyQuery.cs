@@ -4,5 +4,5 @@ using Mediator;
 
 namespace Application.UseCases.Wallets.GetWalletsByFamily;
 
-public sealed record GetWalletsByFamilyQuery : IQuery<Result<List<WalletResponse>>>;
+public sealed record GetWalletsByFamilyQuery : IQuery<Result<IReadOnlyCollection<WalletResponse>>>;
 
