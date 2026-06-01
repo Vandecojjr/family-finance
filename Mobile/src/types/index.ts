@@ -54,6 +54,8 @@ export interface BankAccount {
   type: number; // 1 = Checking, 5 = Savings
   debitBalance: number;
   creditLimit: number;
+  remainingCreditLimit: number;
+  usedCreditLimit: number;
   creditCards: CreditCard[];
 }
 

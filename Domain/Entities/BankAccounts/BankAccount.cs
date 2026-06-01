@@ -15,6 +15,7 @@ public class BankAccount : Entity
     public AccountType Type { get; private set; }
     public decimal DebitBalance { get; private set; }
     public CreditLimit CreditLimit { get; private set; } = null!;
+    public CreditLimit RemainingCreditLimit { get; private set; } = null!;
 
     public virtual Wallet Wallet { get; private set; } = null!;
 
@@ -33,15 +34,18 @@ public class BankAccount : Entity
         Type = type;
         DebitBalance = debitBalance;
         CreditLimit = CreditLimit.Create(creditLimit);
+        RemainingCreditLimit = CreditLimit.Create(creditLimit);
         WalletId = walletId;
     }
 
     public void Update(string bankName, AccountType type, decimal debitBalance, decimal creditLimit)
     {
+        var diff = creditLimit - CreditLimit.Value;
         BankName = BankName.Create(bankName);
         Type = type;
         DebitBalance = debitBalance;
         CreditLimit = CreditLimit.Create(creditLimit);
+        RemainingCreditLimit = CreditLimit.Create(Math.Max(0, RemainingCreditLimit.Value + diff));
         SeUpdate();
     }
 
@@ -89,10 +93,10 @@ public class BankAccount : Entity
             if (type == TransactionType.Income)
                 throw new BankAccountCreditTransactionMustBeExpenseException();
 
-            if (CreditLimit.Value < amount)
+            if (RemainingCreditLimit.Value < amount)
                 throw new InvalidOperationException("Saldo e limite de crédito insuficientes para realizar esta transação.");
             
-            CreditLimit = CreditLimit.Create(CreditLimit.Value - amount);
+            RemainingCreditLimit = CreditLimit.Create(RemainingCreditLimit.Value - amount);
         }
         else
         {
@@ -110,4 +114,6 @@ public class BankAccount : Entity
         }
         SeUpdate();
     }
+
+    public decimal UsageCreditLimit() => CreditLimit.Value - RemainingCreditLimit.Value;
 }

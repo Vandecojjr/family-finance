@@ -536,7 +536,8 @@ export default function WalletsScreen() {
                                   </Text>
                                   {acc.creditLimit > 0 && (
                                     <Text style={styles.accountLimitText}>
-                                      Crédito da conta: <Text style={styles.boldText}>{fmt(acc.creditLimit)}</Text>
+                                      Crédito: <Text style={styles.boldText}>{fmt(acc.remainingCreditLimit ?? acc.creditLimit)}</Text>
+                                      <Text style={{ fontSize: 10, color: colors.text.muted }}> (Utilizado: {fmt(acc.usedCreditLimit ?? 0)} de {fmt(acc.creditLimit)})</Text>
                                     </Text>
                                   )}
                                 </View>

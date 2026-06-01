@@ -1,0 +1,27 @@
+# .NET Core
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# React Native / Expo
+node_modules/
+.expo/
+dist/
+npm-debug.log
+yarn-error.log
+
+# IDEs / Tools
+.idea/
+.vs/
+.vscode/
+
+# Antigravity
+.antigravitycli/
+
+# General
+.git/
+*.log

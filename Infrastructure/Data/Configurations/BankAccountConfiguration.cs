@@ -39,6 +39,14 @@ public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
             .IsRequired()
             .HasPrecision(18, 2);
 
+        builder.Property(x => x.RemainingCreditLimit)
+            .HasConversion(
+                creditLimit => creditLimit.Value,
+                value => CreditLimit.Create(value)
+            )
+            .IsRequired()
+            .HasPrecision(18, 2);
+
         builder.HasMany(x => x.CreditCards)
             .WithOne(x => x.BankAccount)
             .HasForeignKey(x => x.BankAccountId)

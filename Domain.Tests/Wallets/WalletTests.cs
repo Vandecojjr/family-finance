@@ -209,7 +209,9 @@ public class WalletTests
         account.AdjustBalance(400m, TransactionType.Expense, useCredit: true);
         // Assert
         Assert.Equal(300m, account.DebitBalance);
-        Assert.Equal(100m, account.CreditLimit.Value);
+        Assert.Equal(500m, account.CreditLimit.Value);
+        Assert.Equal(100m, account.RemainingCreditLimit.Value);
+        Assert.Equal(400m, account.UsageCreditLimit());
     }
 
     [Fact]

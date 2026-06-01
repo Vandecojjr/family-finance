@@ -17,6 +17,8 @@ public sealed record BankAccountResponse(
     int Type,
     decimal DebitBalance,
     decimal CreditLimit,
+    decimal RemainingCreditLimit,
+    decimal UsedCreditLimit,
     List<CreditCardResponse> CreditCards);
 
 public sealed record CreditCardResponse(
@@ -48,6 +50,8 @@ public static class WalletResponseFactory
             (int)account.Type,
             account.DebitBalance,
             account.CreditLimit.Value,
+            account.RemainingCreditLimit.Value,
+            account.UsageCreditLimit(),
             account.CreditCards.Select(ToResponse).ToList()
         );
     }
