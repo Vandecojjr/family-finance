@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.PlannedIncomes.GetPlannedIncomeById;
 
 public sealed class GetPlannedIncomeByIdQueryHandler(
-    IPlannedIncomeRepository plannedIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetPlannedIncomeByIdQuery, Result<PlannedIncomeResponse>>
 {
@@ -22,7 +22,7 @@ public sealed class GetPlannedIncomeByIdQueryHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedIncome = await plannedIncomeRepository.GetByIdAsync(query.Id, cancellationToken);
+        var plannedIncome = await incomeRepository.GetByIdAsync(query.Id, cancellationToken);
         if (plannedIncome is null)
         {
             return Result<PlannedIncomeResponse>.Failure(
@@ -39,4 +39,3 @@ public sealed class GetPlannedIncomeByIdQueryHandler(
         return Result<PlannedIncomeResponse>.Success(plannedIncome.ToResponse());
     }
 }
-

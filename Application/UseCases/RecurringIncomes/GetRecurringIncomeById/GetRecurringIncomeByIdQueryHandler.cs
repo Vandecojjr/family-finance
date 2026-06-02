@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.RecurringIncomes.GetRecurringIncomeById;
 
 public sealed class GetRecurringIncomeByIdQueryHandler(
-    IRecurringIncomeRepository recurringIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : IQueryHandler<GetRecurringIncomeByIdQuery, Result<RecurringIncomeResponse>>
 {
@@ -22,14 +22,14 @@ public sealed class GetRecurringIncomeByIdQueryHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var income = await recurringIncomeRepository.GetByIdAsync(query.Id, cancellationToken);
+        var income = await incomeRepository.GetByIdAsync(query.Id, cancellationToken);
         if (income is null)
         {
             return Result<RecurringIncomeResponse>.Failure(
                 Error.NotFound("RecurringIncome.NotFound", $"Ganho recorrente com ID '{query.Id}' não foi encontrado."));
         }
 
-        if (income.Member is null || income.Member.FamilyId != currentMember.FamilyId)
+        if (income.Member.FamilyId != currentMember.FamilyId)
         {
             return Result<RecurringIncomeResponse>.Failure(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar este ganho recorrente."));
@@ -38,4 +38,3 @@ public sealed class GetRecurringIncomeByIdQueryHandler(
         return Result<RecurringIncomeResponse>.Success(income.ToResponse());
     }
 }
-
