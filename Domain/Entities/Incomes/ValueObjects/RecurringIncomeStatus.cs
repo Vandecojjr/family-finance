@@ -1,6 +1,6 @@
 using Domain.Shared.Entities;
 
-namespace Domain.Entities.RecurringIncomes.ValueObjects;
+namespace Domain.Entities.Incomes.ValueObjects;
 
 public sealed record RecurringIncomeStatus : ValueObject
 {

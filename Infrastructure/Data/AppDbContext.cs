@@ -1,11 +1,11 @@
 using Domain.Entities.BankAccounts;
 using Domain.Entities.Categories;
 using Domain.Entities.Expenses;
-using Domain.Entities.RecurringIncomes;
-using Domain.Entities.PlannedIncomes;
+using Domain.Entities.Incomes;
 using Domain.Entities.Transactions;
 using Domain.Entities.Wallets;
 using Domain.Entities.CreidtCards;
+using Domain.Shared.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
@@ -15,8 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<Expense> Expenses { get; set; } = null!;
     public DbSet<ExpensePayment> ExpensePayments { get; set; } = null!;
-    public DbSet<RecurringIncome> RecurringIncomes { get; set; } = null!;
-    public DbSet<PlannedIncome> PlannedIncomes { get; set; } = null!;
+    public DbSet<Income> Incomes { get; set; } = null!;
     public DbSet<Wallet> Wallets { get; set; } = null!;
     public DbSet<BankAccount> BankAccounts { get; set; } = null!;
     public DbSet<CreditCard> CreditCards { get; set; } = null!;
@@ -28,10 +27,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(Domain.Shared.Entities.Entity).IsAssignableFrom(entityType.ClrType))
-            {
+            if (typeof(Entity).IsAssignableFrom(entityType.ClrType))
                 modelBuilder.Entity(entityType.ClrType).Property("Id").ValueGeneratedNever();
-            }
         }
 
         base.OnModelCreating(modelBuilder);
@@ -42,9 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         foreach (var entry in ChangeTracker.Entries<Domain.Shared.Entities.Entity>())
         {
             if (entry.State == EntityState.Modified)
-            {
                 entry.Entity.SeUpdate();
-            }
         }
 
         return base.SaveChangesAsync(cancellationToken);
