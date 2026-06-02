@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.RecurringIncomes.DeleteRecurringIncome;
 
 public sealed class DeleteRecurringIncomeCommandHandler(
-    IRecurringIncomeRepository recurringIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<DeleteRecurringIncomeCommand, Result>
 {
@@ -14,7 +14,7 @@ public sealed class DeleteRecurringIncomeCommandHandler(
         DeleteRecurringIncomeCommand command,
         CancellationToken cancellationToken)
     {
-        var recurringIncome = await recurringIncomeRepository.GetByIdAsync(command.Id, cancellationToken);
+        var recurringIncome = await incomeRepository.GetByIdAsync(command.Id, cancellationToken);
         if (recurringIncome is null)
         {
             return Result.Failure(
@@ -35,9 +35,8 @@ public sealed class DeleteRecurringIncomeCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para remover ganhos recorrentes deste membro."));
         }
 
-        await recurringIncomeRepository.DeleteAsync(recurringIncome, cancellationToken);
+        await incomeRepository.DeleteAsync(recurringIncome, cancellationToken);
 
         return Result.Success();
     }
 }
-

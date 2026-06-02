@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.PlannedIncomes.DeletePlannedIncome;
 
 public sealed class DeletePlannedIncomeCommandHandler(
-    IPlannedIncomeRepository plannedIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<DeletePlannedIncomeCommand, Result>
 {
@@ -21,7 +21,7 @@ public sealed class DeletePlannedIncomeCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedIncome = await plannedIncomeRepository.GetByIdAsync(command.Id, cancellationToken);
+        var plannedIncome = await incomeRepository.GetByIdAsync(command.Id, cancellationToken);
         if (plannedIncome is null)
         {
             return Result.Failure(
@@ -35,9 +35,8 @@ public sealed class DeletePlannedIncomeCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para remover ganhos previstos para este membro."));
         }
 
-        await plannedIncomeRepository.DeleteAsync(plannedIncome, cancellationToken);
+        await incomeRepository.DeleteAsync(plannedIncome, cancellationToken);
 
         return Result.Success();
     }
 }
-
