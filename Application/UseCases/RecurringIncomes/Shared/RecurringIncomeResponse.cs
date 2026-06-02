@@ -1,4 +1,4 @@
-using Domain.Entities.RecurringIncomes;
+using Domain.Entities.Incomes;
 
 namespace Application.UseCases.RecurringIncomes.Shared;
 
@@ -18,26 +18,25 @@ public sealed record RecurringIncomeResponse(
 
 public static class RecurringIncomeResponseFactory
 {
-    public static RecurringIncomeResponse ToResponse(this RecurringIncome income)
+    public static RecurringIncomeResponse ToResponse(this Income income)
     {
         return new RecurringIncomeResponse(
             income.Id,
             income.Description.Value,
             income.Amount.Value,
-            (int)income.Type,
-            (int)income.Frequency,
-            income.DueDay.Value,
-            income.Period.StartDate,
-            income.Period.EndDate,
-            income.Status.IsActive,
+            (int)(income.RecurringType ?? 0),
+            (int)(income.Frequency ?? 0),
+            income.DueDay != null ? income.DueDay.Value : 0,
+            income.Period != null ? income.Period.StartDate : DateTime.MinValue,
+            income.Period?.EndDate,
+            income.Status != null && income.Status.IsActive,
             income.MemberId,
             income.CategoryId,
             income.Category?.Name?.Value ?? string.Empty);
     }
 
-    public static IReadOnlyCollection<RecurringIncomeResponse> ToResponse(this IEnumerable<RecurringIncome> incomes)
+    public static IReadOnlyCollection<RecurringIncomeResponse> ToResponse(this IEnumerable<Income> incomes)
     {
         return incomes.Select(ToResponse).ToList();
     }
 }
-

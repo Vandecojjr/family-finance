@@ -41,8 +41,6 @@ public class IncomeRepository(AppDbContext context) : IIncomeRepository
                 SELECT COALESCE(SUM(""Amount""), 0) AS ""Value""
                 FROM ""Incomes""
                 WHERE ""MemberId"" = {memberId}
-                  AND ""Type"" = 2 -- IncomeType.Recurring
-                  AND ""RecurringType"" = 1 -- RecurringIncomeType.Fixed
                   AND ""Status"" = {true}")
             .FirstOrDefaultAsync(cancellationToken);
     }

@@ -7,7 +7,7 @@ using Mediator;
 namespace Application.UseCases.RecurringIncomes.GetRecurringIncomesByMember;
 
 public sealed class GetRecurringIncomesByMemberQueryHandler(
-    IRecurringIncomeRepository recurringIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) 
     : IQueryHandler<GetRecurringIncomesByMemberQuery, Result<IReadOnlyCollection<RecurringIncomeResponse>>>
@@ -36,9 +36,8 @@ public sealed class GetRecurringIncomesByMemberQueryHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar os ganhos recorrentes deste membro."));
         }
 
-        var incomes = await recurringIncomeRepository.GetByMemberIdAsync(query.MemberId, cancellationToken);
+        var incomes = await incomeRepository.GetRecurringByMemberIdAsync(query.MemberId, cancellationToken);
 
         return Result<IReadOnlyCollection<RecurringIncomeResponse>>.Success(incomes.ToResponse());
     }
 }
-

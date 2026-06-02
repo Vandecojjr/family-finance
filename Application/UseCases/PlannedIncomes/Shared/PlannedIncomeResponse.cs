@@ -1,4 +1,4 @@
-using Domain.Entities.PlannedIncomes;
+using Domain.Entities.Incomes;
 
 namespace Application.UseCases.PlannedIncomes.Shared;
 
@@ -13,21 +13,20 @@ public sealed record PlannedIncomeResponse(
 
 public static class PlannedIncomeResponseFactory
 {
-    public static PlannedIncomeResponse ToResponse(this PlannedIncome income)
+    public static PlannedIncomeResponse ToResponse(this Income income)
     {
         return new PlannedIncomeResponse(
             income.Id,
             income.Description.Value,
             income.Amount.Value,
-            income.Date,
+            income.Date ?? DateTime.MinValue,
             income.MemberId,
             income.CategoryId,
             income.Category?.Name?.Value ?? string.Empty);
     }
 
-    public static IReadOnlyCollection<PlannedIncomeResponse> ToResponse(this IEnumerable<PlannedIncome> incomes)
+    public static IReadOnlyCollection<PlannedIncomeResponse> ToResponse(this IEnumerable<Income> incomes)
     {
         return incomes.Select(ToResponse).ToList();
     }
 }
-

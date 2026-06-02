@@ -31,10 +31,9 @@ public static class DashboardQuerySql
                    WHERE  m."FamilyId" = @FamilyId) AS "TotalProjectedExpenditure",
 
                   -- 4. Total Projected Income
-                  (SELECT COALESCE(SUM(r."Amount"), 0) + COALESCE(SUM(p."Amount"), 0)
-                   FROM "RecurringIncomes" r
-                            INNER JOIN "Members" m ON m."Id" = r."MemberId"
-                            LEFT JOIN "PlannedIncomes" p ON p."MemberId" = r."MemberId"
+                  (SELECT COALESCE(SUM(i."Amount"), 0)
+                   FROM "Incomes" i
+                            INNER JOIN "Members" m ON m."Id" = i."MemberId"
                    WHERE m."FamilyId" = @FamilyId) AS "TotalProjectedIncome",
 
                   -- 5. Total Balance

@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.RecurringIncomes.UpdateRecurringIncome;
 
 public sealed class UpdateRecurringIncomeCommandHandler(
-    IRecurringIncomeRepository recurringIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<UpdateRecurringIncomeCommand, Result>
@@ -22,7 +22,7 @@ public sealed class UpdateRecurringIncomeCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var income = await recurringIncomeRepository.GetByIdAsync(command.Id, cancellationToken);
+        var income = await incomeRepository.GetByIdAsync(command.Id, cancellationToken);
         if (income is null)
         {
             return Result.Failure(
@@ -54,7 +54,7 @@ public sealed class UpdateRecurringIncomeCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Ganho."));
         }
 
-        income.Update(
+        income.UpdateRecurring(
             command.Description,
             command.Amount,
             command.Type,
@@ -64,9 +64,8 @@ public sealed class UpdateRecurringIncomeCommandHandler(
             command.EndDate,
             command.CategoryId);
 
-        await recurringIncomeRepository.UpdateAsync(income, cancellationToken);
+        await incomeRepository.UpdateAsync(income, cancellationToken);
 
         return Result.Success();
     }
 }
-

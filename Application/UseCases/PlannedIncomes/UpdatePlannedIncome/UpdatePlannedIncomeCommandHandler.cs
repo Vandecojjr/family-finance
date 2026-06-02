@@ -6,7 +6,7 @@ using Mediator;
 namespace Application.UseCases.PlannedIncomes.UpdatePlannedIncome;
 
 public sealed class UpdatePlannedIncomeCommandHandler(
-    IPlannedIncomeRepository plannedIncomeRepository,
+    IIncomeRepository incomeRepository,
     IFamilyRepository familyRepository,
     ICategoryRepository categoryRepository,
     ICurrentUser currentUser) : ICommandHandler<UpdatePlannedIncomeCommand, Result>
@@ -22,7 +22,7 @@ public sealed class UpdatePlannedIncomeCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var plannedIncome = await plannedIncomeRepository.GetByIdAsync(command.Id, cancellationToken);
+        var plannedIncome = await incomeRepository.GetByIdAsync(command.Id, cancellationToken);
         if (plannedIncome is null)
         {
             return Result.Failure(
@@ -55,15 +55,14 @@ public sealed class UpdatePlannedIncomeCommandHandler(
                 Error.Failure("Category.InvalidType", "A categoria selecionada deve ser do tipo Ganho."));
         }
 
-        plannedIncome.Update(
+        plannedIncome.UpdatePlanned(
             command.Description,
             command.Amount,
             command.Date,
             command.CategoryId);
 
-        await plannedIncomeRepository.UpdateAsync(plannedIncome, cancellationToken);
+        await incomeRepository.UpdateAsync(plannedIncome, cancellationToken);
 
         return Result.Success();
     }
 }
-
