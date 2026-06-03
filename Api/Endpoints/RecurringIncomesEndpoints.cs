@@ -5,6 +5,7 @@ using Application.UseCases.RecurringIncomes.DeleteRecurringIncome;
 using Application.UseCases.RecurringIncomes.GetRecurringIncomeById;
 using Application.UseCases.RecurringIncomes.GetRecurringIncomesByMember;
 using Application.UseCases.RecurringIncomes.GetTotalFixedIncomesByMember;
+using Application.UseCases.RecurringIncomes.ReceiveRecurringIncome;
 using Application.UseCases.RecurringIncomes.Shared;
 using Application.UseCases.RecurringIncomes.UpdateRecurringIncome;
 using Domain.Enums;
@@ -78,6 +79,16 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/receive", Receive)
+            .WithName("RecurringIncomes.Receive")
+            .WithSummary("Registra o recebimento de um ganho recorrente.")
+            .WithTags("RecurringIncomes")
+            .RequireAuthorization()
+            .Produces<Result<Guid>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     public record CreateRequest(
@@ -100,6 +111,11 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
         DateTime StartDate,
         DateTime? EndDate,
         Guid CategoryId);
+
+    public record ReceiveRecurringIncomeRequest(
+        Guid WalletId,
+        decimal Amount,
+        Guid? BankAccountId = null);
 
     private static async Task<HttpResult> Create(
         [FromBody] CreateRequest request,
@@ -176,6 +192,21 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
         CancellationToken cancellationToken)
     {
         var command = new DeleteRecurringIncomeCommand(id);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> Receive(
+        [FromRoute] Guid id,
+        [FromBody] ReceiveRecurringIncomeRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new ReceiveRecurringIncomeCommand(
+            id,
+            request.WalletId,
+            request.Amount,
+            request.BankAccountId);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }

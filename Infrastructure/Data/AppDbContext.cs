@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Expense> Expenses { get; set; } = null!;
     public DbSet<ExpensePayment> ExpensePayments { get; set; } = null!;
     public DbSet<Income> Incomes { get; set; } = null!;
+    public DbSet<IncomePayment> IncomePayments { get; set; } = null!;
     public DbSet<Wallet> Wallets { get; set; } = null!;
     public DbSet<BankAccount> BankAccounts { get; set; } = null!;
     public DbSet<CreditCard> CreditCards { get; set; } = null!;

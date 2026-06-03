@@ -15,6 +15,7 @@ public static class DependencyInjection
         var assembly = Assembly.GetExecutingAssembly();
         
         services.AddScoped<ExpensePaymentService>();
+        services.AddScoped<IncomePaymentService>();
         
         services.AddMediator(o =>
         {

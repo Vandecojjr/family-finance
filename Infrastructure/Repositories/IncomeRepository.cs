@@ -13,6 +13,7 @@ public class IncomeRepository(AppDbContext context) : IIncomeRepository
         return await context.Set<Income>()
             .Include(x => x.Member)
             .Include(x => x.Category)
+            .Include(x => x.Payments)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
@@ -20,6 +21,7 @@ public class IncomeRepository(AppDbContext context) : IIncomeRepository
     {
         var list = await context.Set<Income>()
             .Include(x => x.Category)
+            .Include(x => x.Payments)
             .Where(x => x.MemberId == memberId && x.Type == IncomeType.Planned)
             .ToListAsync(cancellationToken);
         return list.AsReadOnly();
@@ -29,6 +31,7 @@ public class IncomeRepository(AppDbContext context) : IIncomeRepository
     {
         var list = await context.Set<Income>()
             .Include(x => x.Category)
+            .Include(x => x.Payments)
             .Where(x => x.MemberId == memberId && x.Type == IncomeType.Recurring)
             .ToListAsync(cancellationToken);
         return list.AsReadOnly();

@@ -26,6 +26,9 @@ public class Income : Entity, IAggregateRoot
     public virtual Member Member { get; private set; } = null!;
     public virtual Category Category { get; private set; } = null!;
 
+    private readonly List<IncomePayment> _payments = [];
+    public virtual IReadOnlyCollection<IncomePayment> Payments => _payments.AsReadOnly();
+
     #pragma warning disable CS8618 // Required for EF Core and serialization
     protected Income()
     {
@@ -112,4 +115,22 @@ public class Income : Entity, IAggregateRoot
         CategoryId = categoryId;
         SeUpdate();
     }
+
+    public IncomePayment Receive(int month, int year, decimal amount, DateTime date)
+    {
+        if (Type == IncomeType.Recurring)
+        {
+            if (_payments.Any(p => p.Month == month && p.Year == year))
+            {
+                throw new InvalidOperationException($"A receita recorrente já foi recebida para o mês {month}/{year}.");
+            }
+        }
+
+        var payment = new IncomePayment(Id, month, year, amount, date);
+        _payments.Add(payment);
+        SeUpdate();
+        return payment;
+    }
+
+    public bool IsReceived() => _payments.Count != 0;
 }
