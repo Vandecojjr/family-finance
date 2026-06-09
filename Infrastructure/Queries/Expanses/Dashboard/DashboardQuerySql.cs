@@ -57,7 +57,26 @@ public static class DashboardQuerySql
                      AND t."UseCredit" IS NOT NULL OR t."CreditCardId" IS NOT NULL
                      AND EXTRACT(MONTH FROM t."Date") = EXTRACT(MONTH FROM CURRENT_DATE)
                      AND EXTRACT(YEAR FROM t."Date") = EXTRACT(YEAR FROM CURRENT_DATE)
-                     AND tw."FamilyId" = @FamilyId) AS "TotalCreditExpensed";
+                     AND tw."FamilyId" = @FamilyId) AS "TotalCreditExpensed"
+                  ;
+
+                  -- 8. Projected Income by Category
+                  SELECT c."Name" AS "CategoryName", COALESCE(SUM(i."Amount"), 0) AS "TotalAmount"
+                  FROM "Incomes" i
+                  INNER JOIN "Categories" c ON c."Id" = i."CategoryId"
+                  INNER JOIN "Members" m ON m."Id" = i."MemberId"
+                  WHERE m."FamilyId" = @FamilyId
+                  GROUP BY c."Id", c."Name"
+                  ;
+
+                  -- 9. Projected Expense by Category
+                  SELECT c."Name" AS "CategoryName", COALESCE(SUM(e."Amount"), 0) AS "TotalAmount"
+                  FROM "Expenses" e
+                  INNER JOIN "Categories" c ON c."Id" = e."CategoryId"
+                  INNER JOIN "Members" m ON m."Id" = e."MemberId"
+                  WHERE m."FamilyId" = @FamilyId
+                  GROUP BY c."Id", c."Name"
+                  ;
                   """;
         var sqlResult = new SqlQuery(sql, familyId);
         return sqlResult;

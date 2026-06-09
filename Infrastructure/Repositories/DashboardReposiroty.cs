@@ -20,11 +20,15 @@ public sealed class DashboardReposiroty(IDbConnection connection) : IDashboardRe
 
         var query = DashboardQuerySql.GetDashboard(familyId.Value);
 
-        var general = await connection.QueryFirstOrDefaultAsync<General>(
+        using var multi = await connection.QueryMultipleAsync(
             query.Sql,
             new { FamilyId = familyId.Value }
         );
 
-        return new GetInitialDashBoardDto(general ?? new General(0, 0, 0, 0, 0, 0, 0));
+        var general = await multi.ReadFirstOrDefaultAsync<General>() ?? new General(0, 0, 0, 0, 0, 0, 0);
+        var projectedIncomes = (await multi.ReadAsync<CategorySummaryDto>()).ToList();
+        var projectedExpenses = (await multi.ReadAsync<CategorySummaryDto>()).ToList();
+
+        return new GetInitialDashBoardDto(general, projectedIncomes, projectedExpenses);
     }
 }

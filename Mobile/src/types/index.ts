@@ -310,6 +310,13 @@ export interface DashboardGeneral {
   totalCreditExpensed: number;
 }
 
+export interface CategorySummary {
+  categoryName: string;
+  totalAmount: number;
+}
+
 export interface DashboardResponse {
   general: DashboardGeneral;
+  projectedIncomesByCategory: CategorySummary[];
+  projectedExpensesByCategory: CategorySummary[];
 }

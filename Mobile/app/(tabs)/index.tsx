@@ -18,6 +18,7 @@ import { familyApi } from '@/api/endpoints/family';
 import { decodeJwt } from '@/utils/jwt';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
+import { CategoryPieChart } from '@/components/CategoryPieChart';
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -192,6 +193,21 @@ export default function DashboardScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* ── Distribuição das Projeções por Categoria ─────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Distribuição das Projeções</Text>
+          <CategoryPieChart
+            data={dashboardData?.projectedIncomesByCategory ?? []}
+            title="Receitas Previstas por Categoria"
+            emptyMessage="Nenhuma receita prevista para este mês."
+          />
+          <CategoryPieChart
+            data={dashboardData?.projectedExpensesByCategory ?? []}
+            title="Despesas Previstas por Categoria"
+            emptyMessage="Nenhuma despesa prevista para este mês."
+          />
         </View>
 
         {/* ── Atalhos de Acesso Rápido ─────────────────────── */}

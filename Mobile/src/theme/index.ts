@@ -39,6 +39,19 @@ export const colors = {
   overlay: 'rgba(15,15,26,0.85)',
   white: '#ffffff',
   transparent: 'transparent',
+  // Chart segment colors
+  chart: [
+    '#7c6aff',
+    '#ff6b9d',
+    '#00d4aa',
+    '#ffb347',
+    '#4ea8de',
+    '#9b5de5',
+    '#f15bb5',
+    '#00f5d4',
+    '#00bbf9',
+    '#fee440',
+  ],
 } as const;
 
 export const spacing = {
