@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IIncomeRepository, IncomeRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<IAccountsPayableRepository, AccountsPayableRepository>();
+        services.AddScoped<IAccountsReceivableRepository, AccountsReceivableRepository>();
         services.AddScoped<IDashboardRepository, DashboardReposiroty>();
 
         services.AddHttpContextAccessor();

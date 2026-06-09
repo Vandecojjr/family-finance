@@ -24,7 +24,7 @@ public class IncomePaymentService
             income.CategoryId,
             bankAccountId,
             null,
-            null,
+            false,
             "Recebimento de receita"
         );
 

@@ -407,57 +407,53 @@ export default function CategoriesScreen() {
                   )}
                 </TouchableOpacity>
               </ScrollView>
+
+              {isParentPickerOpen && (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+                  <View style={styles.modalHeaderRow}>
+                    <Text style={styles.modalTitle}>Escolha a Categoria Pai</Text>
+                    <TouchableOpacity onPress={() => setIsParentPickerOpen(false)}>
+                      <Ionicons name="close" size={24} color={colors.text.primary} />
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView style={styles.pickerList} contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.md }}>
+                    {availableParents.length === 0 ? (
+                      <Text style={styles.pickerEmptyText}>
+                        Nenhuma categoria principal de {type === 'Income' ? 'receita' : 'despesa'} encontrada para associar.
+                      </Text>
+                    ) : (
+                      availableParents.map((c) => (
+                        <TouchableOpacity
+                          key={c.id}
+                          style={[
+                            styles.pickerItem,
+                            selectedParent?.id === c.id && styles.pickerItemActive
+                          ]}
+                          onPress={() => {
+                            setSelectedParent(c);
+                            setIsParentPickerOpen(false);
+                          }}
+                        >
+                          <Ionicons 
+                            name="pricetag-outline" 
+                            size={16} 
+                            color={selectedParent?.id === c.id ? colors.brand.primary : colors.text.secondary}
+                            style={{ marginRight: 10 }}
+                          />
+                          <Text style={[
+                            styles.pickerItemText,
+                            selectedParent?.id === c.id && styles.pickerItemTextActive
+                          ]}>
+                            {c.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))
+                    )}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           </KeyboardAvoidingView>
-        </View>
-      </Modal>
-
-      {/* ── SUB-MODAL: PICKER DE CATEGORIA PAI ─────────────────────────────────── */}
-      <Modal visible={isParentPickerOpen} animationType="fade" transparent>
-        <View style={styles.pickerOverlay}>
-          <View style={styles.pickerCard}>
-            <View style={styles.pickerHeader}>
-              <Text style={styles.pickerTitle}>Escolha a Categoria Pai</Text>
-              <TouchableOpacity onPress={() => setIsParentPickerOpen(false)}>
-                <Ionicons name="close" size={20} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.pickerList} contentContainerStyle={{ paddingBottom: spacing.md }}>
-              {availableParents.length === 0 ? (
-                <Text style={styles.pickerEmptyText}>
-                  Nenhuma categoria principal de {type === 'Income' ? 'receita' : 'despesa'} encontrada para associar.
-                </Text>
-              ) : (
-                availableParents.map((c) => (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[
-                      styles.pickerItem,
-                      selectedParent?.id === c.id && styles.pickerItemActive
-                    ]}
-                    onPress={() => {
-                      setSelectedParent(c);
-                      setIsParentPickerOpen(false);
-                    }}
-                  >
-                    <Ionicons 
-                      name="pricetag-outline" 
-                      size={16} 
-                      color={selectedParent?.id === c.id ? colors.brand.primary : colors.text.secondary}
-                      style={{ marginRight: 10 }}
-                    />
-                    <Text style={[
-                      styles.pickerItemText,
-                      selectedParent?.id === c.id && styles.pickerItemTextActive
-                    ]}>
-                      {c.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
-          </View>
         </View>
       </Modal>
     </SafeAreaView>

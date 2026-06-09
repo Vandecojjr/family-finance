@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import { ApiResult, RecurringIncome, CreateRecurringIncomeRequest, UpdateRecurringIncomeRequest } from '@/types';
+import { ApiResult, RecurringIncome, CreateRecurringIncomeRequest, UpdateRecurringIncomeRequest, ReceiveRecurringIncomeRequest } from '@/types';
 
 export const recurringIncomesApi = {
   getByMemberId: async (memberId: string): Promise<RecurringIncome[]> => {
@@ -28,6 +28,15 @@ export const recurringIncomesApi = {
     }
   },
 
+  receive: async (id: string, payload: ReceiveRecurringIncomeRequest): Promise<string> => {
+    const { data } = await apiClient.post<ApiResult<string>>(`/api/recurringincomes/${id}/receive`, payload);
+    if (!data.isSuccess || !data.value) {
+      const msg = data.errors?.[0]?.description ?? 'Erro ao receber ganho recorrente.';
+      throw new Error(msg);
+    }
+    return data.value;
+  },
+
   getTotalFixedByMemberId: async (memberId: string): Promise<number> => {
     const { data } = await apiClient.get<ApiResult<number>>(`/api/recurringincomes/member/${memberId}/total-fixed`);
     if (!data.isSuccess || data.value === undefined) {
@@ -45,3 +54,4 @@ export const recurringIncomesApi = {
     }
   },
 };
+

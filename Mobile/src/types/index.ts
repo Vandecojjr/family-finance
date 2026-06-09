@@ -283,6 +283,23 @@ export interface AccountsPayableDto {
   isLate: boolean;
 }
 
+export interface AccountsReceivableDto {
+  id: string;
+  description: string;
+  amount: number;
+  frequency: number;
+  categoryName: string;
+  dueDay: number;
+  isLate: boolean;
+}
+
+export interface ReceiveRecurringIncomeRequest {
+  walletId: string;
+  amount: number;
+  bankAccountId?: string | null;
+}
+
+
 export interface DashboardGeneral {
   totalExpensed: number;
   totalIncomed: number;

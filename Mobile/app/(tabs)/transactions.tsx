@@ -474,6 +474,84 @@ export default function TransactionsScreen() {
                 )}
               </TouchableOpacity>
             </ScrollView>
+
+            {isCategoryPickerOpen && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Selecione a Categoria</Text>
+                  <TouchableOpacity onPress={() => setIsCategoryPickerOpen(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.secondary} />
+                  </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={targetCategories}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={{ padding: spacing.md, gap: spacing.xs }}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerItem,
+                        categoryId === item.id && styles.pickerItemActive,
+                      ]}
+                      onPress={() => {
+                        setCategoryId(item.id);
+                        setIsCategoryPickerOpen(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, categoryId === item.id && styles.pickerItemTextActive]}>
+                        {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+
+            {isOriginPickerOpen && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Origem / Destino do Saldo</Text>
+                  <TouchableOpacity onPress={() => setIsOriginPickerOpen(false)}>
+                    <Ionicons name="close" size={24} color={colors.text.secondary} />
+                  </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={originOptions}
+                  keyExtractor={(item, index) => `${item.walletId}-${item.bankAccountId}-${item.creditCardId}-${index}`}
+                  contentContainerStyle={{ padding: spacing.md, gap: spacing.xs }}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerItem,
+                        selectedOrigin?.walletId === item.walletId &&
+                          selectedOrigin?.bankAccountId === item.bankAccountId &&
+                          selectedOrigin?.creditCardId === item.creditCardId &&
+                          styles.pickerItemActive,
+                      ]}
+                      onPress={() => {
+                        setSelectedOrigin(item);
+                        setIsOriginPickerOpen(false);
+                      }}
+                    >
+                      <View style={styles.originPickerRow}>
+                        <Text
+                          style={[
+                            styles.pickerItemText,
+                            selectedOrigin?.walletId === item.walletId &&
+                              selectedOrigin?.bankAccountId === item.bankAccountId &&
+                              selectedOrigin?.creditCardId === item.creditCardId &&
+                              styles.pickerItemTextActive,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text style={styles.originPickerSub}>{item.typeLabel}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -488,88 +566,6 @@ export default function TransactionsScreen() {
           setIsDatePickerOpen(false);
         }}
       />
-
-      {/* Category Picker Modal */}
-      <Modal visible={isCategoryPickerOpen} animationType="fade" transparent>
-        <TouchableOpacity
-          style={styles.pickerOverlay}
-          activeOpacity={1}
-          onPress={() => setIsCategoryPickerOpen(false)}
-        >
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>Selecione a Categoria</Text>
-            <FlatList
-              data={targetCategories}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ gap: spacing.xs }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.pickerItem,
-                    categoryId === item.id && styles.pickerItemActive,
-                  ]}
-                  onPress={() => {
-                    setCategoryId(item.id);
-                    setIsCategoryPickerOpen(false);
-                  }}
-                >
-                  <Text style={[styles.pickerItemText, categoryId === item.id && styles.pickerItemTextActive]}>
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Origin Picker Modal */}
-      <Modal visible={isOriginPickerOpen} animationType="fade" transparent>
-        <TouchableOpacity
-          style={styles.pickerOverlay}
-          activeOpacity={1}
-          onPress={() => setIsOriginPickerOpen(false)}
-        >
-          <View style={styles.pickerContent}>
-            <Text style={styles.pickerTitle}>Origem / Destino do Saldo</Text>
-            <FlatList
-              data={originOptions}
-              keyExtractor={(item, index) => `${item.walletId}-${item.bankAccountId}-${item.creditCardId}-${index}`}
-              contentContainerStyle={{ gap: spacing.xs }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.pickerItem,
-                    selectedOrigin?.walletId === item.walletId &&
-                      selectedOrigin?.bankAccountId === item.bankAccountId &&
-                      selectedOrigin?.creditCardId === item.creditCardId &&
-                      styles.pickerItemActive,
-                  ]}
-                  onPress={() => {
-                    setSelectedOrigin(item);
-                    setIsOriginPickerOpen(false);
-                  }}
-                >
-                  <View style={styles.originPickerRow}>
-                    <Text
-                      style={[
-                        styles.pickerItemText,
-                        selectedOrigin?.walletId === item.walletId &&
-                          selectedOrigin?.bankAccountId === item.bankAccountId &&
-                          selectedOrigin?.creditCardId === item.creditCardId &&
-                          styles.pickerItemTextActive,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    <Text style={styles.originPickerSub}>{item.typeLabel}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 }

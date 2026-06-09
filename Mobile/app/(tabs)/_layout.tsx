@@ -19,6 +19,7 @@ const TABS: TabConfig[] = [
   { name: 'wallets',            title: 'Carteiras',    icon: 'wallet-outline',         iconActive: 'wallet' },
   { name: 'family',             title: 'Família',      icon: 'people-outline',         iconActive: 'people' },
   { name: 'accounts-payable',   title: 'A Pagar',      icon: 'cash-outline',           iconActive: 'cash' },
+  { name: 'accounts-receivable', title: 'A Receber',   icon: 'receipt-outline',        iconActive: 'receipt' },
 ];
 
 export default function TabsLayout() {

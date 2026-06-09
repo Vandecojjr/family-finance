@@ -14,8 +14,8 @@ public sealed record DueDay : ValueObject
 
     public static DueDay Create(int value)
     {
-        if (value < 1 || value > 31)
-            throw new InvalidDueDayException("O dia de vencimento deve estar entre 1 e 31.");
+        if ((value < 1 || value > 31) && (value < 101 || value > 131))
+            throw new InvalidDueDayException("O dia de vencimento deve estar entre 1 e 31 ou entre 101 e 131 para dias úteis.");
 
         return new DueDay(value);
     }

@@ -780,76 +780,73 @@ export default function FamilyScreen() {
                     title="Data de Fim"
                     showClear
                   />
+
+                  {isCategoryModalOpen && (
+                    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+                      <View style={styles.formHeader}>
+                        <View style={styles.formHeaderInfo}>
+                          <Text style={styles.formTitle}>
+                            {activeTab === 'expense' ? 'Selecionar Categoria de Gasto' : 'Selecionar Categoria de Ganho'}
+                          </Text>
+                          <Text style={styles.formSubtitle}>Escolha uma categoria para a recorrência</Text>
+                        </View>
+                        <TouchableOpacity style={styles.closeBtn} onPress={() => setIsCategoryModalOpen(false)}>
+                          <Ionicons name="close" size={24} color={colors.text.primary} />
+                        </TouchableOpacity>
+                      </View>
+                      <FlatList
+                        data={flattenedCategories}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.categoryListContent}
+                        renderItem={({ item }) => {
+                          const isSelected = categoryId === item.id;
+                          return (
+                            <TouchableOpacity
+                              style={[
+                                styles.categorySelectItem, 
+                                isSelected && styles.categorySelectItemActive,
+                                isSelected && activeTab === 'income' && { borderColor: colors.brand.teal, backgroundColor: 'rgba(0, 212, 170, 0.05)' }
+                              ]}
+                              onPress={() => {
+                                setCategoryId(item.id);
+                                setIsCategoryModalOpen(false);
+                              }}
+                            >
+                              <Text style={[
+                                styles.categorySelectText, 
+                                isSelected && styles.categorySelectTextActive,
+                                isSelected && activeTab === 'income' && { color: colors.brand.teal }
+                              ]}>
+                                {item.name}
+                              </Text>
+                              {isSelected && (
+                                <Ionicons 
+                                  name="checkmark" 
+                                  size={20} 
+                                  color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                />
+                              )}
+                            </TouchableOpacity>
+                          );
+                        }}
+                        ListEmptyComponent={
+                          <View style={styles.emptyContainer}>
+                            <Ionicons name="pricetags-outline" size={48} color={colors.text.muted} />
+                            <Text style={styles.emptyText}>
+                              {activeTab === 'expense' 
+                                ? 'Nenhuma categoria de gasto disponível. Crie-as na aba de Categorias primeiro.' 
+                                : 'Nenhuma categoria de ganho disponível. Crie-as na aba de Categorias primeiro.'}
+                            </Text>
+                          </View>
+                        }
+                      />
+                    </View>
+                  )}
                 </View>
               </SafeAreaView>
             </View>
           </KeyboardAvoidingView>
         </Modal>
-      </Modal>
-
-      {/* ── SELETOR DE CATEGORIA MODAL ─────────────────────────────── */}
-      <Modal visible={isCategoryModalOpen} animationType="slide" transparent>
-        <SafeAreaView style={styles.modalOverlay}>
-          <View style={styles.categorySelectorCard}>
-            <View style={styles.formHeader}>
-              <View style={styles.formHeaderInfo}>
-                <Text style={styles.formTitle}>
-                  {activeTab === 'expense' ? 'Selecionar Categoria de Gasto' : 'Selecionar Categoria de Ganho'}
-                </Text>
-                <Text style={styles.formSubtitle}>Escolha uma categoria para a recorrência</Text>
-              </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsCategoryModalOpen(false)}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={flattenedCategories}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.categoryListContent}
-              renderItem={({ item }) => {
-                const isSelected = categoryId === item.id;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.categorySelectItem, 
-                      isSelected && styles.categorySelectItemActive,
-                      isSelected && activeTab === 'income' && { borderColor: colors.brand.teal, backgroundColor: 'rgba(0, 212, 170, 0.05)' }
-                    ]}
-                    onPress={() => {
-                      setCategoryId(item.id);
-                      setIsCategoryModalOpen(false);
-                    }}
-                  >
-                    <Text style={[
-                      styles.categorySelectText, 
-                      isSelected && styles.categorySelectTextActive,
-                      isSelected && activeTab === 'income' && { color: colors.brand.teal }
-                    ]}>
-                      {item.name}
-                    </Text>
-                    {isSelected && (
-                      <Ionicons 
-                        name="checkmark" 
-                        size={20} 
-                        color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="pricetags-outline" size={48} color={colors.text.muted} />
-                  <Text style={styles.emptyText}>
-                    {activeTab === 'expense' 
-                      ? 'Nenhuma categoria de gasto disponível. Crie-as na aba de Categorias primeiro.' 
-                      : 'Nenhuma categoria de ganho disponível. Crie-as na aba de Categorias primeiro.'}
-                  </Text>
-                </View>
-              }
-            />
-          </View>
-        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
