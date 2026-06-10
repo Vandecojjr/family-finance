@@ -22,6 +22,7 @@ import { walletsApi } from '@/api/endpoints/wallets';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
 import { decodeJwt } from '@/utils/jwt';
 import { AccountsPayableDto } from '@/types';
+import { OriginPicker } from '@/components/OriginPicker';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -34,7 +35,7 @@ const getFrequencyLabel = (freq: number) => {
   }
 };
 
-export default function AccountsPayableScreen() {
+export default function AccountsPayableScreen({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
@@ -124,18 +125,30 @@ export default function AccountsPayableScreen() {
 
   const totalAmount = accountsPayable?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
 
+  const Container = isEmbedded ? View : SafeAreaView;
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>A Pagar</Text>
-          <Text style={styles.subtitle}>Suas pendências financeiras</Text>
+    <Container style={isEmbedded ? { flex: 1 } : styles.safe}>
+      {isEmbedded ? (
+        <View style={styles.embeddedHeader}>
+          <Text style={styles.embeddedTitle}>Pendências a Pagar</Text>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalBadgeLabel}>Total</Text>
+            <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+          </View>
         </View>
-        <View style={styles.totalBadge}>
-          <Text style={styles.totalBadgeLabel}>Total</Text>
-          <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+      ) : (
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>A Pagar</Text>
+            <Text style={styles.subtitle}>Suas pendências financeiras</Text>
+          </View>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalBadgeLabel}>Total</Text>
+            <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Filtro de Período */}
       <View style={styles.filterContainer}>
@@ -377,87 +390,26 @@ export default function AccountsPayableScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Wallet/Account Select Modal */}
-      <Modal visible={isWalletSelectOpen} transparent animationType="slide">
-        <SafeAreaView style={styles.modalOverlay}>
-          <View style={styles.categorySelectorCard}>
-            <View style={styles.formHeader}>
-              <View style={styles.formHeaderInfo}>
-                <Text style={styles.formTitle}>Selecione a Fonte de Pagamento</Text>
-              </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => {
-                setIsWalletSelectOpen(false);
-                setIsPayModalOpen(true);
-              }}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryListContent}>
-              {wallets?.map(wallet => (
-                <View key={wallet.id} style={{ marginBottom: spacing.md }}>
-                  <Text style={styles.walletGroupTitle}>{wallet.name}</Text>
-                  
-                  {/* Dinheiro Vivo */}
-                  <TouchableOpacity 
-                    style={styles.walletOptionBtn}
-                    onPress={() => {
-                      setPayWalletId(wallet.id);
-                      setPayBankAccountId('');
-                      setPayCreditCardId('');
-                      setPayUseCredit(false);
-                      setIsWalletSelectOpen(false);
-                      setIsPayModalOpen(true);
-                    }}
-                  >
-                    <Ionicons name="cash-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
-                    <Text style={styles.walletOptionText}>Dinheiro Vivo ({fmt(wallet.cashBalance)})</Text>
-                  </TouchableOpacity>
-
-                  {/* Bank Accounts */}
-                  {wallet.accounts.map(acc => (
-                    <View key={acc.id}>
-                      <TouchableOpacity 
-                        style={styles.walletOptionBtn}
-                        onPress={() => {
-                          setPayWalletId(wallet.id);
-                          setPayBankAccountId(acc.id);
-                          setPayCreditCardId('');
-                          setPayUseCredit(false);
-                          setIsWalletSelectOpen(false);
-                          setIsPayModalOpen(true);
-                        }}
-                      >
-                        <Ionicons name="business-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
-                        <Text style={styles.walletOptionText}>{acc.bankName} - Conta ({fmt(acc.debitBalance)})</Text>
-                      </TouchableOpacity>
-
-                      {/* Credit Cards */}
-                      {acc.creditCards.map(card => (
-                        <TouchableOpacity 
-                          key={card.id}
-                          style={[styles.walletOptionBtn, { paddingLeft: spacing.xl }]}
-                          onPress={() => {
-                            setPayWalletId(wallet.id);
-                            setPayBankAccountId(acc.id);
-                            setPayCreditCardId(card.id);
-                            setPayUseCredit(true);
-                            setIsWalletSelectOpen(false);
-                            setIsPayModalOpen(true);
-                          }}
-                        >
-                          <Ionicons name="card-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
-                          <Text style={styles.walletOptionText}>{card.brand} final {card.lastFourDigits}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+      <OriginPicker
+        visible={isWalletSelectOpen}
+        onClose={() => {
+          setIsWalletSelectOpen(false);
+          setIsPayModalOpen(true);
+        }}
+        wallets={wallets || []}
+        selectedWalletId={payWalletId || null}
+        selectedBankAccountId={payBankAccountId || null}
+        selectedCreditCardId={payCreditCardId || null}
+        onSelect={(selection) => {
+          setPayWalletId(selection.walletId);
+          setPayBankAccountId(selection.bankAccountId || '');
+          setPayCreditCardId(selection.creditCardId || '');
+          setPayUseCredit(selection.creditCardId !== null);
+          setIsWalletSelectOpen(false);
+          setIsPayModalOpen(true);
+        }}
+      />
+    </Container>
   );
 }
 
@@ -747,5 +699,17 @@ const styles = StyleSheet.create({
   walletOptionText: {
     ...typography.body,
     color: colors.text.primary,
+  },
+  embeddedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  embeddedTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '700',
   },
 });

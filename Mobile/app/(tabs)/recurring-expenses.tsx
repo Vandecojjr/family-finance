@@ -29,6 +29,7 @@ import { decodeJwt } from '@/utils/jwt';
 import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense, Wallet, BankAccount, CreditCard } from '@/types';
 import { useIsFocused } from '@react-navigation/native';
 import DatePicker from '@/components/DatePicker';
+import { CategoryPicker } from '@/components/CategoryPicker';
 
 
 const MEMBER_COLORS = [colors.brand.primary, colors.brand.teal, colors.brand.accent];
@@ -48,7 +49,7 @@ const formatDateDisplay = (dateStr: string) => {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export default function RecurringExpensesScreen() {
+export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const isFocused = useIsFocused();
@@ -189,6 +190,19 @@ export default function RecurringExpensesScreen() {
   const [endDate, setEndDate] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+  const selectedCategoryName = React.useMemo(() => {
+    if (!categoryId || !categories) return 'Selecione uma categoria';
+    for (const parent of categories) {
+      if (parent.id === categoryId) return parent.name;
+      if (parent.subCategories) {
+        const sub = parent.subCategories.find((s) => s.id === categoryId);
+        if (sub) return `${parent.name} ➔ ${sub.name}`;
+      }
+    }
+    return 'Selecione uma categoria';
+  }, [categories, categoryId]);
+
   const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false);
   const [isEndDatePickerOpen, setIsEndDatePickerOpen] = useState(false);
 
@@ -597,24 +611,40 @@ export default function RecurringExpensesScreen() {
       }));
   }, [currentList, categories]);
 
+  const Container = isEmbedded ? View : SafeAreaView;
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>{viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}</Text>
-          <Text style={styles.subtitle}>
-            {viewMode === 'planned' 
-              ? 'Gerencie gastos e ganhos planejados para a família' 
-              : 'Gerencie gastos e ganhos recorrentes da família'}
+    <Container style={isEmbedded ? { flex: 1 } : styles.safe}>
+      {isEmbedded ? (
+        <View style={styles.embeddedHeader}>
+          <Text style={styles.embeddedTitle}>
+            {viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}
           </Text>
+          <TouchableOpacity 
+            style={[styles.addBtnCompact, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
+            onPress={openCreateForm}
+          >
+            <Ionicons name="add" size={20} color={colors.white} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={[styles.addBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
-          onPress={openCreateForm}
-        >
-          <Ionicons name="add" size={24} color={colors.white} />
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>{viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}</Text>
+            <Text style={styles.subtitle}>
+              {viewMode === 'planned' 
+                ? 'Gerencie gastos e ganhos planejados para a família' 
+                : 'Gerencie gastos e ganhos recorrentes da família'}
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={[styles.addBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
+            onPress={openCreateForm}
+          >
+            <Ionicons name="add" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Tab Switcher */}
       <View style={styles.tabOuterContainer}>
@@ -994,9 +1024,7 @@ export default function RecurringExpensesScreen() {
                       onPress={() => setIsCategoryModalOpen(true)}
                     >
                       <Text style={[styles.selectInputText, !categoryId && { color: colors.text.muted }]}>
-                        {categoryId 
-                          ? (flattenedCategories.find(c => c.id === categoryId)?.name ?? 'Categoria Selecionada') 
-                          : 'Selecione uma categoria'}
+                        {selectedCategoryName}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
                     </TouchableOpacity>
@@ -1209,67 +1237,14 @@ export default function RecurringExpensesScreen() {
                     showClear
                   />
 
-                  {isCategoryModalOpen && (
-                    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
-                      <View style={styles.formHeader}>
-                        <View style={styles.formHeaderInfo}>
-                          <Text style={styles.formTitle}>
-                            {activeTab === 'expense' ? 'Selecionar Categoria de Gasto' : 'Selecionar Categoria de Ganho'}
-                          </Text>
-                          <Text style={styles.formSubtitle}>Escolha uma categoria para a recorrência</Text>
-                        </View>
-                        <TouchableOpacity style={styles.closeBtn} onPress={() => setIsCategoryModalOpen(false)}>
-                          <Ionicons name="close" size={24} color={colors.text.primary} />
-                        </TouchableOpacity>
-                      </View>
-                      <FlatList
-                        data={flattenedCategories}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.categoryListContent}
-                        renderItem={({ item }) => {
-                          const isSelected = categoryId === item.id;
-                          return (
-                            <TouchableOpacity
-                              style={[
-                                styles.categorySelectItem, 
-                                isSelected && styles.categorySelectItemActive,
-                                isSelected && activeTab === 'income' && { borderColor: colors.brand.teal, backgroundColor: 'rgba(0, 212, 170, 0.05)' }
-                              ]}
-                              onPress={() => {
-                                setCategoryId(item.id);
-                                setIsCategoryModalOpen(false);
-                              }}
-                            >
-                              <Text style={[
-                                styles.categorySelectText, 
-                                isSelected && styles.categorySelectTextActive,
-                                isSelected && activeTab === 'income' && { color: colors.brand.teal }
-                              ]}>
-                                {item.name}
-                              </Text>
-                              {isSelected && (
-                                <Ionicons 
-                                  name="checkmark" 
-                                  size={20} 
-                                  color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
-                                />
-                              )}
-                            </TouchableOpacity>
-                          );
-                        }}
-                        ListEmptyComponent={
-                          <View style={styles.emptyContainer}>
-                            <Ionicons name="pricetags-outline" size={48} color={colors.text.muted} />
-                            <Text style={styles.emptyText}>
-                              {activeTab === 'expense' 
-                                ? 'Nenhuma categoria de gasto disponível. Crie-as na aba de Categorias primeiro.' 
-                                : 'Nenhuma categoria de ganho disponível. Crie-as na aba de Categorias primeiro.'}
-                            </Text>
-                          </View>
-                        }
-                      />
-                    </View>
-                  )}
+                  <CategoryPicker
+                    visible={isCategoryModalOpen}
+                    onClose={() => setIsCategoryModalOpen(false)}
+                    selectedId={categoryId}
+                    onSelect={setCategoryId}
+                    categories={categories || []}
+                    type={activeTab === 'income' ? 'Income' : 'Expense'}
+                  />
               </View>
             </SafeAreaView>
           </View>
@@ -1434,7 +1409,7 @@ export default function RecurringExpensesScreen() {
         </SafeAreaView>
       </Modal>
 
-    </SafeAreaView>
+    </Container>
   );
 }
 
@@ -1874,5 +1849,25 @@ const styles = StyleSheet.create({
   walletOptionText: {
     ...typography.body,
     color: colors.text.primary,
+  },
+  embeddedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  embeddedTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '700',
+  },
+  addBtnCompact: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    backgroundColor: colors.brand.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

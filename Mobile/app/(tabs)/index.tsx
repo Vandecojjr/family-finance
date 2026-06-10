@@ -19,6 +19,7 @@ import { decodeJwt } from '@/utils/jwt';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { CategoryPieChart } from '@/components/CategoryPieChart';
+import { usePreferenceStore } from '@/stores/preferenceStore';
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -27,6 +28,7 @@ export default function DashboardScreen() {
   const { logout, tokens } = useAuthStore();
   const router = useRouter();
   const isFocused = useIsFocused();
+  const { showBalances, toggleBalances } = usePreferenceStore();
   const [memberId, setMemberId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,9 +98,18 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>Olá, {memberName}! 👋</Text>
             <Text style={styles.subtitle}>Resumo financeiro da família</Text>
           </View>
-          <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={22} color={colors.text.secondary} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={toggleBalances} style={styles.toggleBalancesBtn}>
+              <Ionicons 
+                name={showBalances ? 'eye-outline' : 'eye-off-outline'} 
+                size={22} 
+                color={colors.text.secondary} 
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+              <Ionicons name="log-out-outline" size={22} color={colors.text.secondary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Saldo Geral Consolidado ─────────────────────── */}
@@ -109,7 +120,9 @@ export default function DashboardScreen() {
           style={styles.balanceCard}
         >
           <Text style={styles.balanceLabel}>Saldo Consolidado</Text>
-          <Text style={styles.balanceValue}>{fmt(totalBalance)}</Text>
+          <Text style={styles.balanceValue}>
+            {showBalances ? fmt(totalBalance) : 'R$ ••••••'}
+          </Text>
 
           <View style={styles.balanceRow}>
             <View style={styles.balanceItem}>
@@ -118,7 +131,9 @@ export default function DashboardScreen() {
               </View>
               <View>
                 <Text style={styles.balanceItemLabel}>Receitas do Mês</Text>
-                <Text style={styles.balanceItemValue}>{fmt(totalIncomed)}</Text>
+                <Text style={styles.balanceItemValue}>
+                  {showBalances ? fmt(totalIncomed) : 'R$ ••••••'}
+                </Text>
               </View>
             </View>
             <View style={styles.balanceDivider} />
@@ -128,7 +143,9 @@ export default function DashboardScreen() {
               </View>
               <View>
                 <Text style={styles.balanceItemLabel}>Despesas do Mês</Text>
-                <Text style={styles.balanceItemValue}>{fmt(totalExpensed)}</Text>
+                <Text style={styles.balanceItemValue}>
+                  {showBalances ? fmt(totalExpensed) : 'R$ ••••••'}
+                </Text>
               </View>
             </View>
           </View>
@@ -144,9 +161,13 @@ export default function DashboardScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.creditLabel}>Crédito Utilizado</Text>
-                <Text style={styles.creditValue}>{fmt(totalCreditExpensed)}</Text>
+                <Text style={styles.creditValue}>
+                  {showBalances ? fmt(totalCreditExpensed) : 'R$ ••••••'}
+                </Text>
               </View>
-              <Text style={styles.creditLimitText}>Limite: {fmt(totalCreditLimit)}</Text>
+              <Text style={styles.creditLimitText}>
+                Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'}
+              </Text>
             </View>
 
             {/* Progress Bar */}
@@ -169,7 +190,9 @@ export default function DashboardScreen() {
                   <Ionicons name="trending-up" size={18} color={colors.success} />
                   <Text style={styles.projectionBoxLabel}>Receita Prevista</Text>
                 </View>
-                <Text style={styles.projectionBoxValue}>{fmt(totalProjectedIncome)}</Text>
+                <Text style={styles.projectionBoxValue}>
+                  {showBalances ? fmt(totalProjectedIncome) : 'R$ ••••••'}
+                </Text>
               </View>
 
               <View style={styles.projectionBox}>
@@ -177,7 +200,9 @@ export default function DashboardScreen() {
                   <Ionicons name="trending-down" size={18} color={colors.danger} />
                   <Text style={styles.projectionBoxLabel}>Despesa Prevista</Text>
                 </View>
-                <Text style={styles.projectionBoxValue}>{fmt(totalProjectedExpenditure)}</Text>
+                <Text style={styles.projectionBoxValue}>
+                  {showBalances ? fmt(totalProjectedExpenditure) : 'R$ ••••••'}
+                </Text>
               </View>
             </View>
 
@@ -189,7 +214,7 @@ export default function DashboardScreen() {
                   { color: projectedNet >= 0 ? colors.success : colors.danger }
                 ]}
               >
-                {fmt(projectedNet)}
+                {showBalances ? fmt(projectedNet) : 'R$ ••••••'}
               </Text>
             </View>
           </View>
@@ -214,35 +239,49 @@ export default function DashboardScreen() {
         <View style={[styles.section, { marginBottom: spacing.xl }]}>
           <Text style={styles.sectionTitle}>Acesso Rápido</Text>
           <View style={styles.shortcutsGrid}>
-            <TouchableOpacity 
-              style={styles.shortcutCard} 
-              onPress={() => router.push('/accounts-payable')}
-            >
-              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
-                <Ionicons name="receipt-outline" size={24} color={colors.brand.primary} />
-              </View>
-              <Text style={styles.shortcutText}>Contas a Pagar</Text>
-            </TouchableOpacity>
+            <View style={styles.shortcutRow}>
+              <TouchableOpacity 
+                style={styles.shortcutCard} 
+                onPress={() => router.push('/accounts-payable')}
+              >
+                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
+                  <Ionicons name="cash-outline" size={24} color={colors.brand.primary} />
+                </View>
+                <Text style={styles.shortcutText}>A Pagar</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.shortcutCard} 
-              onPress={() => router.push('/recurring-expenses')}
-            >
-              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(255, 107, 157, 0.12)' }]}>
-                <Ionicons name="repeat-outline" size={24} color={colors.brand.accent} />
-              </View>
-              <Text style={styles.shortcutText}>Gastos Fixos</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.shortcutCard} 
+                onPress={() => router.push('/accounts-receivable')}
+              >
+                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.12)' }]}>
+                  <Ionicons name="receipt-outline" size={24} color={colors.brand.teal} />
+                </View>
+                <Text style={styles.shortcutText}>A Receber</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity 
-              style={styles.shortcutCard} 
-              onPress={() => router.push('/wallets')}
-            >
-              <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.12)' }]}>
-                <Ionicons name="wallet-outline" size={24} color={colors.brand.teal} />
-              </View>
-              <Text style={styles.shortcutText}>Minhas Carteiras</Text>
-            </TouchableOpacity>
+            <View style={styles.shortcutRow}>
+              <TouchableOpacity 
+                style={styles.shortcutCard} 
+                onPress={() => router.push('/recurring-expenses')}
+              >
+                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(255, 107, 157, 0.12)' }]}>
+                  <Ionicons name="repeat-outline" size={24} color={colors.brand.accent} />
+                </View>
+                <Text style={styles.shortcutText}>Recorrentes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.shortcutCard} 
+                onPress={() => router.push('/wallets')}
+              >
+                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
+                  <Ionicons name="wallet-outline" size={24} color={colors.brand.primary} />
+                </View>
+                <Text style={styles.shortcutText}>Carteiras</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -263,6 +302,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing.lg },
   greeting: { ...typography.h3, color: colors.text.primary },
   subtitle: { ...typography.bodySmall, color: colors.text.secondary, marginTop: 2 },
+  headerActions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  toggleBalancesBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   logoutBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
 
   // Balance card
@@ -384,6 +425,10 @@ const styles = StyleSheet.create({
 
   // Shortcuts Grid
   shortcutsGrid: {
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
+  shortcutRow: {
     flexDirection: 'row',
     gap: spacing.md,
   },

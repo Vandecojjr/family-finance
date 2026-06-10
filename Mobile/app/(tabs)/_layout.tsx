@@ -10,16 +10,20 @@ interface TabConfig {
   title: string;
   icon: IoniconsName;
   iconActive: IoniconsName;
+  href?: null;
 }
 
 const TABS: TabConfig[] = [
   { name: 'index',              title: 'Início',       icon: 'home-outline',          iconActive: 'home' },
   { name: 'transactions',       title: 'Lançamentos',  icon: 'swap-vertical-outline', iconActive: 'swap-vertical' },
-  { name: 'recurring-expenses', title: 'Recorrentes',  icon: 'calendar-outline',      iconActive: 'calendar' },
+  { name: 'planning',           title: 'Planejar',     icon: 'calendar-outline',      iconActive: 'calendar' },
   { name: 'wallets',            title: 'Carteiras',    icon: 'wallet-outline',         iconActive: 'wallet' },
   { name: 'family',             title: 'Família',      icon: 'people-outline',         iconActive: 'people' },
-  { name: 'accounts-payable',   title: 'A Pagar',      icon: 'cash-outline',           iconActive: 'cash' },
-  { name: 'accounts-receivable', title: 'A Receber',   icon: 'receipt-outline',        iconActive: 'receipt' },
+  
+  // Hidden tabs
+  { name: 'recurring-expenses', title: 'Recorrentes',  icon: 'calendar-outline',      iconActive: 'calendar', href: null },
+  { name: 'accounts-payable',   title: 'A Pagar',      icon: 'cash-outline',           iconActive: 'cash', href: null },
+  { name: 'accounts-receivable', title: 'A Receber',   icon: 'receipt-outline',        iconActive: 'receipt', href: null },
 ];
 
 export default function TabsLayout() {
@@ -46,7 +50,14 @@ export default function TabsLayout() {
       }}
     >
       {TABS.map((tab) => (
-        <Tabs.Screen key={tab.name} name={tab.name} options={{ title: tab.title }} />
+        <Tabs.Screen 
+          key={tab.name} 
+          name={tab.name} 
+          options={{ 
+            title: tab.title,
+            href: tab.href, 
+          }} 
+        />
       ))}
     </Tabs>
   );

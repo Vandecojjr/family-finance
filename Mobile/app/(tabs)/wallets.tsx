@@ -21,12 +21,14 @@ import { useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { walletsApi } from '@/api/endpoints/wallets';
 import { Wallet, BankAccount, CreditCard } from '@/types';
+import { usePreferenceStore } from '@/stores/preferenceStore';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function WalletsScreen() {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
+  const { showBalances, toggleBalances } = usePreferenceStore();
 
   // Queries
   const { data: wallets = [], isLoading, isError, refetch } = useQuery({
@@ -360,9 +362,18 @@ export default function WalletsScreen() {
           <Text style={styles.title}>Minhas Finanças</Text>
           <Text style={styles.subtitle}>Gerencie suas carteiras e contas</Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={() => handleOpenWalletModal()}>
-          <Ionicons name="add" size={24} color={colors.white} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={toggleBalances} style={styles.toggleBalancesBtn}>
+            <Ionicons 
+              name={showBalances ? 'eye-outline' : 'eye-off-outline'} 
+              size={22} 
+              color={colors.text.secondary} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addBtn} onPress={() => handleOpenWalletModal()}>
+            <Ionicons name="add" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (
@@ -392,22 +403,30 @@ export default function WalletsScreen() {
           {/* Patrimonio Líquido Header */}
           <View style={styles.patrimonioHeaderContainer}>
             <Text style={styles.patrimonioLabel}>Patrimônio Líquido Geral</Text>
-            <Text style={styles.patrimonioValue}>{fmt(metrics.netWorth)}</Text>
+            <Text style={styles.patrimonioValue}>
+              {showBalances ? fmt(metrics.netWorth) : 'R$ ••••••'}
+            </Text>
             
             <View style={styles.patrimonioSummaryRow}>
               <View style={styles.patrimonioSummaryItem}>
                 <Text style={styles.patrimonioSummaryLabel}>Dinheiro Vivo</Text>
-                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalCash)}</Text>
+                <Text style={styles.patrimonioSummaryValue}>
+                  {showBalances ? fmt(metrics.totalCash) : 'R$ ••••••'}
+                </Text>
               </View>
               <View style={styles.patrimonioSummaryDivider} />
               <View style={styles.patrimonioSummaryItem}>
                 <Text style={styles.patrimonioSummaryLabel}>Contas</Text>
-                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalDebit)}</Text>
+                <Text style={styles.patrimonioSummaryValue}>
+                  {showBalances ? fmt(metrics.totalDebit) : 'R$ ••••••'}
+                </Text>
               </View>
               <View style={styles.patrimonioSummaryDivider} />
               <View style={styles.patrimonioSummaryItem}>
                 <Text style={styles.patrimonioSummaryLabel}>Créditos</Text>
-                <Text style={styles.patrimonioSummaryValue}>{fmt(metrics.totalCredit)}</Text>
+                <Text style={styles.patrimonioSummaryValue}>
+                  {showBalances ? fmt(metrics.totalCredit) : 'R$ ••••••'}
+                </Text>
               </View>
             </View>
           </View>
@@ -440,7 +459,9 @@ export default function WalletsScreen() {
                         />
                       </View>
                       <Text style={styles.walletCash}>
-                        Dinheiro físico: <Text style={styles.walletCashValue}>{fmt(w.cashBalance)}</Text>
+                        Dinheiro físico: <Text style={styles.walletCashValue}>
+                          {showBalances ? fmt(w.cashBalance) : 'R$ ••••••'}
+                        </Text>
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -532,12 +553,21 @@ export default function WalletsScreen() {
                                     )}
                                   </View>
                                   <Text style={styles.accountBalanceText}>
-                                    Saldo: <Text style={styles.boldText}>{fmt(acc.debitBalance)}</Text>
+                                    Saldo: <Text style={styles.boldText}>
+                                      {showBalances ? fmt(acc.debitBalance) : 'R$ ••••••'}
+                                    </Text>
                                   </Text>
                                   {acc.creditLimit > 0 && (
                                     <Text style={styles.accountLimitText}>
-                                      Crédito: <Text style={styles.boldText}>{fmt(acc.remainingCreditLimit ?? acc.creditLimit)}</Text>
-                                      <Text style={{ fontSize: 10, color: colors.text.muted }}> (Utilizado: {fmt(acc.usedCreditLimit ?? 0)} de {fmt(acc.creditLimit)})</Text>
+                                      Crédito: <Text style={styles.boldText}>
+                                        {showBalances ? fmt(acc.remainingCreditLimit ?? acc.creditLimit) : 'R$ ••••••'}
+                                      </Text>
+                                      <Text style={{ fontSize: 10, color: colors.text.muted }}>
+                                        {' '}
+                                        (Utilizado:{' '}
+                                        {showBalances ? fmt(acc.usedCreditLimit ?? 0) : 'R$ ••••••'} de{' '}
+                                        {showBalances ? fmt(acc.creditLimit) : 'R$ ••••••'})
+                                      </Text>
                                     </Text>
                                   )}
                                 </View>
@@ -616,15 +646,21 @@ export default function WalletsScreen() {
                                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginRight: spacing.sm, alignItems: 'flex-end' }}>
                                             <View>
                                               <Text style={styles.miniCardLabel}>Disponível</Text>
-                                              <Text style={styles.miniCardValue}>{fmt(card.remainingLimit)}</Text>
+                                              <Text style={styles.miniCardValue}>
+                                                {showBalances ? fmt(card.remainingLimit) : 'R$ •••'}
+                                              </Text>
                                             </View>
                                             <View>
                                               <Text style={styles.miniCardLabel}>Utilizado</Text>
-                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.85)' }]}>{fmt(card.usedLimit ?? 0)}</Text>
+                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.85)' }]}>
+                                                {showBalances ? fmt(card.usedLimit ?? 0) : 'R$ •••'}
+                                              </Text>
                                             </View>
                                             <View>
                                               <Text style={styles.miniCardLabel}>Limite</Text>
-                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>{fmt(card.totalLimit)}</Text>
+                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>
+                                                {showBalances ? fmt(card.totalLimit) : 'R$ •••'}
+                                              </Text>
                                             </View>
                                           </View>
                                         </View>
@@ -1283,4 +1319,6 @@ const styles = StyleSheet.create({
     ...shadow.sm,
   },
   submitBtnText: { ...typography.button, color: colors.white },
+  headerActions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  toggleBalancesBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
 });

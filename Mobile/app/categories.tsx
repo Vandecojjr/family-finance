@@ -242,18 +242,26 @@ export default function CategoriesScreen() {
                   </View>
                   <View style={styles.categoryInfo}>
                     <Text style={styles.categoryNameText}>{category.name}</Text>
-                    {hasSub && (
-                      <Text style={styles.categorySubCountText}>
-                        {category.subCategories.length} {category.subCategories.length === 1 ? 'subcategoria' : 'subcategorias'}
-                      </Text>
-                    )}
                   </View>
                   {hasSub && (
-                    <Ionicons 
-                      name={isExpanded ? "chevron-down" : "chevron-forward"} 
-                      size={18} 
-                      color={colors.text.secondary} 
-                    />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                      <View style={[
+                        styles.categoryBadge,
+                        { backgroundColor: activeTab === 'expense' ? `${colors.brand.accent}15` : `${colors.brand.teal}15` }
+                      ]}>
+                        <Text style={[
+                          styles.categoryBadgeText,
+                          { color: activeTab === 'expense' ? colors.brand.accent : colors.brand.teal }
+                        ]}>
+                          {category.subCategories.length} {category.subCategories.length === 1 ? 'sub' : 'subs'}
+                        </Text>
+                      </View>
+                      <Ionicons 
+                        name={isExpanded ? "chevron-down" : "chevron-forward"} 
+                        size={16} 
+                        color={colors.text.secondary} 
+                      />
+                    </View>
                   )}
                 </TouchableOpacity>
 
@@ -487,7 +495,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: colors.bg.secondary,
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
     padding: 4,
@@ -498,7 +506,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: radius.sm,
+    borderRadius: radius.full,
   },
   tabText: {
     ...typography.bodySmall,
@@ -611,6 +619,17 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 2,
   },
+  categoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryBadgeText: {
+    ...typography.caption,
+    fontWeight: '700',
+  },
   subCategoriesContainer: {
     flexDirection: 'row',
     backgroundColor: `${colors.bg.secondary}66`,
@@ -712,7 +731,11 @@ const styles = StyleSheet.create({
   },
   formTypeContainer: {
     flexDirection: 'row',
-    gap: 8,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 4,
     marginBottom: spacing.md,
   },
   formTypeBtn: {
@@ -720,19 +743,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.bg.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderRadius: radius.full,
   },
   formTypeBtnExpenseActive: {
     backgroundColor: colors.brand.accent,
-    borderColor: colors.brand.accent,
   },
   formTypeBtnIncomeActive: {
     backgroundColor: colors.brand.teal,
-    borderColor: colors.brand.teal,
   },
   formTypeBtnText: {
     ...typography.bodySmall,

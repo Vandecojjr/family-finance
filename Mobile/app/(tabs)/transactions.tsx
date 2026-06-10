@@ -25,6 +25,8 @@ import { categoriesApi } from '@/api/endpoints/categories';
 import { walletsApi } from '@/api/endpoints/wallets';
 import { Transaction, Category, Wallet } from '@/types';
 import DatePicker from '@/components/DatePicker';
+import { CategoryPicker } from '@/components/CategoryPicker';
+import { OriginPicker } from '@/components/OriginPicker';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -113,6 +115,18 @@ export default function TransactionsScreen() {
       });
     return list;
   }, [categories, type]);
+
+  const selectedCategoryName = React.useMemo(() => {
+    if (!categoryId) return 'Selecionar Categoria';
+    for (const parent of categories) {
+      if (parent.id === categoryId) return parent.name;
+      if (parent.subCategories) {
+        const sub = parent.subCategories.find((s) => s.id === categoryId);
+        if (sub) return `${parent.name} ➔ ${sub.name}`;
+      }
+    }
+    return 'Selecionar Categoria';
+  }, [categories, categoryId]);
 
   // Flattened resource options (Wallets, Accounts, CreditCards)
   const originOptions = React.useMemo(() => {
@@ -436,9 +450,7 @@ export default function TransactionsScreen() {
                   onPress={() => setIsCategoryPickerOpen(true)}
                 >
                   <Text style={styles.pickerTriggerText}>
-                    {categoryId
-                      ? targetCategories.find((c) => c.id === categoryId)?.name ?? 'Selecionar Categoria'
-                      : 'Selecionar Categoria'}
+                    {selectedCategoryName}
                   </Text>
                   <Ionicons name="chevron-down-outline" size={18} color={colors.text.secondary} />
                 </TouchableOpacity>
@@ -475,83 +487,26 @@ export default function TransactionsScreen() {
               </TouchableOpacity>
             </ScrollView>
 
-            {isCategoryPickerOpen && (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Selecione a Categoria</Text>
-                  <TouchableOpacity onPress={() => setIsCategoryPickerOpen(false)}>
-                    <Ionicons name="close" size={24} color={colors.text.secondary} />
-                  </TouchableOpacity>
-                </View>
-                <FlatList
-                  data={targetCategories}
-                  keyExtractor={(item) => item.id}
-                  contentContainerStyle={{ padding: spacing.md, gap: spacing.xs }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.pickerItem,
-                        categoryId === item.id && styles.pickerItemActive,
-                      ]}
-                      onPress={() => {
-                        setCategoryId(item.id);
-                        setIsCategoryPickerOpen(false);
-                      }}
-                    >
-                      <Text style={[styles.pickerItemText, categoryId === item.id && styles.pickerItemTextActive]}>
-                        {item.name}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            )}
+            <CategoryPicker
+              visible={isCategoryPickerOpen}
+              onClose={() => setIsCategoryPickerOpen(false)}
+              selectedId={categoryId}
+              onSelect={setCategoryId}
+              categories={categories}
+              type={type === 1 ? 'Income' : 'Expense'}
+            />
 
-            {isOriginPickerOpen && (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Origem / Destino do Saldo</Text>
-                  <TouchableOpacity onPress={() => setIsOriginPickerOpen(false)}>
-                    <Ionicons name="close" size={24} color={colors.text.secondary} />
-                  </TouchableOpacity>
-                </View>
-                <FlatList
-                  data={originOptions}
-                  keyExtractor={(item, index) => `${item.walletId}-${item.bankAccountId}-${item.creditCardId}-${index}`}
-                  contentContainerStyle={{ padding: spacing.md, gap: spacing.xs }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.pickerItem,
-                        selectedOrigin?.walletId === item.walletId &&
-                          selectedOrigin?.bankAccountId === item.bankAccountId &&
-                          selectedOrigin?.creditCardId === item.creditCardId &&
-                          styles.pickerItemActive,
-                      ]}
-                      onPress={() => {
-                        setSelectedOrigin(item);
-                        setIsOriginPickerOpen(false);
-                      }}
-                    >
-                      <View style={styles.originPickerRow}>
-                        <Text
-                          style={[
-                            styles.pickerItemText,
-                            selectedOrigin?.walletId === item.walletId &&
-                              selectedOrigin?.bankAccountId === item.bankAccountId &&
-                              selectedOrigin?.creditCardId === item.creditCardId &&
-                              styles.pickerItemTextActive,
-                          ]}
-                        >
-                          {item.label}
-                        </Text>
-                        <Text style={styles.originPickerSub}>{item.typeLabel}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            )}
+            <OriginPicker
+              visible={isOriginPickerOpen}
+              onClose={() => setIsOriginPickerOpen(false)}
+              wallets={wallets}
+              selectedWalletId={selectedOrigin?.walletId ?? null}
+              selectedBankAccountId={selectedOrigin?.bankAccountId ?? null}
+              selectedCreditCardId={selectedOrigin?.creditCardId ?? null}
+              onSelect={(selection) => {
+                setSelectedOrigin(selection);
+              }}
+            />
           </View>
         </KeyboardAvoidingView>
       </Modal>

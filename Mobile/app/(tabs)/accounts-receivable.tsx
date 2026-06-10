@@ -22,6 +22,7 @@ import { walletsApi } from '@/api/endpoints/wallets';
 import { recurringIncomesApi } from '@/api/endpoints/recurringIncomes';
 import { decodeJwt } from '@/utils/jwt';
 import { AccountsReceivableDto } from '@/types';
+import { OriginPicker } from '@/components/OriginPicker';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -34,7 +35,7 @@ const getFrequencyLabel = (freq: number) => {
   }
 };
 
-export default function AccountsReceivableScreen() {
+export default function AccountsReceivableScreen({ isEmbedded = false }: { isEmbedded?: boolean }) {
   const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
@@ -119,18 +120,30 @@ export default function AccountsReceivableScreen() {
 
   const totalAmount = accountsReceivable?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
 
+  const Container = isEmbedded ? View : SafeAreaView;
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>A Receber</Text>
-          <Text style={styles.subtitle}>Suas receitas pendentes</Text>
+    <Container style={isEmbedded ? { flex: 1 } : styles.safe}>
+      {isEmbedded ? (
+        <View style={styles.embeddedHeader}>
+          <Text style={styles.embeddedTitle}>Receitas Pendentes</Text>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalBadgeLabel}>Total</Text>
+            <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+          </View>
         </View>
-        <View style={styles.totalBadge}>
-          <Text style={styles.totalBadgeLabel}>Total</Text>
-          <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+      ) : (
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>A Receber</Text>
+            <Text style={styles.subtitle}>Suas receitas pendentes</Text>
+          </View>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalBadgeLabel}>Total</Text>
+            <Text style={styles.totalBadgeValue}>{fmt(totalAmount)}</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Filtro de Período */}
       <View style={styles.filterContainer}>
@@ -368,63 +381,25 @@ export default function AccountsReceivableScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Wallet/Account Select Modal */}
-      <Modal visible={isWalletSelectOpen} transparent animationType="slide">
-        <SafeAreaView style={styles.modalOverlay}>
-          <View style={styles.categorySelectorCard}>
-            <View style={styles.formHeader}>
-              <View style={styles.formHeaderInfo}>
-                <Text style={styles.formTitle}>Selecione o Destino</Text>
-              </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => {
-                setIsWalletSelectOpen(false);
-                setIsReceiveModalOpen(true);
-              }}>
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </TouchableOpacity>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.categoryListContent}>
-              {wallets?.map(wallet => (
-                <View key={wallet.id} style={{ marginBottom: spacing.md }}>
-                  <Text style={styles.walletGroupTitle}>{wallet.name}</Text>
-                  
-                  {/* Dinheiro Vivo */}
-                  <TouchableOpacity 
-                    style={styles.walletOptionBtn}
-                    onPress={() => {
-                      setReceiveWalletId(wallet.id);
-                      setReceiveBankAccountId('');
-                      setIsWalletSelectOpen(false);
-                      setIsReceiveModalOpen(true);
-                    }}
-                  >
-                    <Ionicons name="cash-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
-                    <Text style={styles.walletOptionText}>Dinheiro Vivo ({fmt(wallet.cashBalance)})</Text>
-                  </TouchableOpacity>
-
-                  {/* Bank Accounts */}
-                  {wallet.accounts.map(acc => (
-                    <TouchableOpacity 
-                      key={acc.id}
-                      style={styles.walletOptionBtn}
-                      onPress={() => {
-                        setReceiveWalletId(wallet.id);
-                        setReceiveBankAccountId(acc.id);
-                        setIsWalletSelectOpen(false);
-                        setIsReceiveModalOpen(true);
-                      }}
-                    >
-                      <Ionicons name="business-outline" size={20} color={colors.text.secondary} style={{ marginRight: spacing.sm }} />
-                      <Text style={styles.walletOptionText}>{acc.bankName} - Conta ({fmt(acc.debitBalance)})</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+      <OriginPicker
+        visible={isWalletSelectOpen}
+        onClose={() => {
+          setIsWalletSelectOpen(false);
+          setIsReceiveModalOpen(true);
+        }}
+        wallets={wallets || []}
+        selectedWalletId={receiveWalletId || null}
+        selectedBankAccountId={receiveBankAccountId || null}
+        selectedCreditCardId={null}
+        onSelect={(selection) => {
+          setReceiveWalletId(selection.walletId);
+          setReceiveBankAccountId(selection.bankAccountId || '');
+          setIsWalletSelectOpen(false);
+          setIsReceiveModalOpen(true);
+        }}
+        allowCreditCards={false}
+      />
+    </Container>
   );
 }
 
@@ -714,5 +689,17 @@ const styles = StyleSheet.create({
   walletOptionText: {
     ...typography.body,
     color: colors.text.primary,
+  },
+  embeddedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  embeddedTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '700',
   },
 });
