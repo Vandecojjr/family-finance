@@ -118,7 +118,7 @@ export default function AccountsPayableScreen() {
       walletId: payWalletId,
       bankAccountId: payBankAccountId || null,
       creditCardId: payCreditCardId || null,
-      useCredit: payUseCredit || null,
+      useCredit: payBankAccountId ? payUseCredit : null,
     });
   };
 
