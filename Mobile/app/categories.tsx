@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +22,7 @@ import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { decodeJwt } from '@/utils/jwt';
 import { categoriesApi, CategoryResponse } from '@/api/endpoints/categories';
+import { getCategoryMeta } from '@/utils/categoryHelpers';
 
 export default function CategoriesScreen() {
   const router = useRouter();
@@ -40,16 +42,17 @@ export default function CategoriesScreen() {
     }
   }, [tokens]);
 
-  // Estados de Filtro e Modais
-  const [activeTab, setActiveTab] = useState<'income' | 'expense'>('expense'); // 1 = income, 2 = expense
+  // Estados de Filtro, Busca e Modais
+  const [activeTab, setActiveTab] = useState<'income' | 'expense'>('expense');
+  const [search, setSearch] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
-  
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isParentPickerOpen, setIsParentPickerOpen] = useState(false);
 
   // Estados do Formulário
   const [name, setName] = useState('');
-  const [type, setType] = useState<'Income' | 'Expense'>('Expense'); // 'Income' = Ganho, 'Expense' = Gasto
+  const [type, setType] = useState<'Income' | 'Expense'>('Expense');
   const [isSubCategory, setIsSubCategory] = useState(false);
   const [selectedParent, setSelectedParent] = useState<CategoryResponse | null>(null);
 
@@ -61,7 +64,7 @@ export default function CategoriesScreen() {
 
   // Mutação para criar categoria
   const createMutation = useMutation({
-    mutationFn: (payload: { name: string; type: 'Income' | 'Expense'; parentId: string | null }) => 
+    mutationFn: (payload: { name: string; type: 'Income' | 'Expense'; parentId: string | null }) =>
       categoriesApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -81,13 +84,24 @@ export default function CategoriesScreen() {
     }));
   };
 
+  // Expandir/recolher todas
+  const toggleAll = () => {
+    const allExpanded = filteredCategories.every(c => !!expandedCategories[c.id]);
+    if (allExpanded) {
+      setExpandedCategories({});
+    } else {
+      const newExpanded: Record<string, boolean> = {};
+      filteredCategories.forEach(c => { newExpanded[c.id] = true; });
+      setExpandedCategories(newExpanded);
+    }
+  };
+
   // Abrir formulário
   const openCreateModal = () => {
     if (!isAdmin) {
       Alert.alert('Acesso Negado', 'Apenas membros administradores podem criar categorias.');
       return;
     }
-    // Define o tipo inicial com base na aba ativa
     setType(activeTab === 'income' ? 'Income' : 'Expense');
     setName('');
     setIsSubCategory(false);
@@ -118,96 +132,196 @@ export default function CategoriesScreen() {
     });
   };
 
-  // Filtrar categorias com base na aba ativa (Income = Ganhos, Expense = Gastos)
+  // Filtrar categorias com base na aba ativa e busca
   const activeTypeValue = activeTab === 'income' ? 'Income' : 'Expense';
-  const filteredCategories = categories.filter(c => c.type === activeTypeValue && c.parentId === null);
+  const typeMatchedCategories = useMemo(() => {
+    return categories.filter(c => c.type === activeTypeValue && c.parentId === null);
+  }, [categories, activeTypeValue]);
 
-  // Categorias disponíveis para serem Pai (sem parentId e do mesmo tipo selecionado no form)
+  const filteredCategories = useMemo(() => {
+    if (!search.trim()) return typeMatchedCategories;
+    const query = search.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return typeMatchedCategories
+      .map((parent) => {
+        const parentMatches = parent.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(query);
+        const matchingSubs = parent.subCategories
+          ? parent.subCategories.filter((sub) =>
+              sub.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(query)
+            )
+          : [];
+
+        if (parentMatches || matchingSubs.length > 0) {
+          return {
+            ...parent,
+            subCategories: parentMatches ? parent.subCategories || [] : matchingSubs,
+          };
+        }
+        return null;
+      })
+      .filter((parent): parent is CategoryResponse => parent !== null);
+  }, [typeMatchedCategories, search]);
+
+  // Efeito para expandir categorias automaticamente durante a busca
+  useEffect(() => {
+    if (search.trim() && filteredCategories.length > 0) {
+      const newExpanded: Record<string, boolean> = {};
+      filteredCategories.forEach((cat) => {
+        newExpanded[cat.id] = true;
+      });
+      setExpandedCategories(newExpanded);
+    }
+  }, [search, filteredCategories]);
+
+
+  // Categorias disponíveis para serem Pai
   const availableParents = categories.filter(c => c.type === type && c.parentId === null);
+
+  // Cor ativa baseada na aba
+  const activeColor = activeTab === 'expense' ? colors.brand.accent : colors.brand.teal;
+
+  // Verificar se categorias com sub existem e se todas estão expandidas
+  const categoriesWithSubs = filteredCategories.filter(c => c.subCategories && c.subCategories.length > 0);
+  const allExpanded = categoriesWithSubs.length > 0 && categoriesWithSubs.every(c => !!expandedCategories[c.id]);
+
+  // Preview Meta para o modal de criação
+  const previewMeta = useMemo(() => getCategoryMeta(name || 'Nova Categoria', type), [name, type]);
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
+      {/* ─── HEADER ─────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Categorias</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Categorias</Text>
+          <Text style={styles.headerSubtitle}>
+            {activeTab === 'expense' ? 'Despesas & Gastos' : 'Receitas & Ganhos'}
+          </Text>
+        </View>
         {isAdmin ? (
-          <TouchableOpacity style={styles.addHeaderBtn} onPress={openCreateModal}>
-            <Ionicons name="add" size={24} color={colors.brand.teal} />
+          <TouchableOpacity style={[styles.addHeaderBtn, { backgroundColor: `${activeColor}15` }]} onPress={openCreateModal}>
+            <Ionicons name="add" size={20} color={activeColor} />
           </TouchableOpacity>
         ) : (
-          <View style={{ width: 24 }} />
+          <View style={{ width: 36 }} />
         )}
       </View>
 
-      {/* Tabs */}
+      {/* ─── TABS ──────────────────────────────────────────────────────── */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'expense' && styles.activeTabExpense,
-          ]}
+          style={[styles.tab, activeTab === 'expense' && styles.activeTabExpense]}
           onPress={() => setActiveTab('expense')}
+          activeOpacity={0.8}
         >
-          <Ionicons 
-            name="trending-down" 
-            size={18} 
-            color={activeTab === 'expense' ? colors.white : colors.text.secondary} 
+          <Ionicons
+            name="arrow-down-circle"
+            size={16}
+            color={activeTab === 'expense' ? colors.white : colors.text.secondary}
           />
           <Text style={[styles.tabText, activeTab === 'expense' && styles.activeTabText]}>
-            Gastos (Despesas)
+            Despesas
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'income' && styles.activeTabIncome,
-          ]}
+          style={[styles.tab, activeTab === 'income' && styles.activeTabIncome]}
           onPress={() => setActiveTab('income')}
+          activeOpacity={0.8}
         >
-          <Ionicons 
-            name="trending-up" 
-            size={18} 
-            color={activeTab === 'income' ? colors.white : colors.text.secondary} 
+          <Ionicons
+            name="arrow-up-circle"
+            size={16}
+            color={activeTab === 'income' ? colors.white : colors.text.secondary}
           />
           <Text style={[styles.tabText, activeTab === 'income' && styles.activeTabText]}>
-            Ganhos (Receitas)
+            Receitas
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Admin Info Banner */}
+      {/* ─── SEARCH ────────────────────────────────────────────────────── */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={18} color={colors.text.muted} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar categorias..."
+          placeholderTextColor={colors.text.muted}
+          value={search}
+          onChangeText={setSearch}
+          autoCorrect={false}
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="close-circle" size={18} color={colors.text.secondary} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ─── ADMIN BANNER ──────────────────────────────────────────────── */}
       {!isAdmin && (
         <View style={styles.adminBanner}>
-          <Ionicons name="information-circle-outline" size={16} color={colors.warning} style={{ marginRight: 8 }} />
+          <Ionicons name="lock-closed-outline" size={14} color={colors.warning} style={{ marginRight: spacing.sm }} />
           <Text style={styles.adminBannerText}>
-            Visualização restrita. Apenas administradores da família podem criar ou gerenciar categorias.
+            Somente administradores podem criar ou editar categorias.
           </Text>
         </View>
       )}
 
-      {/* Body List */}
+      {/* ─── EXPAND/COLLAPSE TOGGLE ────────────────────────────────────── */}
+      {categoriesWithSubs.length > 0 && !isLoading && !error && (
+        <View style={styles.expandToggleRow}>
+          <Text style={styles.sectionLabel}>
+            {search.trim() ? `${filteredCategories.length} resultado(s)` : `${filteredCategories.length} categorias`}
+          </Text>
+          <TouchableOpacity style={styles.expandToggleBtn} onPress={toggleAll} activeOpacity={0.7}>
+            <Ionicons
+              name={allExpanded ? 'contract-outline' : 'expand-outline'}
+              size={14}
+              color={colors.text.secondary}
+            />
+            <Text style={styles.expandToggleText}>
+              {allExpanded ? 'Recolher' : 'Expandir'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ─── BODY LIST ──────────────────────────────────────────────────── */}
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.brand.primary} />
+          <Text style={styles.loadingText}>Carregando categorias...</Text>
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
-          <Text style={styles.errorText}>Erro ao obter categorias da família.</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
+          <View style={styles.errorIconWrap}>
+            <Ionicons name="cloud-offline-outline" size={40} color={colors.danger} />
+          </View>
+          <Text style={styles.errorTitle}>Falha ao carregar</Text>
+          <Text style={styles.errorText}>Não foi possível obter as categorias da família.</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()} activeOpacity={0.8}>
+            <Ionicons name="refresh-outline" size={16} color={colors.brand.primary} style={{ marginRight: spacing.xs }} />
             <Text style={styles.retryBtnText}>Tentar Novamente</Text>
           </TouchableOpacity>
         </View>
       ) : filteredCategories.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Ionicons name="pricetags-outline" size={64} color={colors.text.muted} />
-          <Text style={styles.emptyText}>Nenhuma categoria de {activeTab === 'expense' ? 'gasto' : 'ganho'} cadastrada.</Text>
-          {isAdmin && (
-            <TouchableOpacity style={styles.createFirstBtn} onPress={openCreateModal}>
+          <View style={styles.emptyIconWrap}>
+            <Ionicons name="pricetags-outline" size={40} color={colors.text.muted} />
+          </View>
+          <Text style={styles.emptyTitle}>
+            {search.trim() ? 'Sem resultados' : 'Nenhuma categoria'}
+          </Text>
+          <Text style={styles.emptyText}>
+            {search.trim()
+              ? `Nenhuma categoria corresponde à busca "${search}".`
+              : `Você ainda não tem categorias de ${activeTab === 'expense' ? 'despesa' : 'receita'} cadastradas.`}
+          </Text>
+          {isAdmin && !search.trim() && (
+            <TouchableOpacity style={[styles.createFirstBtn, { backgroundColor: activeColor }]} onPress={openCreateModal} activeOpacity={0.8}>
+              <Ionicons name="add-circle-outline" size={18} color={colors.white} style={{ marginRight: spacing.xs }} />
               <Text style={styles.createFirstBtnText}>Criar Primeira Categoria</Text>
             </TouchableOpacity>
           )}
@@ -217,85 +331,88 @@ export default function CategoriesScreen() {
           {filteredCategories.map((category) => {
             const hasSub = category.subCategories && category.subCategories.length > 0;
             const isExpanded = !!expandedCategories[category.id];
+            const meta = getCategoryMeta(category.name, category.type);
+            const parentColor = meta.color;
 
             return (
-              <View key={category.id} style={styles.categoryCard}>
+              <View key={category.id} style={[styles.categoryCard, isExpanded && styles.categoryCardExpanded]}>
+                {/* Barra lateral de cor */}
+                <View style={[styles.cardAccentStrip, { backgroundColor: parentColor }]} />
+
                 {/* Categoria Principal */}
-                <TouchableOpacity
-                  style={styles.categoryRow}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    if (hasSub) {
-                      toggleExpand(category.id);
-                    }
-                  }}
-                >
-                  <View style={[
-                    styles.categoryIconContainer, 
-                    { backgroundColor: activeTab === 'expense' ? `${colors.brand.accent}22` : `${colors.brand.teal}22` }
-                  ]}>
-                    <Ionicons 
-                      name="pricetag" 
-                      size={18} 
-                      color={activeTab === 'expense' ? colors.brand.accent : colors.brand.teal} 
-                    />
-                  </View>
-                  <View style={styles.categoryInfo}>
-                    <Text style={styles.categoryNameText}>{category.name}</Text>
-                  </View>
-                  {hasSub && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                      <View style={[
-                        styles.categoryBadge,
-                        { backgroundColor: activeTab === 'expense' ? `${colors.brand.accent}15` : `${colors.brand.teal}15` }
-                      ]}>
-                        <Text style={[
-                          styles.categoryBadgeText,
-                          { color: activeTab === 'expense' ? colors.brand.accent : colors.brand.teal }
-                        ]}>
-                          {category.subCategories.length} {category.subCategories.length === 1 ? 'sub' : 'subs'}
+                <View style={styles.cardBody}>
+                  <TouchableOpacity
+                    style={styles.categoryRow}
+                    activeOpacity={0.7}
+                    onPress={() => hasSub && toggleExpand(category.id)}
+                  >
+                    <View style={[styles.categoryIconContainer, { backgroundColor: `${parentColor}18` }]}>
+                      <Ionicons name={meta.icon} size={20} color={parentColor} />
+                    </View>
+
+                    <View style={styles.categoryInfo}>
+                      <Text style={styles.categoryNameText}>{category.name}</Text>
+                      {hasSub && (
+                        <Text style={[styles.categorySubLabel, { color: parentColor }]}>
+                          {category.subCategories.length} {category.subCategories.length === 1 ? 'subcategoria' : 'subcategorias'}
                         </Text>
+                      )}
+                    </View>
+
+                    {hasSub ? (
+                      <View style={[styles.expandBtnWrap, { backgroundColor: `${parentColor}12` }]}>
+                        <Ionicons
+                          name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                          size={16}
+                          color={parentColor}
+                        />
                       </View>
-                      <Ionicons 
-                        name={isExpanded ? "chevron-down" : "chevron-forward"} 
-                        size={16} 
-                        color={colors.text.secondary} 
-                      />
+                    ) : (
+                      <View style={styles.soloIndicator}>
+                        <Ionicons name="ellipse" size={6} color={`${parentColor}55`} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Subcategorias aninhadas */}
+                  {hasSub && isExpanded && (
+                    <View style={styles.subCategoriesContainer}>
+                      {category.subCategories.map((sub, idx) => {
+                        const subMeta = getCategoryMeta(sub.name, sub.type);
+                        const subColor = subMeta.color;
+                        const isLast = idx === category.subCategories.length - 1;
+                        return (
+                          <View key={sub.id} style={[styles.subCategoryRow, isLast && { marginBottom: 0 }]}>
+                            {/* Connector visual */}
+                            <View style={styles.subConnectorWrap}>
+                              <View style={[styles.subConnectorV, { backgroundColor: `${parentColor}25` }, isLast && { height: '50%' }]} />
+                              <View style={[styles.subConnectorH, { backgroundColor: `${parentColor}25` }]} />
+                            </View>
+
+                            <View style={[styles.subIconContainer, { backgroundColor: `${subColor}15` }]}>
+                              <Ionicons name={subMeta.icon} size={13} color={subColor} />
+                            </View>
+                            <Text style={styles.subCategoryNameText}>{sub.name}</Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   )}
-                </TouchableOpacity>
-
-                {/* Subcategorias aninhadas */}
-                {hasSub && isExpanded && (
-                  <View style={styles.subCategoriesContainer}>
-                    <View style={styles.treeLine} />
-                    <View style={styles.subList}>
-                      {category.subCategories.map((sub) => (
-                        <View key={sub.id} style={styles.subCategoryRow}>
-                          <View style={styles.subTreeNodeConnector} />
-                          <View style={styles.subIconContainer}>
-                            <Ionicons name="chevron-forward-circle" size={10} color={colors.text.muted} />
-                          </View>
-                          <Text style={styles.subCategoryNameText}>{sub.name}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
+                </View>
               </View>
             );
           })}
         </ScrollView>
       )}
 
-      {/* Botão Flutuante (Somente Admin) */}
+      {/* ─── FAB ────────────────────────────────────────────────────────── */}
       {isAdmin && filteredCategories.length > 0 && (
-        <TouchableOpacity style={styles.fab} onPress={openCreateModal} activeOpacity={0.8}>
-          <Ionicons name="add" size={28} color={colors.white} />
+        <TouchableOpacity style={[styles.fab, { backgroundColor: activeColor }]} onPress={openCreateModal} activeOpacity={0.85}>
+          <Ionicons name="add" size={24} color={colors.white} />
         </TouchableOpacity>
       )}
 
-      {/* ── MODAL: CRIAR CATEGORIA ──────────────────────────────────────────── */}
+      {/* ─── MODAL: CRIAR CATEGORIA ────────────────────────────────────── */}
       <Modal visible={isCreateModalOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
@@ -303,11 +420,17 @@ export default function CategoriesScreen() {
             style={styles.modalKeyboardAvoiding}
           >
             <View style={styles.modalContent}>
+              {/* Drag Handle */}
+              <View style={styles.modalHandle} />
+
               {/* Modal Header */}
               <View style={styles.modalHeaderRow}>
-                <Text style={styles.modalTitle}>Nova Categoria</Text>
+                <View>
+                  <Text style={styles.modalTitle}>Nova Categoria</Text>
+                  <Text style={styles.modalSubtitle}>Organize suas finanças</Text>
+                </View>
                 <TouchableOpacity style={styles.modalCloseBtn} onPress={closeCreateModal}>
-                  <Ionicons name="close" size={24} color={colors.text.primary} />
+                  <Ionicons name="close" size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
               </View>
 
@@ -333,12 +456,12 @@ export default function CategoriesScreen() {
                     ]}
                     onPress={() => {
                       setType('Expense');
-                      setSelectedParent(null); // reseta parent
+                      setSelectedParent(null);
                     }}
                   >
-                    <Ionicons name="trending-down" size={16} color={type === 'Expense' ? colors.white : colors.text.secondary} />
+                    <Ionicons name="arrow-down-circle" size={16} color={type === 'Expense' ? colors.white : colors.text.secondary} />
                     <Text style={[styles.formTypeBtnText, type === 'Expense' && styles.formTypeBtnTextActive]}>
-                      Despesa / Gasto
+                      Despesa
                     </Text>
                   </TouchableOpacity>
 
@@ -349,12 +472,12 @@ export default function CategoriesScreen() {
                     ]}
                     onPress={() => {
                       setType('Income');
-                      setSelectedParent(null); // reseta parent
+                      setSelectedParent(null);
                     }}
                   >
-                    <Ionicons name="trending-up" size={16} color={type === 'Income' ? colors.white : colors.text.secondary} />
+                    <Ionicons name="arrow-up-circle" size={16} color={type === 'Income' ? colors.white : colors.text.secondary} />
                     <Text style={[styles.formTypeBtnText, type === 'Income' && styles.formTypeBtnTextActive]}>
-                      Receita / Ganho
+                      Receita
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -364,7 +487,7 @@ export default function CategoriesScreen() {
                   <View style={{ flex: 1, paddingRight: spacing.sm }}>
                     <Text style={styles.toggleLabel}>Esta é uma subcategoria?</Text>
                     <Text style={styles.toggleDesc}>
-                      Subcategorias ajudam a detalhar seus lançamentos (ex: Mercado dentro de Alimentação).
+                      Detalhe seus lançamentos (ex: Mercado → Alimentação).
                     </Text>
                   </View>
                   <Switch
@@ -381,26 +504,57 @@ export default function CategoriesScreen() {
                 {/* Categoria Pai Selector */}
                 {isSubCategory && (
                   <View style={{ marginTop: spacing.md }}>
-                    <Text style={styles.label}>Selecione a Categoria Pai</Text>
+                    <Text style={styles.label}>Categoria Pai</Text>
                     <TouchableOpacity
                       style={styles.pickerTrigger}
                       activeOpacity={0.8}
                       onPress={() => setIsParentPickerOpen(true)}
                     >
-                      <Text style={[
-                        styles.pickerTriggerText,
-                        !selectedParent && { color: colors.text.muted }
-                      ]}>
-                        {selectedParent ? selectedParent.name : 'Selecionar categoria pai...'}
-                      </Text>
+                      {selectedParent ? (
+                        <View style={styles.pickerSelectedRow}>
+                          <View style={[styles.pickerSelectedIcon, { backgroundColor: `${getCategoryMeta(selectedParent.name, selectedParent.type).color}15` }]}>
+                            <Ionicons
+                              name={getCategoryMeta(selectedParent.name, selectedParent.type).icon}
+                              size={14}
+                              color={getCategoryMeta(selectedParent.name, selectedParent.type).color}
+                            />
+                          </View>
+                          <Text style={styles.pickerTriggerText}>{selectedParent.name}</Text>
+                        </View>
+                      ) : (
+                        <Text style={[styles.pickerTriggerText, { color: colors.text.muted }]}>
+                          Selecionar categoria pai...
+                        </Text>
+                      )}
                       <Ionicons name="chevron-down" size={18} color={colors.text.secondary} />
                     </TouchableOpacity>
                   </View>
                 )}
 
+                {/* Live Preview Card */}
+                {name.trim().length > 0 && (
+                  <View style={styles.previewContainer}>
+                    <Text style={styles.previewTitle}>Prévia</Text>
+                    <View style={[styles.previewCard, { borderColor: `${previewMeta.color}44` }]}>
+                      <View style={[styles.previewStrip, { backgroundColor: previewMeta.color }]} />
+                      <View style={[styles.categoryIconContainer, { backgroundColor: `${previewMeta.color}18` }]}>
+                        <Ionicons name={previewMeta.icon} size={20} color={previewMeta.color} />
+                      </View>
+                      <View style={styles.categoryInfo}>
+                        <Text style={styles.categoryNameText}>{name}</Text>
+                        <Text style={styles.categorySubLabel}>
+                          {isSubCategory
+                            ? `Sub de: ${selectedParent?.name || '—'}`
+                            : `${type === 'Income' ? 'Receita' : 'Despesa'} principal`}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
                 {/* Submit button */}
                 <TouchableOpacity
-                  style={styles.saveBtn}
+                  style={[styles.saveBtn, { backgroundColor: type === 'Income' ? colors.brand.teal : colors.brand.accent }]}
                   activeOpacity={0.8}
                   onPress={handleSave}
                   disabled={createMutation.isPending}
@@ -409,53 +563,62 @@ export default function CategoriesScreen() {
                     <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} style={{ marginRight: 8 }} />
+                      <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} style={{ marginRight: spacing.sm }} />
                       <Text style={styles.saveBtnText}>Salvar Categoria</Text>
                     </>
                   )}
                 </TouchableOpacity>
               </ScrollView>
 
+              {/* ─── PARENT PICKER OVERLAY ─────────────────────────────── */}
               {isParentPickerOpen && (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.bg.secondary, zIndex: 10, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+                <View style={[StyleSheet.absoluteFill, styles.parentPickerOverlay]}>
                   <View style={styles.modalHeaderRow}>
                     <Text style={styles.modalTitle}>Escolha a Categoria Pai</Text>
-                    <TouchableOpacity onPress={() => setIsParentPickerOpen(false)}>
-                      <Ionicons name="close" size={24} color={colors.text.primary} />
+                    <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setIsParentPickerOpen(false)}>
+                      <Ionicons name="close" size={20} color={colors.text.secondary} />
                     </TouchableOpacity>
                   </View>
-                  <ScrollView style={styles.pickerList} contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.md }}>
+                  <ScrollView style={styles.pickerList} contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.lg }}>
                     {availableParents.length === 0 ? (
-                      <Text style={styles.pickerEmptyText}>
-                        Nenhuma categoria principal de {type === 'Income' ? 'receita' : 'despesa'} encontrada para associar.
-                      </Text>
+                      <View style={styles.pickerEmptyContainer}>
+                        <Ionicons name="folder-open-outline" size={32} color={colors.text.muted} />
+                        <Text style={styles.pickerEmptyText}>
+                          Nenhuma categoria principal de {type === 'Income' ? 'receita' : 'despesa'} encontrada.
+                        </Text>
+                      </View>
                     ) : (
-                      availableParents.map((c) => (
-                        <TouchableOpacity
-                          key={c.id}
-                          style={[
-                            styles.pickerItem,
-                            selectedParent?.id === c.id && styles.pickerItemActive
-                          ]}
-                          onPress={() => {
-                            setSelectedParent(c);
-                            setIsParentPickerOpen(false);
-                          }}
-                        >
-                          <Ionicons 
-                            name="pricetag-outline" 
-                            size={16} 
-                            color={selectedParent?.id === c.id ? colors.brand.primary : colors.text.secondary}
-                            style={{ marginRight: 10 }}
-                          />
-                          <Text style={[
-                            styles.pickerItemText,
-                            selectedParent?.id === c.id && styles.pickerItemTextActive
-                          ]}>
-                            {c.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))
+                      availableParents.map((c) => {
+                        const cMeta = getCategoryMeta(c.name, c.type);
+                        const isSelected = selectedParent?.id === c.id;
+                        return (
+                          <TouchableOpacity
+                            key={c.id}
+                            style={[
+                              styles.pickerItem,
+                              isSelected && { backgroundColor: `${cMeta.color}12`, borderColor: `${cMeta.color}44` },
+                            ]}
+                            onPress={() => {
+                              setSelectedParent(c);
+                              setIsParentPickerOpen(false);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <View style={[styles.pickerItemIcon, { backgroundColor: `${cMeta.color}15` }]}>
+                              <Ionicons name={cMeta.icon} size={16} color={cMeta.color} />
+                            </View>
+                            <Text style={[
+                              styles.pickerItemText,
+                              isSelected && { color: cMeta.color, fontWeight: '700' },
+                            ]}>
+                              {c.name}
+                            </Text>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={18} color={cMeta.color} />
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })
                     )}
                   </ScrollView>
                 </View>
@@ -473,32 +636,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg.primary,
   },
+
+  // ─── HEADER ──────────────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   backBtn: {
-    padding: spacing.xs,
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    alignItems: 'center',
+    flex: 1,
   },
   headerTitle: {
     ...typography.h3,
     color: colors.text.primary,
   },
-  addHeaderBtn: {
-    padding: spacing.xs,
+  headerSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 1,
   },
+  addHeaderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  // ─── TABS ────────────────────────────────────────────────────────────
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: colors.bg.secondary,
     borderRadius: radius.full,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
-    padding: 4,
+    padding: 3,
   },
   tab: {
     flex: 1,
@@ -507,54 +694,140 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
     borderRadius: radius.full,
+    gap: 6,
   },
   tabText: {
     ...typography.bodySmall,
     fontWeight: '600',
     color: colors.text.secondary,
-    marginLeft: 6,
   },
   activeTabText: {
     color: colors.white,
   },
   activeTabExpense: {
     backgroundColor: colors.brand.accent,
+    ...shadow.sm,
   },
   activeTabIncome: {
     backgroundColor: colors.brand.teal,
+    ...shadow.sm,
   },
-  adminBanner: {
+
+  // ─── SEARCH ──────────────────────────────────────────────────────────
+  searchContainer: {
     flexDirection: 'row',
-    backgroundColor: `${colors.warning}15`,
-    borderRadius: radius.sm,
-    borderColor: `${colors.warning}44`,
+    alignItems: 'center',
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
     borderWidth: 1,
+    borderColor: colors.border,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.md,
+    height: 42,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.text.primary,
+    ...typography.bodySmall,
+  },
+
+  // ─── STATS ───────────────────────────────────────────────────────────
+
+
+  // ─── ADMIN BANNER ────────────────────────────────────────────────────
+  adminBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.warning}10`,
+    borderRadius: radius.sm,
+    borderColor: `${colors.warning}30`,
+    borderWidth: 1,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
   },
   adminBannerText: {
-    ...typography.bodySmall,
+    ...typography.caption,
     color: colors.warning,
     flex: 1,
   },
+
+  // ─── EXPAND/COLLAPSE ROW ────────────────────────────────────────────
+  expandToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.text.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  expandToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.secondary,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  expandToggleText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+
+  // ─── CENTER STATES (loading / error / empty) ─────────────────────────
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
   },
-  errorText: {
-    ...typography.body,
-    color: colors.text.secondary,
+  loadingText: {
+    ...typography.bodySmall,
+    color: colors.text.muted,
     marginTop: spacing.md,
+  },
+  errorIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.full,
+    backgroundColor: `${colors.danger}12`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  errorTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  errorText: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    textAlign: 'center',
     marginBottom: spacing.md,
   },
   retryBtn: {
-    backgroundColor: colors.bg.secondary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.card,
     paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    borderRadius: radius.sm,
+    paddingVertical: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -563,29 +836,47 @@ const styles = StyleSheet.create({
     color: colors.brand.primary,
     fontWeight: '600',
   },
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.full,
+    backgroundColor: `${colors.brand.primary}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  emptyTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
   emptyText: {
-    ...typography.body,
+    ...typography.bodySmall,
     color: colors.text.secondary,
     textAlign: 'center',
-    marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   createFirstBtn: {
-    backgroundColor: colors.brand.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: 12,
     borderRadius: radius.md,
-    marginTop: spacing.lg,
+    ...shadow.sm,
   },
   createFirstBtnText: {
     ...typography.button,
     color: colors.white,
   },
+
+  // ─── CATEGORY LIST ───────────────────────────────────────────────────
   listContent: {
     padding: spacing.md,
-    paddingBottom: 80,
+    paddingBottom: 90,
   },
   categoryCard: {
+    flexDirection: 'row',
     backgroundColor: colors.bg.card,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
@@ -593,15 +884,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  categoryCardExpanded: {
+    borderColor: colors.bg.elevated,
+    ...shadow.sm,
+  },
+  cardAccentStrip: {
+    width: 3,
+  },
+  cardBody: {
+    flex: 1,
+  },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
   },
   categoryIconContainer: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -614,71 +916,85 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text.primary,
   },
+  categorySubLabel: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 1,
+  },
   categorySubCountText: {
     ...typography.caption,
     color: colors.text.secondary,
     marginTop: 2,
   },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  expandBtnWrap: {
+    width: 28,
+    height: 28,
     borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  categoryBadgeText: {
-    ...typography.caption,
-    fontWeight: '700',
+  soloIndicator: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
+  // ─── SUBCATEGORIES ───────────────────────────────────────────────────
   subCategoriesContainer: {
-    flexDirection: 'row',
-    backgroundColor: `${colors.bg.secondary}66`,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingLeft: spacing.md,
-  },
-  treeLine: {
-    width: 1,
-    backgroundColor: colors.border,
-    alignSelf: 'stretch',
-    marginLeft: 18, // Alinha com o ícone da categoria principal
-  },
-  subList: {
-    flex: 1,
-    paddingVertical: spacing.xs,
+    paddingLeft: spacing.md + 20, // Alinha com o texto do pai
+    paddingRight: spacing.md,
+    paddingBottom: spacing.sm,
   },
   subCategoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingRight: spacing.md,
+    marginBottom: spacing.xs + 2,
+    minHeight: 32,
   },
-  subTreeNodeConnector: {
-    width: 14,
+  subConnectorWrap: {
+    width: 20,
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+  },
+  subConnectorV: {
+    width: 1,
+    height: '100%',
+  },
+  subConnectorH: {
+    width: 12,
     height: 1,
-    backgroundColor: colors.border,
-    marginRight: 6,
+    alignSelf: 'center',
   },
   subIconContainer: {
-    marginRight: 8,
+    width: 26,
+    height: 26,
+    borderRadius: radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
   },
   subCategoryNameText: {
     ...typography.bodySmall,
     color: colors.text.primary,
     fontWeight: '500',
+    flex: 1,
   },
+
+  // ─── FAB ─────────────────────────────────────────────────────────────
   fab: {
     position: 'absolute',
     bottom: spacing.lg,
     right: spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.brand.primary,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     ...shadow.md,
   },
+
+  // ─── MODAL ───────────────────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -689,10 +1005,18 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.bg.secondary,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     padding: spacing.md,
-    maxHeight: '85%',
+    maxHeight: '88%',
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
   },
   modalHeaderRow: {
     flexDirection: 'row',
@@ -706,17 +1030,33 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text.primary,
   },
-  modalCloseBtn: {
-    padding: spacing.xs,
+  modalSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 1,
   },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  // ─── MODAL FORM ──────────────────────────────────────────────────────
   modalForm: {
     marginTop: spacing.md,
   },
   label: {
-    ...typography.bodySmall,
+    ...typography.caption,
     color: colors.text.secondary,
     fontWeight: '600',
-    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
   },
   input: {
     backgroundColor: colors.bg.card,
@@ -735,7 +1075,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 4,
+    padding: 3,
     marginBottom: spacing.md,
   },
   formTypeBtn: {
@@ -745,18 +1085,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
     borderRadius: radius.full,
+    gap: 6,
   },
   formTypeBtnExpenseActive: {
     backgroundColor: colors.brand.accent,
+    ...shadow.sm,
   },
   formTypeBtnIncomeActive: {
     backgroundColor: colors.brand.teal,
+    ...shadow.sm,
   },
   formTypeBtnText: {
     ...typography.bodySmall,
     fontWeight: '600',
     color: colors.text.secondary,
-    marginLeft: 6,
   },
   formTypeBtnTextActive: {
     color: colors.white,
@@ -781,6 +1123,8 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 2,
   },
+
+  // ─── PICKER ──────────────────────────────────────────────────────────
   pickerTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -796,15 +1140,60 @@ const styles = StyleSheet.create({
   pickerTriggerText: {
     ...typography.body,
     color: colors.text.primary,
+    flex: 1,
   },
+  pickerSelectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: spacing.sm,
+  },
+  pickerSelectedIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // ─── PREVIEW ─────────────────────────────────────────────────────────
+  previewContainer: {
+    marginBottom: spacing.md,
+  },
+  previewTitle: {
+    ...typography.caption,
+    color: colors.text.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  previewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: spacing.sm + 2,
+    overflow: 'hidden',
+  },
+  previewStrip: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: radius.md,
+    borderBottomLeftRadius: radius.md,
+  },
+
+  // ─── SAVE BUTTON ─────────────────────────────────────────────────────
   saveBtn: {
-    backgroundColor: colors.brand.primary,
     borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     marginBottom: spacing.xl,
     ...shadow.sm,
   },
@@ -812,60 +1201,51 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.white,
   },
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  pickerCard: {
-    backgroundColor: colors.bg.card,
-    borderRadius: radius.lg,
-    width: '100%',
-    maxHeight: '60%',
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginBottom: spacing.sm,
-  },
-  pickerTitle: {
-    ...typography.h4,
-    color: colors.text.primary,
+
+  // ─── PARENT PICKER OVERLAY ───────────────────────────────────────────
+  parentPickerOverlay: {
+    backgroundColor: colors.bg.secondary,
+    zIndex: 10,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   pickerList: {
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  pickerEmptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+    gap: spacing.sm,
   },
   pickerEmptyText: {
     ...typography.bodySmall,
     color: colors.text.secondary,
     textAlign: 'center',
-    paddingVertical: spacing.lg,
   },
   pickerItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
+    marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.transparent,
+    gap: spacing.sm,
   },
-  pickerItemActive: {
-    backgroundColor: `${colors.brand.primary}15`,
+  pickerItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   pickerItemText: {
     ...typography.body,
     color: colors.text.primary,
-  },
-  pickerItemTextActive: {
-    color: colors.brand.primary,
-    fontWeight: '600',
+    flex: 1,
   },
 });

@@ -27,6 +27,7 @@ import { Transaction, Category, Wallet } from '@/types';
 import DatePicker from '@/components/DatePicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { OriginPicker } from '@/components/OriginPicker';
+import { getCategoryMeta } from '@/utils/categoryHelpers';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -315,45 +316,52 @@ export default function TransactionsScreen() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <View style={styles.card}>
-                  <View
-                    style={[
-                      styles.icon,
-                      { backgroundColor: item.type === 1 ? `${colors.success}18` : `${colors.danger}18` },
-                    ]}
-                  >
-                    <Ionicons
-                      name={item.type === 1 ? 'trending-up' : 'trending-down'}
-                      size={20}
-                      color={item.type === 1 ? colors.success : colors.danger}
-                    />
-                  </View>
+              renderItem={({ item }) => {
+                const isIncome = item.type === 1;
+                const meta = getCategoryMeta(item.categoryName || '', isIncome ? 'Income' : 'Expense');
+                const itemColor = meta.color;
+                const itemIcon = meta.icon;
 
-                  <View style={styles.info}>
-                    <Text style={styles.desc}>{item.description}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.catText}>{item.categoryName}</Text>
-                      <Text style={styles.dot}>·</Text>
-                      <Text style={styles.originText}>{getOriginText(item)}</Text>
-                      <Text style={styles.dot}>·</Text>
-                      <Text style={styles.dateText}>
-                        {new Date(item.date).toLocaleDateString('pt-BR')}
+                return (
+                  <View style={styles.card}>
+                    <View
+                      style={[
+                        styles.icon,
+                        { backgroundColor: `${itemColor}15` },
+                      ]}
+                    >
+                      <Ionicons
+                        name={itemIcon}
+                        size={20}
+                        color={itemColor}
+                      />
+                    </View>
+
+                    <View style={styles.info}>
+                      <Text style={styles.desc}>{item.description}</Text>
+                      <View style={styles.metaRow}>
+                        <Text style={[styles.catText, { color: itemColor, fontWeight: '600' }]}>{item.categoryName}</Text>
+                        <Text style={styles.dot}>·</Text>
+                        <Text style={styles.originText}>{getOriginText(item)}</Text>
+                        <Text style={styles.dot}>·</Text>
+                        <Text style={styles.dateText}>
+                          {new Date(item.date).toLocaleDateString('pt-BR')}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.cardRight}>
+                      <Text style={[styles.amount, { color: isIncome ? colors.success : colors.danger }]}>
+                        {isIncome ? '+' : '-'}{fmt(item.amount)}
                       </Text>
+
+                      <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
+                        <Ionicons name="trash-outline" size={16} color={colors.text.muted} />
+                      </TouchableOpacity>
                     </View>
                   </View>
-
-                  <View style={styles.cardRight}>
-                    <Text style={[styles.amount, { color: item.type === 1 ? colors.success : colors.danger }]}>
-                      {item.type === 1 ? '+' : '-'}{fmt(item.amount)}
-                    </Text>
-
-                    <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
-                      <Ionicons name="trash-outline" size={16} color={colors.text.muted} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
+                );
+              }}
             />
           )}
         </View>
