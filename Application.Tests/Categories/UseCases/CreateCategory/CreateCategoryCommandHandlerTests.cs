@@ -3,6 +3,7 @@ using Application.Shared.Authorization;
 using Application.UseCases.Categories.CreateCategory;
 using Domain.Entities.Categories;
 using Domain.Entities.Families;
+using Domain.Entities.Members;
 using Domain.Enums;
 using Domain.Repositories;
 using FluentAssertions;
@@ -17,6 +18,8 @@ public class CreateCategoryCommandHandlerTests
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly CreateCategoryCommandHandler _handler;
+    
+    private readonly Family _family = new Family("Silva");
 
     public CreateCategoryCommandHandlerTests()
     {
@@ -27,15 +30,15 @@ public class CreateCategoryCommandHandlerTests
             _categoryRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _currentUserMock.Object);
+        
+        _family.AddMember("Member");
     }
 
     [Fact]
     public void Command_ShouldImplementIAuthorizeableRequest_WithCategoryCreatePermission()
     {
-        // Arrange & Act
         var command = new CreateCategoryCommand("Alimentação", CategoryType.Expense);
 
-        // Assert
         command.Should().BeAssignableTo<IAuthorizeableRequest>();
         command.RequiredPermissions.Should().ContainSingle(p => p == Permission.CategoryCreate);
     }
@@ -43,11 +46,7 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnSuccessResult_WhenDataIsValid()
     {
-        // Arrange
-        var family = new Family("Silva");
-        family.AddMember("Member");
-        var currentMember = family.Members.First();
-
+        var currentMember = _family.Members.First();
         var command = new CreateCategoryCommand("Alimentação", CategoryType.Expense);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
@@ -55,10 +54,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
@@ -70,19 +67,16 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenCurrentUserMemberNotFound()
     {
-        // Arrange
         var command = new CreateCategoryCommand("Alimentação", CategoryType.Expense);
         var currentMemberId = Guid.NewGuid();
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMemberId);
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Domain.Entities.Members.Member?)null);
+            .ReturnsAsync((Member?)null);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("User.MemberNotFound");
@@ -91,12 +85,9 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnSuccessResult_WhenCreatingValidSubCategory()
     {
-        // Arrange
-        var family = new Family("Silva");
-        family.AddMember("Member");
-        var currentMember = family.Members.First();
+        var currentMember = _family.Members.First();
 
-        var parentCategory = new Category("Alimentação", CategoryType.Expense, family.Id);
+        var parentCategory = new Category("Alimentação", CategoryType.Expense, _family.Id);
         var command = new CreateCategoryCommand("Mercado", CategoryType.Expense, parentCategory.Id);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
@@ -107,10 +98,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetByIdAsync(parentCategory.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentCategory);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
@@ -122,10 +111,7 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenParentCategoryNotFound()
     {
-        // Arrange
-        var family = new Family("Silva");
-        family.AddMember("Member");
-        var currentMember = family.Members.First();
+        var currentMember = _family.Members.First();
 
         var nonExistentParentId = Guid.NewGuid();
         var command = new CreateCategoryCommand("Mercado", CategoryType.Expense, nonExistentParentId);
@@ -138,10 +124,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetByIdAsync(nonExistentParentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Category?)null);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Category.ParentNotFound");
@@ -150,13 +134,10 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenParentCategoryBelongsToDifferentFamily()
     {
-        // Arrange
-        var family1 = new Family("Silva");
-        family1.AddMember("Member");
-        var currentMember = family1.Members.First();
+        var currentMember = _family.Members.First();
 
         var family2 = new Family("Other");
-        var parentCategory = new Category("Alimentação", CategoryType.Expense, family2.Id); // Different Family
+        var parentCategory = new Category("Alimentação", CategoryType.Expense, family2.Id);
 
         var command = new CreateCategoryCommand("Mercado", CategoryType.Expense, parentCategory.Id);
 
@@ -168,10 +149,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetByIdAsync(parentCategory.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentCategory);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Category.AccessDenied");
@@ -180,13 +159,10 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenParentCategoryIsAlreadyASubCategory()
     {
-        // Arrange
-        var family = new Family("Silva");
-        family.AddMember("Member");
-        var currentMember = family.Members.First();
+        var currentMember = _family.Members.First();
 
-        var grandparentCategory = new Category("Alimentação", CategoryType.Expense, family.Id);
-        var parentCategory = new Category("Mercado", CategoryType.Expense, family.Id, grandparentCategory.Id); // Already a subcategory
+        var grandparentCategory = new Category("Alimentação", CategoryType.Expense, _family.Id);
+        var parentCategory = new Category("Mercado", CategoryType.Expense, _family.Id, grandparentCategory.Id);
 
         var command = new CreateCategoryCommand("Hortifruti", CategoryType.Expense, parentCategory.Id);
 
@@ -198,10 +174,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetByIdAsync(parentCategory.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentCategory);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Category.NestingLimitExceeded");
@@ -210,13 +184,10 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenParentCategoryTypeMismatches()
     {
-        // Arrange
-        var family = new Family("Silva");
-        family.AddMember("Member");
-        var currentMember = family.Members.First();
+        var currentMember = _family.Members.First();
 
-        var parentCategory = new Category("Salário", CategoryType.Income, family.Id); // Income parent
-        var command = new CreateCategoryCommand("Mercado", CategoryType.Expense, parentCategory.Id); // Expense subcategory
+        var parentCategory = new Category("Salário", CategoryType.Income, _family.Id);
+        var command = new CreateCategoryCommand("Mercado", CategoryType.Expense, parentCategory.Id);
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
@@ -226,10 +197,8 @@ public class CreateCategoryCommandHandlerTests
             .Setup(repo => repo.GetByIdAsync(parentCategory.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(parentCategory);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle();
         result.Errors[0].Code.Should().Be("Category.TypeMismatch");

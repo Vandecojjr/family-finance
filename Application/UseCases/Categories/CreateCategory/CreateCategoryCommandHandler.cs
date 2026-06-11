@@ -29,7 +29,7 @@ public sealed class CreateCategoryCommandHandler(
                 return Result<Guid>.Failure(
                     Error.Forbidden("Category.AccessDenied", "A categoria selecionada pertence a outra família."));
 
-            if (parent.ParentId == command.ParentId)
+            if (parent.ParentId.HasValue)
                 return Result<Guid>.Failure(
                     Error.Failure("Category.NestingLimitExceeded", "Não é permitido criar subcategoria de subcategorias."));
 
