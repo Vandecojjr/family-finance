@@ -25,7 +25,7 @@ public sealed class GetTransactionsByFamilyQueryHandler(
 
         var transactions = await walletRepository.GetTransactionsByFamilyIdAsync(member.FamilyId, cancellationToken);
         var categories = await categoryRepository.GetByFamilyIdAsync(member.FamilyId, cancellationToken);
-        var categoryDict = categories.ToDictionary(c => c.Id, c => c.Name.Value);
+        var categoryDict = categories.ToDictionary(c => c.Id, c => c.Name);
 
         var responseList = transactions.Select(t => new TransactionResponse(
             t.Id,

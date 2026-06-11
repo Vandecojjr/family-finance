@@ -5,7 +5,7 @@ namespace Domain.Entities.Categories.ValueObjects;
 
 public sealed record CategoryName : ValueObject
 {
-    public string Value { get; init; }
+    public string Value { get;}
 
     private CategoryName(string value)
     {
@@ -14,10 +14,7 @@ public sealed record CategoryName : ValueObject
 
     public static CategoryName Create(string value)
     {
-        if (value is null)
-            throw new CategoryNameRequiredException();
-
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
             throw new CategoryNameEmptyException();
 
         if (value.Length > 100)
@@ -25,4 +22,6 @@ public sealed record CategoryName : ValueObject
 
         return new CategoryName(value);
     }
+    
+    public static implicit operator string(CategoryName categoryName) => categoryName.Value;
 }

@@ -1,4 +1,5 @@
 using Application.Shared.Auth;
+using Application.Shared.Errors;
 using Application.Shared.Results;
 using Domain.Entities.Categories;
 using Domain.Repositories;
@@ -11,51 +12,33 @@ public sealed class CreateCategoryCommandHandler(
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<CreateCategoryCommand, Result<Guid>>
 {
-    public async ValueTask<Result<Guid>> Handle(
-        CreateCategoryCommand command,
-        CancellationToken cancellationToken)
+    public async ValueTask<Result<Guid>> Handle(CreateCategoryCommand command, CancellationToken cancellationToken)
     {
         var currentMember = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
         if (currentMember is null)
-        {
-            return Result<Guid>.Failure(
-                Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
-        }
+            return Result<Guid>.Failure(CommonsErrors.MemberNotFound);
 
         if (command.ParentId.HasValue)
         {
             var parent = await categoryRepository.GetByIdAsync(command.ParentId.Value, cancellationToken);
             if (parent is null)
-            {
                 return Result<Guid>.Failure(
-                    Error.NotFound("Category.ParentNotFound", $"Categoria pai com ID '{command.ParentId.Value}' não foi encontrada."));
-            }
+                    Error.NotFound("Category.ParentNotFound", "Não é possível criar uma subcategoria de uma categoria inexistente."));
 
             if (parent.FamilyId != currentMember.FamilyId)
-            {
                 return Result<Guid>.Failure(
-                    Error.Forbidden("Category.AccessDenied", "A categoria pai informada pertence a outra família."));
-            }
+                    Error.Forbidden("Category.AccessDenied", "A categoria selecionada pertence a outra família."));
 
-            if (parent.ParentId.HasValue)
-            {
+            if (parent.ParentId == command.ParentId)
                 return Result<Guid>.Failure(
-                    Error.Failure("Category.NestingLimitExceeded", "Não é permitido criar subcategorias com mais de um nível de aninhamento."));
-            }
+                    Error.Failure("Category.NestingLimitExceeded", "Não é permitido criar subcategoria de subcategorias."));
 
             if (parent.Type != command.Type)
-            {
                 return Result<Guid>.Failure(
-                    Error.Failure("Category.TypeMismatch", "A subcategoria deve ter o mesmo tipo (Gasto/Ganho) que a categoria pai."));
-            }
+                    Error.Failure("Category.TypeMismatch", "A subcategoria deve ser do mesmo tipo de sua categoria."));
         }
 
-        var category = new Category(
-            command.Name,
-            command.Type,
-            currentMember.FamilyId,
-            command.ParentId);
-
+        var category = new Category(command.Name, command.Type, currentMember.FamilyId, command.ParentId);
         await categoryRepository.AddAsync(category, cancellationToken);
 
         return Result<Guid>.Success(category.Id);

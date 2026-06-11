@@ -36,35 +36,18 @@ public sealed class CategoriesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
-    private static async Task<HttpResult> CreateCategory(
-        [FromBody] CreateCategoryRequest request,
-        IMediator mediator,
+    private static async Task<HttpResult> CreateCategory([FromBody] CreateCategoryCommand request, IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var command = new CreateCategoryCommand(
-            request.Name,
-            request.Type,
-            request.ParentId);
-
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(request, cancellationToken);
         return result.ToResult();
     }
 
-    private static async Task<HttpResult> ListCategories(
-        IMediator mediator,
-        CancellationToken cancellationToken)
+    private static async Task<HttpResult> ListCategories(IMediator mediator, CancellationToken cancellationToken)
     {
         var query = new ListCategoriesQuery();
         var result = await mediator.Send(query, cancellationToken);
         return result.ToResult();
     }
 }
-
-/// <summary>
-/// Contrato para requisição de criação de categoria.
-/// </summary>
-public sealed record CreateCategoryRequest(
-    string Name,
-    CategoryType Type,
-    Guid? ParentId = null);
 

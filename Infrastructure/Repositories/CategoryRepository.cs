@@ -18,7 +18,7 @@ public class CategoryRepository(AppDbContext context) : ICategoryRepository
     {
         var result = await context.Set<Category>()
             .Include(x => x.SubCategories)
-            .Where(x => x.FamilyId == familyId)
+            .Where(x => x.FamilyId == familyId && x.ParentId == null)
             .ToListAsync(cancellationToken);
 
         return result.AsReadOnly();

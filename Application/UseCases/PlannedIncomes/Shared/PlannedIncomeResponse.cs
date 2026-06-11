@@ -22,7 +22,7 @@ public static class PlannedIncomeResponseFactory
             income.Date ?? DateTime.MinValue,
             income.MemberId,
             income.CategoryId,
-            income.Category?.Name?.Value ?? string.Empty);
+            income.Category.Name);
     }
 
     public static IReadOnlyCollection<PlannedIncomeResponse> ToResponse(this IEnumerable<Income> incomes)

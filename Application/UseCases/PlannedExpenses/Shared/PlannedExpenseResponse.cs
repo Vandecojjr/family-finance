@@ -22,7 +22,7 @@ public static class PlannedExpenseResponseFactory
             expense.Date ?? DateTime.UtcNow,
             expense.MemberId,
             expense.CategoryId,
-            expense.Category?.Name?.Value ?? string.Empty);
+            expense.Category.Name);
     }
 
     public static IReadOnlyCollection<PlannedExpenseResponse> ToResponse(this IEnumerable<Expense> expenses)

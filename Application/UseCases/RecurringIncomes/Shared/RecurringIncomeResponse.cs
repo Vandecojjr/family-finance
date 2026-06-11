@@ -32,7 +32,7 @@ public static class RecurringIncomeResponseFactory
             income.Status != null && income.Status.IsActive,
             income.MemberId,
             income.CategoryId,
-            income.Category?.Name?.Value ?? string.Empty);
+            income.Category.Name);
     }
 
     public static IReadOnlyCollection<RecurringIncomeResponse> ToResponse(this IEnumerable<Income> incomes)

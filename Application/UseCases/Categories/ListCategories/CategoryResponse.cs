@@ -17,35 +17,16 @@ public static class CategoryResponseFactory
     {
         return new CategoryResponse(
             category.Id,
-            category.Name.Value,
+            category.Name,
             category.Type,
             category.FamilyId,
             category.ParentId,
             category.SubCategories.Select(ToResponse).ToList().AsReadOnly());
     }
-
-    public static IReadOnlyCollection<CategoryResponse> MapToHierarchy(this IEnumerable<Category> categories)
+    
+    public static IReadOnlyCollection<CategoryResponse> ToResponse(this IReadOnlyCollection<Category> categories)
     {
-        var allCategories = categories.ToList();
-
-        // 1. Obter apenas categorias principais (sem ParentId)
-        var topLevelCategories = allCategories
-            .Where(c => c.ParentId == null)
-            .ToList();
-
-        // 2. Mapear cada categoria principal associando suas subcategorias da lista já carregada
-        return topLevelCategories.Select(parent => new CategoryResponse(
-            parent.Id,
-            parent.Name.Value,
-            parent.Type,
-            parent.FamilyId,
-            parent.ParentId,
-            allCategories
-                .Where(sub => sub.ParentId == parent.Id)
-                .Select(sub => sub.ToResponse())
-                .ToList()
-                .AsReadOnly()
-        )).ToList().AsReadOnly();
+        return categories.Select(ToResponse).ToList();
     }
 }
 
