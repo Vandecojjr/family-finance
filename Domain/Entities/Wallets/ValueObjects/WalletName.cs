@@ -14,10 +14,7 @@ public sealed record WalletName : ValueObject
 
     public static WalletName Create(string value)
     {
-        if (value is null)
-            throw new WalletNameRequiredException();
-
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value) || string.IsNullOrEmpty(value))
             throw new WalletNameRequiredException();
 
         if (value.Length > 100)
@@ -25,4 +22,6 @@ public sealed record WalletName : ValueObject
 
         return new WalletName(value.Trim());
     }
+    
+    public static implicit operator string(WalletName walletName) => walletName.Value;
 }

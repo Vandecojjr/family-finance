@@ -19,4 +19,6 @@ public sealed record CashBalance : ValueObject
 
         return new CashBalance(value);
     }
+    
+    public static implicit operator decimal(CashBalance cashBalance) => cashBalance.Value;
 }

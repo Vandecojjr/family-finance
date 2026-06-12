@@ -10,7 +10,7 @@ public sealed class CreateWalletCommandValidator : AbstractValidator<CreateWalle
             .NotEmpty().WithMessage("O nome da carteira é obrigatório.")
             .MaximumLength(100).WithMessage("O nome da carteira deve ter no máximo 100 caracteres.");
 
-        RuleFor(x => x.CashBalance)
+        RuleFor(x => x.InitialCashBalance)
             .GreaterThanOrEqualTo(0).WithMessage("O saldo em dinheiro vivo deve ser maior ou igual a zero.");
     }
 }

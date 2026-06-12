@@ -22,7 +22,6 @@ public sealed class WalletsEndpoints : IEndpointGroup
 {
     public void Map(RouteGroupBuilder group)
     {
-        // Wallets
         group.MapPost("/", CreateWallet)
             .WithName("Wallets.Create")
             .WithSummary("Cria uma nova carteira.")
@@ -112,7 +111,6 @@ public sealed class WalletsEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
-    public record CreateWalletRequest(string Name, decimal CashBalance);
     public record UpdateWalletRequest(string Name, decimal CashBalance);
 
     public record CreateAccountRequest(
@@ -132,13 +130,9 @@ public sealed class WalletsEndpoints : IEndpointGroup
         string LastFourDigits,
         decimal TotalLimit);
 
-    private static async Task<HttpResult> CreateWallet(
-        [FromBody] CreateWalletRequest request,
-        IMediator mediator,
-        CancellationToken cancellationToken)
+    private static async Task<HttpResult> CreateWallet([FromBody] CreateWalletCommand request, IMediator mediator, CancellationToken cancellationToken)
     {
-        var command = new CreateWalletCommand(request.Name, request.CashBalance);
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(request, cancellationToken);
         return result.ToResult();
     }
 

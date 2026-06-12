@@ -37,14 +37,12 @@ public class Wallet : Entity, IAggregateRoot
     {
         Name = WalletName.Create(name);
         CashBalance = CashBalance.Create(cashBalance);
-        SeUpdate();
     }
 
     public void AddAccount(string bankName, AccountType type, decimal debitBalance, decimal creditLimit)
     {
         var account = new BankAccount(bankName, type, debitBalance, creditLimit, Id);
         _accounts.Add(account);
-        SeUpdate();
     }
 
     public void UpdateAccount(Guid accountId, string bankName, AccountType type, decimal debitBalance, decimal creditLimit)
@@ -54,7 +52,6 @@ public class Wallet : Entity, IAggregateRoot
             return;
         
         account.Update(bankName, type, debitBalance, creditLimit);
-        SeUpdate();
     }
 
     public void RemoveAccount(Guid accountId)
@@ -64,7 +61,6 @@ public class Wallet : Entity, IAggregateRoot
             return;
         
         _accounts.Remove(account);
-        SeUpdate();
     }
 
     public void AdjustCashBalance(decimal amount, TransactionType type)
@@ -83,7 +79,6 @@ public class Wallet : Entity, IAggregateRoot
             
             CashBalance = CashBalance.Create(CashBalance.Value - amount);
         }
-        SeUpdate();
     }
 
     public Transaction RegisterTransaction(
@@ -143,7 +138,6 @@ public class Wallet : Entity, IAggregateRoot
             metadata);
 
         _transactions.Add(transaction);
-        SeUpdate();
 
         return transaction;
     }

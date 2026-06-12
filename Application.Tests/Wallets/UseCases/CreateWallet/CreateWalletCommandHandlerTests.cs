@@ -30,7 +30,6 @@ public class CreateWalletCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnSuccessResult_WhenFamilyAndValuesAreValid()
     {
-        // Arrange
         var family = new Family("Silva");
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
@@ -42,10 +41,8 @@ public class CreateWalletCommandHandlerTests
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
 
@@ -57,7 +54,6 @@ public class CreateWalletCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenCurrentUserMemberNotFound()
     {
-        // Arrange
         var command = new CreateWalletCommand("Carteira Principal", 1500.50m);
         var currentMemberId = Guid.NewGuid();
 
@@ -66,10 +62,8 @@ public class CreateWalletCommandHandlerTests
             .Setup(repo => repo.GetMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Domain.Entities.Members.Member?)null);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => e.Code == "User.MemberNotFound");
 

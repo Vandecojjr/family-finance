@@ -3,5 +3,5 @@ using Mediator;
 
 namespace Application.UseCases.Wallets.CreateWallet;
 
-public sealed record CreateWalletCommand(string Name, decimal CashBalance) : ICommand<Result<Guid>>;
+public sealed record CreateWalletCommand(string Name, decimal InitialCashBalance) : ICommand<Result<Guid>>;
 
