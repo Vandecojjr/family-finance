@@ -70,7 +70,7 @@ export interface CreditCard {
 
 export interface CreateWalletRequest {
   name: string;
-  cashBalance: number;
+  InitialCashBalance: number;
 }
 
 export interface UpdateWalletRequest {

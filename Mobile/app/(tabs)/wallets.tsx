@@ -148,7 +148,7 @@ export default function WalletsScreen() {
       } else {
         await walletsApi.create({
           name: walletForm.name,
-          cashBalance: parsedBalance,
+          InitialCashBalance: parsedBalance,
         });
       }
     },

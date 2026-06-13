@@ -15,6 +15,7 @@ public class CreateWalletCommandHandlerTests
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly CreateWalletCommandHandler _handler;
+    private readonly CreateWalletCommand _command;
 
     public CreateWalletCommandHandlerTests()
     {
@@ -25,6 +26,8 @@ public class CreateWalletCommandHandlerTests
             _walletRepositoryMock.Object,
             _familyRepositoryMock.Object,
             _currentUserMock.Object);
+        
+        _command = new CreateWalletCommand("Carteira Principal", 1500.50m);
     }
 
     [Fact]
@@ -34,14 +37,12 @@ public class CreateWalletCommandHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var command = new CreateWalletCommand("Carteira Principal", 1500.50m);
-
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(currentMember);
 
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(_command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeEmpty();
@@ -54,7 +55,6 @@ public class CreateWalletCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnFailureResult_WhenCurrentUserMemberNotFound()
     {
-        var command = new CreateWalletCommand("Carteira Principal", 1500.50m);
         var currentMemberId = Guid.NewGuid();
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMemberId);
@@ -62,7 +62,7 @@ public class CreateWalletCommandHandlerTests
             .Setup(repo => repo.GetMemberByIdAsync(currentMemberId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Domain.Entities.Members.Member?)null);
 
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(_command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => e.Code == "User.MemberNotFound");
