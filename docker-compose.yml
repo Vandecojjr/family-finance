@@ -17,19 +17,31 @@ services:
       retries: 5
     restart: unless-stopped
 
-  app:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: family-finance-app
+    container_name: family-finance-api
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=family_finance_db;Username=admin;Password=admin_password
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Mobile
+      dockerfile: Dockerfile
+    container_name: family-finance-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:

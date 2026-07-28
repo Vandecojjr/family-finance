@@ -1,4 +1,5 @@
 using Application.Shared.Auth;
+using Application.Shared.Errors;
 using Application.Shared.Results;
 using Domain.Repositories;
 using Mediator;
@@ -10,32 +11,25 @@ public sealed class DeleteWalletCommandHandler(
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<DeleteWalletCommand, Result>
 {
-    public async ValueTask<Result> Handle(
-        DeleteWalletCommand command,
-        CancellationToken cancellationToken)
+    public async ValueTask<Result> Handle(DeleteWalletCommand command, CancellationToken cancellationToken)
     {
         var member = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
         if (member is null)
-        {
-            return Result.Failure(
-                Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
-        }
+            return Result.Failure(CommonsErrors.MemberNotFound);
 
-        var wallet = await walletRepository.GetByIdAsync(command.Id, cancellationToken);
+        var wallet = await walletRepository.GetSimpleByIdAsync(command.Id, cancellationToken);
         if (wallet is null)
-        {
             return Result.Failure(
-                Error.NotFound("Wallet.NotFound", $"Carteira com ID '{command.Id}' não foi encontrada."));
-        }
+                Error.NotFound("Wallet.NotFound", "Carteira não foi encontrada."));
 
         if (wallet.FamilyId != member.FamilyId)
-        {
+            return Result.Failure(CommonsErrors.FamilyAccessDenied);
+
+        if (wallet.MemberId != member.Id)
             return Result.Failure(
-                Error.Failure("Family.AccessDenied", "Você não tem permissão para excluir esta carteira."));
-        }
+                Error.Forbidden("Wallet.OwnershipRequired", "Somente o dono da carteira pode excluí-la."));
 
         await walletRepository.DeleteAsync(wallet, cancellationToken);
-
         return Result.Success();
     }
 }

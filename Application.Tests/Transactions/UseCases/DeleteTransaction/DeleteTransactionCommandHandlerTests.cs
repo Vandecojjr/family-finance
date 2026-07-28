@@ -39,7 +39,7 @@ public class DeleteTransactionCommandHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var wallet = new Wallet("Dinheiro", 100m, family.Id);
+        var wallet = new Wallet("Dinheiro", 100m, family.Id, Guid.NewGuid());
         var transaction = new Transaction(
             "Pão",
             50m,
@@ -103,7 +103,7 @@ public class DeleteTransactionCommandHandlerTests
         var currentMember = family.Members.First();
 
         var otherFamilyId = Guid.NewGuid();
-        var wallet = new Wallet("Dinheiro", 100m, otherFamilyId);
+        var wallet = new Wallet("Dinheiro", 100m, otherFamilyId, Guid.NewGuid());
         var transaction = new Transaction(
             "Pão",
             50m,

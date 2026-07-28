@@ -13,6 +13,7 @@ public class Wallet : Entity, IAggregateRoot
     public WalletName Name { get; private set; } = null!;
     public CashBalance CashBalance { get; private set; } = null!;
     public Guid FamilyId { get; private set; }
+    public Guid MemberId { get; private set; }
 
     private readonly List<BankAccount> _accounts = [];
     public virtual IReadOnlyCollection<BankAccount> Accounts => _accounts.AsReadOnly();
@@ -26,11 +27,12 @@ public class Wallet : Entity, IAggregateRoot
     }
     #pragma warning restore CS8618
 
-    public Wallet(string name, decimal cashBalance, Guid familyId)
+    public Wallet(string name, decimal cashBalance, Guid familyId, Guid memberId)
     {
         Name = WalletName.Create(name);
         CashBalance = CashBalance.Create(cashBalance);
         FamilyId = familyId;
+        MemberId = memberId;
     }
 
     public void Update(string name, decimal cashBalance)

@@ -36,7 +36,7 @@ public class CreateBankAccountCommandHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var wallet = new Wallet("Carteira Principal", 200m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 200m, family.Id, Guid.NewGuid());
 
         var command = new CreateBankAccountCommand(
             wallet.Id,
@@ -107,7 +107,7 @@ public class CreateBankAccountCommandHandlerTests
         var currentMember = family.Members.First();
 
         var otherFamilyId = Guid.NewGuid();
-        var wallet = new Wallet("Other Wallet", 0m, otherFamilyId);
+        var wallet = new Wallet("Other Wallet", 0m, otherFamilyId, Guid.NewGuid());
 
         var command = new CreateBankAccountCommand(
             wallet.Id,

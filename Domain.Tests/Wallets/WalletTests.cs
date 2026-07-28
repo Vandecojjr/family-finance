@@ -18,7 +18,7 @@ public class WalletTests
         var familyId = Guid.NewGuid();
 
         // Act
-        var wallet = new Wallet(name, cashBalance, familyId);
+        var wallet = new Wallet(name, cashBalance, familyId, Guid.NewGuid());
 
         // Assert
         Assert.Equal(name, wallet.Name.Value);
@@ -33,27 +33,27 @@ public class WalletTests
     [InlineData(null)]
     public void Wallet_ShouldThrow_WhenNameIsInvalid(string? name)
     {
-        Assert.Throws<WalletNameRequiredException>(() => new Wallet(name!, 100m, Guid.NewGuid()));
+        Assert.Throws<WalletNameRequiredException>(() => new Wallet(name!, 100m, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Wallet_ShouldThrow_WhenNameIsTooLong()
     {
         var longName = new string('A', 101);
-        Assert.Throws<WalletNameTooLongException>(() => new Wallet(longName, 100m, Guid.NewGuid()));
+        Assert.Throws<WalletNameTooLongException>(() => new Wallet(longName, 100m, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Wallet_ShouldThrow_WhenCashBalanceIsNegative()
     {
-        Assert.Throws<InvalidCashBalanceException>(() => new Wallet("Test Wallet", -0.01m, Guid.NewGuid()));
+        Assert.Throws<InvalidCashBalanceException>(() => new Wallet("Test Wallet", -0.01m, Guid.NewGuid(), Guid.NewGuid()));
     }
 
     [Fact]
     public void Wallet_ShouldUpdate_WhenValuesAreValid()
     {
         // Arrange
-        var wallet = new Wallet("Original Name", 50m, Guid.NewGuid());
+        var wallet = new Wallet("Original Name", 50m, Guid.NewGuid(), Guid.NewGuid());
 
         // Act
         wallet.Update("Updated Name", 120.90m);
@@ -67,7 +67,7 @@ public class WalletTests
     public void Wallet_ShouldAddAccount_WhenValuesAreValid()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
 
         // Act
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
@@ -85,7 +85,7 @@ public class WalletTests
     public void Wallet_ShouldUpdateAccount_WhenAccountExists()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var accountId = wallet.Accounts.First().Id;
 
@@ -103,7 +103,7 @@ public class WalletTests
     public void Wallet_ShouldRemoveAccount_WhenAccountExists()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var accountId = wallet.Accounts.First().Id;
 
@@ -118,7 +118,7 @@ public class WalletTests
     public void BankAccount_ShouldAddCreditCard_WhenValuesAreValid()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var account = wallet.Accounts.First();
 
@@ -138,7 +138,7 @@ public class WalletTests
     public void BankAccount_ShouldThrow_WhenCreditCardDigitsAreInvalid()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var account = wallet.Accounts.First();
 
@@ -151,7 +151,7 @@ public class WalletTests
     public void BankAccount_ShouldAdjustCreditCardRemainingLimit_WhenCardIsCharged()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var account = wallet.Accounts.First();
         account.AddCreditCard("Visa", "4321", 5000m);
@@ -169,7 +169,7 @@ public class WalletTests
     public void Wallet_ShouldAdjustCashBalance_WhenTypeIsIncomeOrExpense()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 100m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 100m, Guid.NewGuid(), Guid.NewGuid());
 
         // Act
         wallet.AdjustCashBalance(50m, TransactionType.Income);
@@ -186,7 +186,7 @@ public class WalletTests
     public void Wallet_ShouldThrow_WhenExpenseExceedsCashBalance()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 10m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 10m, Guid.NewGuid(), Guid.NewGuid());
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => wallet.AdjustCashBalance(15m, TransactionType.Expense));
@@ -196,7 +196,7 @@ public class WalletTests
     public void BankAccount_ShouldAdjustBalance_WhenTypeIsIncomeOrExpense()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
         var account = wallet.Accounts.First();
 
@@ -218,7 +218,7 @@ public class WalletTests
     public void BankAccount_ShouldThrow_WhenExpenseExceedsDebitAndCreditLimit()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
         var account = wallet.Accounts.First();
 
@@ -230,7 +230,7 @@ public class WalletTests
     public void BankAccount_ShouldThrow_WhenCreditIncomeIsAttempted()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
         var account = wallet.Accounts.First();
 
@@ -242,7 +242,7 @@ public class WalletTests
     public void BankAccount_ShouldThrow_WhenSourceIsNotSelected()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
         var account = wallet.Accounts.First();
 
@@ -254,7 +254,7 @@ public class WalletTests
     public void BankAccount_ShouldThrow_WhenDebitExpenseExceedsDebitBalance()
     {
         // Arrange
-        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid());
+        var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 200m, 500m);
         var account = wallet.Accounts.First();
 

@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 
 # Custom ignore rules
 AGENTS.md
+
+# AppSettings (Configurações locais e segredos)
+appsettings.json
+appsettings.*.json

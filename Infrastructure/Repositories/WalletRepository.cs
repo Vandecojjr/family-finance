@@ -16,6 +16,12 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
             .Include(x => x.Transactions)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
+    
+    public async Task<Wallet?> GetSimpleByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Wallet>()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
     public async Task<IReadOnlyCollection<Wallet>> GetByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default)
     {

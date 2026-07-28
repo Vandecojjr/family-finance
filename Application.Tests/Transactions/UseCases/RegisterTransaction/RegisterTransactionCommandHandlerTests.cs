@@ -42,7 +42,7 @@ public class RegisterTransactionCommandHandlerTests
         var currentMember = family.Members.First();
 
         var category = new Category("Supermercado", CategoryType.Expense, family.Id);
-        var wallet = new Wallet("Dinheiro Mão", 500m, family.Id);
+        var wallet = new Wallet("Dinheiro Mão", 500m, family.Id, Guid.NewGuid());
 
         var command = new RegisterTransactionCommand(
             "Compra Pão",
@@ -89,7 +89,7 @@ public class RegisterTransactionCommandHandlerTests
         var currentMember = family.Members.First();
 
         var category = new Category("Salário", CategoryType.Income, family.Id);
-        var wallet = new Wallet("Banco", 0m, family.Id);
+        var wallet = new Wallet("Banco", 0m, family.Id, Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 1500m, 5000m);
         var account = wallet.Accounts.First();
 

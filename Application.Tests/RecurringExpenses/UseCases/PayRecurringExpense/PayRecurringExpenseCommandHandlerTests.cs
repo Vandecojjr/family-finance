@@ -76,7 +76,7 @@ public class PayRecurringExpenseCommandHandlerTests
             
         SetPrivateProperty(expense, "Member", currentMember);
 
-        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id, Guid.NewGuid());
 
         var command = new PayRecurringExpenseCommand(
             expense.Id,
@@ -311,7 +311,7 @@ public class PayRecurringExpenseCommandHandlerTests
             
         SetPrivateProperty(expense, "Member", currentMember);
 
-        var wallet = new Wallet("Outra Carteira", 1000.00m, family2.Id);
+        var wallet = new Wallet("Outra Carteira", 1000.00m, family2.Id, Guid.NewGuid());
 
         var command = new PayRecurringExpenseCommand(
             expense.Id,
@@ -369,7 +369,7 @@ public class PayRecurringExpenseCommandHandlerTests
         var currentYear = DateTime.UtcNow.Year;
         expense.Pay(currentMonth, currentYear, 150.00m, DateTime.UtcNow);
 
-        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id, Guid.NewGuid());
 
         var command = new PayRecurringExpenseCommand(
             expense.Id,

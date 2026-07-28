@@ -22,13 +22,18 @@ import { useAuthStore } from '@/stores/authStore';
 import { walletsApi } from '@/api/endpoints/wallets';
 import { Wallet, BankAccount, CreditCard } from '@/types';
 import { usePreferenceStore } from '@/stores/preferenceStore';
+import { decodeJwt } from '@/utils/jwt';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function WalletsScreen() {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, tokens } = useAuthStore();
   const { showBalances, toggleBalances } = usePreferenceStore();
+
+  const currentMemberId = tokens?.accessToken
+    ? decodeJwt(tokens.accessToken)?.memberId ?? null
+    : null;
 
   // Queries
   const { data: wallets = [], isLoading, isError, refetch } = useQuery({
@@ -470,9 +475,11 @@ export default function WalletsScreen() {
                     <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleOpenWalletModal(w)}>
                       <Ionicons name="pencil-sharp" size={13} color={colors.text.secondary} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleConfirmDeleteWallet(w)}>
-                      <Ionicons name="trash-sharp" size={13} color={colors.danger} />
-                    </TouchableOpacity>
+                    {currentMemberId === w.memberId && (
+                      <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleConfirmDeleteWallet(w)}>
+                        <Ionicons name="trash-sharp" size={13} color={colors.danger} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 

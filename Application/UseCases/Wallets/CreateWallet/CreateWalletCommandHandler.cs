@@ -18,7 +18,7 @@ public sealed class CreateWalletCommandHandler(
         if (member is null)
             return Result<Guid>.Failure(CommonsErrors.MemberNotFound);
 
-        var wallet = new Wallet(command.Name, command.InitialCashBalance, member.FamilyId);
+        var wallet = new Wallet(command.Name, command.InitialCashBalance, member.FamilyId, member.Id);
         await walletRepository.AddAsync(wallet, cancellationToken);
 
         return Result<Guid>.Success(wallet.Id);

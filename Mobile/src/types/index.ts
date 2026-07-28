@@ -45,6 +45,7 @@ export interface Wallet {
   name: string;
   cashBalance: number;
   familyId: string;
+  memberId: string;
   accounts: BankAccount[];
 }
 

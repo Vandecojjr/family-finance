@@ -77,7 +77,7 @@ public class ReceiveRecurringIncomeCommandHandlerTests
             
         SetPrivateProperty(income, "Member", currentMember);
 
-        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id, Guid.NewGuid());
 
         var command = new ReceiveRecurringIncomeCommand(
             income.Id,
@@ -297,7 +297,7 @@ public class ReceiveRecurringIncomeCommandHandlerTests
             
         SetPrivateProperty(income, "Member", currentMember);
 
-        var wallet = new Wallet("Outra Carteira", 1000.00m, family2.Id);
+        var wallet = new Wallet("Outra Carteira", 1000.00m, family2.Id, Guid.NewGuid());
 
         var command = new ReceiveRecurringIncomeCommand(
             income.Id,
@@ -352,7 +352,7 @@ public class ReceiveRecurringIncomeCommandHandlerTests
         var currentYear = DateTime.UtcNow.Year;
         income.Receive(currentMonth, currentYear, 5000.00m, DateTime.UtcNow);
 
-        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 1000.00m, family.Id, Guid.NewGuid());
 
         var command = new ReceiveRecurringIncomeCommand(
             income.Id,

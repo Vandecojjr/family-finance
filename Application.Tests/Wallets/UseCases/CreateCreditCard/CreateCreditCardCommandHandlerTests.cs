@@ -36,7 +36,7 @@ public class CreateCreditCardCommandHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var wallet = new Wallet("Carteira Principal", 200m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 200m, family.Id, Guid.NewGuid());
         wallet.AddAccount("Itaú", AccountType.Checking, 1500m, 3000m);
         var account = wallet.Accounts.First();
 
@@ -76,7 +76,7 @@ public class CreateCreditCardCommandHandlerTests
         family.AddMember("John Doe");
         var currentMember = family.Members.First();
 
-        var wallet = new Wallet("Carteira Principal", 200m, family.Id);
+        var wallet = new Wallet("Carteira Principal", 200m, family.Id, Guid.NewGuid());
         var nonExistentAccountId = Guid.NewGuid();
 
         var command = new CreateCreditCardCommand(
