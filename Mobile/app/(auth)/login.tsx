@@ -59,112 +59,113 @@ export default function LoginScreen() {
     <LinearGradient colors={[colors.bg.primary, colors.bg.secondary]} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-
-          {/* Header / Logo */}
-          <View style={styles.header}>
-            <LinearGradient
-              colors={colors.gradient.primary}
-              style={styles.logoContainer}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="wallet" size={36} color={colors.white} />
-            </LinearGradient>
-            <Text style={styles.appName}>Family Finance</Text>
-            <Text style={styles.tagline}>Controle financeiro familiar</Text>
-          </View>
-
-          {/* Card de Login */}
-          <View style={styles.card}>
-            <Text style={styles.title}>Bem-vindo de volta 👋</Text>
-            <Text style={styles.subtitle}>Faça login para acessar sua conta</Text>
-
-            {/* E-mail */}
-            <View style={styles.fieldWrapper}>
-              <Text style={styles.label}>E-mail</Text>
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
-                    <Ionicons name="mail-outline" size={18} color={colors.text.secondary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="seu@email.com"
-                      placeholderTextColor={colors.text.muted}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </View>
-                )}
-              />
-              {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
-            </View>
-
-            {/* Senha */}
-            <View style={styles.fieldWrapper}>
-              <Text style={styles.label}>Senha</Text>
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
-                    <Ionicons name="lock-closed-outline" size={18} color={colors.text.secondary} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      placeholder="••••••••"
-                      placeholderTextColor={colors.text.muted}
-                      secureTextEntry={!showPassword}
-                      autoComplete="password"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                      <Ionicons
-                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={colors.text.secondary}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              />
-              {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-            </View>
-
-            {/* Botão */}
-            <TouchableOpacity
-              style={styles.btnWrapper}
-              onPress={handleSubmit(onSubmit)}
-              disabled={isLoading}
-              activeOpacity={0.85}
-            >
+          <View style={styles.contentWrapper}>
+            {/* Header / Logo */}
+            <View style={styles.header}>
               <LinearGradient
                 colors={colors.gradient.primary}
+                style={styles.logoContainer}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.btn}
+                end={{ x: 1, y: 1 }}
               >
-                {isLoading ? (
-                  <ActivityIndicator color={colors.white} />
-                ) : (
-                  <>
-                    <Text style={styles.btnText}>Entrar</Text>
-                    <Ionicons name="arrow-forward" size={18} color={colors.white} />
-                  </>
-                )}
+                <Ionicons name="wallet" size={36} color={colors.white} />
               </LinearGradient>
-            </TouchableOpacity>
+              <Text style={styles.appName}>Family Finance</Text>
+              <Text style={styles.tagline}>Controle financeiro familiar</Text>
+            </View>
 
-            {/* Rodapé */}
-            <Text style={styles.footerText}>
-              Sem conta? Fale com o administrador da família.
-            </Text>
+            {/* Card de Login */}
+            <View style={styles.card}>
+              <Text style={styles.title}>Bem-vindo de volta 👋</Text>
+              <Text style={styles.subtitle}>Faça login para acessar sua conta</Text>
+
+              {/* E-mail */}
+              <View style={styles.fieldWrapper}>
+                <Text style={styles.label}>E-mail</Text>
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
+                      <Ionicons name="mail-outline" size={18} color={colors.text.secondary} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="seu@email.com"
+                        placeholderTextColor={colors.text.muted}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                      />
+                    </View>
+                  )}
+                />
+                {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+              </View>
+
+              {/* Senha */}
+              <View style={styles.fieldWrapper}>
+                <Text style={styles.label}>Senha</Text>
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+                      <Ionicons name="lock-closed-outline" size={18} color={colors.text.secondary} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        placeholder="••••••••"
+                        placeholderTextColor={colors.text.muted}
+                        secureTextEntry={!showPassword}
+                        autoComplete="password"
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                        <Ionicons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={18}
+                          color={colors.text.secondary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                />
+                {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+              </View>
+
+              {/* Botão */}
+              <TouchableOpacity
+                style={styles.btnWrapper}
+                onPress={handleSubmit(onSubmit)}
+                disabled={isLoading}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={colors.gradient.primary}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.btn}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <>
+                      <Text style={styles.btnText}>Entrar</Text>
+                      <Ionicons name="arrow-forward" size={18} color={colors.white} />
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Rodapé */}
+              <Text style={styles.footerText}>
+                Sem conta? Fale com o administrador da família.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -175,6 +176,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+  },
 
   // Header
   header: { alignItems: 'center', marginBottom: spacing.xl },

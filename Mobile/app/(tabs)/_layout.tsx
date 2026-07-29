@@ -26,44 +26,131 @@ const TABS: TabConfig[] = [
   { name: 'accounts-receivable', title: 'A Receber',   icon: 'receipt-outline',        iconActive: 'receipt', href: null },
 ];
 
+import { useWindowDimensions, TouchableOpacity, Text, SafeAreaView } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
+import { typography, shadow } from '@/theme';
+
 export default function TabsLayout() {
-  return (
-    <Tabs
-      screenOptions={({ route }) => {
-        const tab = TABS.find((t) => t.name === route.name);
-        return {
-          headerShown: false,
-          tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: colors.brand.primary,
-          tabBarInactiveTintColor: colors.text.muted,
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarIcon: ({ focused, color, size }) => (
-            <View style={[styles.iconWrapper, focused && styles.iconActive]}>
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Desktop Sidebar Component
+  const Sidebar = () => (
+    <SafeAreaView style={styles.sidebarContainer}>
+      <View style={styles.sidebarHeader}>
+        <Text style={styles.sidebarTitle}>Family Finance</Text>
+      </View>
+      <View style={styles.sidebarNav}>
+        {TABS.filter(t => t.href !== null).map(tab => {
+          // Normalize paths for comparison
+          const isActive = pathname === `/${tab.name}` || (pathname === '/' && tab.name === 'index');
+          
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
+              onPress={() => router.navigate(`/(tabs)/${tab.name}`)}
+            >
               <Ionicons
-                name={focused ? (tab?.iconActive ?? route.name as IoniconsName) : (tab?.icon ?? route.name as IoniconsName)}
-                size={size}
-                color={color}
+                name={isActive ? tab.iconActive : tab.icon}
+                size={22}
+                color={isActive ? colors.brand.primary : colors.text.secondary}
               />
-            </View>
-          ),
-        };
-      }}
-    >
-      {TABS.map((tab) => (
-        <Tabs.Screen 
-          key={tab.name} 
-          name={tab.name} 
-          options={{ 
-            title: tab.title,
-            href: tab.href, 
-          }} 
-        />
-      ))}
-    </Tabs>
+              <Text style={[styles.sidebarLabel, isActive && styles.sidebarLabelActive]}>
+                {tab.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
+  );
+
+  return (
+    <View style={{ flex: 1, flexDirection: isDesktop ? 'row' : 'column' }}>
+      {isDesktop && <Sidebar />}
+      <View style={{ flex: 1, overflow: 'hidden' }}>
+        <Tabs
+          screenOptions={({ route }) => {
+            const tab = TABS.find((t) => t.name === route.name);
+            return {
+              headerShown: false,
+              tabBarStyle: isDesktop ? { display: 'none' } : styles.tabBar,
+              tabBarActiveTintColor: colors.brand.primary,
+              tabBarInactiveTintColor: colors.text.muted,
+              tabBarLabelStyle: styles.tabLabel,
+              tabBarIcon: ({ focused, color, size }) => (
+                <View style={[styles.iconWrapper, focused && styles.iconActive]}>
+                  <Ionicons
+                    name={focused ? (tab?.iconActive ?? route.name as IoniconsName) : (tab?.icon ?? route.name as IoniconsName)}
+                    size={size}
+                    color={color}
+                  />
+                </View>
+              ),
+            };
+          }}
+        >
+          {TABS.map((tab) => (
+            <Tabs.Screen 
+              key={tab.name} 
+              name={tab.name} 
+              options={{ 
+                title: tab.title,
+                href: tab.href, 
+              }} 
+            />
+          ))}
+        </Tabs>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  sidebarContainer: {
+    width: 250,
+    backgroundColor: colors.bg.card,
+    borderRightColor: colors.border,
+    borderRightWidth: 1,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  sidebarHeader: {
+    marginBottom: 32,
+    paddingHorizontal: 12,
+  },
+  sidebarTitle: {
+    ...typography.h3,
+    color: colors.brand.primary,
+    fontWeight: '700',
+  },
+  sidebarNav: {
+    flex: 1,
+    gap: 8,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    gap: 12,
+  },
+  sidebarItemActive: {
+    backgroundColor: `${colors.brand.primary}15`,
+  },
+  sidebarLabel: {
+    ...typography.body,
+    color: colors.text.secondary,
+    fontWeight: '500',
+  },
+  sidebarLabelActive: {
+    color: colors.brand.primary,
+    fontWeight: '700',
+  },
   tabBar: {
     backgroundColor: colors.bg.card,
     borderTopColor: colors.border,
