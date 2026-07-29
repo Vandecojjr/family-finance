@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,8 @@ export default function DashboardScreen() {
   const isFocused = useIsFocused();
   const { showBalances, toggleBalances } = usePreferenceStore();
   const [memberId, setMemberId] = useState<string | null>(null);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
 
   useEffect(() => {
     if (tokens?.accessToken) {
@@ -112,70 +115,72 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* ── Saldo Geral Consolidado ─────────────────────── */}
-        <LinearGradient
-          colors={colors.gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.balanceCard}
-        >
-          <Text style={styles.balanceLabel}>Saldo Consolidado</Text>
-          <Text style={styles.balanceValue}>
-            {showBalances ? fmt(totalBalance) : 'R$ ••••••'}
-          </Text>
+        <View style={isDesktop ? styles.desktopRow : undefined}>
+          {/* ── Saldo Geral Consolidado ─────────────────────── */}
+          <LinearGradient
+            colors={colors.gradient.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.balanceCard, isDesktop && { flex: 1, marginBottom: 0 }]}
+          >
+            <Text style={styles.balanceLabel}>Saldo Consolidado</Text>
+            <Text style={styles.balanceValue}>
+              {showBalances ? fmt(totalBalance) : 'R$ ••••••'}
+            </Text>
 
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceItem}>
-              <View style={styles.balanceIconWrap}>
-                <Ionicons name="arrow-up-circle" size={16} color={colors.success} />
+            <View style={styles.balanceRow}>
+              <View style={styles.balanceItem}>
+                <View style={styles.balanceIconWrap}>
+                  <Ionicons name="arrow-up-circle" size={16} color={colors.success} />
+                </View>
+                <View>
+                  <Text style={styles.balanceItemLabel}>Receitas do Mês</Text>
+                  <Text style={styles.balanceItemValue}>
+                    {showBalances ? fmt(totalIncomed) : 'R$ ••••••'}
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.balanceItemLabel}>Receitas do Mês</Text>
-                <Text style={styles.balanceItemValue}>
-                  {showBalances ? fmt(totalIncomed) : 'R$ ••••••'}
-                </Text>
+              <View style={styles.balanceDivider} />
+              <View style={styles.balanceItem}>
+                <View style={styles.balanceIconWrap}>
+                  <Ionicons name="arrow-down-circle" size={16} color={colors.danger} />
+                </View>
+                <View>
+                  <Text style={styles.balanceItemLabel}>Despesas do Mês</Text>
+                  <Text style={styles.balanceItemValue}>
+                    {showBalances ? fmt(totalExpensed) : 'R$ ••••••'}
+                  </Text>
+                </View>
               </View>
             </View>
-            <View style={styles.balanceDivider} />
-            <View style={styles.balanceItem}>
-              <View style={styles.balanceIconWrap}>
-                <Ionicons name="arrow-down-circle" size={16} color={colors.danger} />
-              </View>
-              <View>
-                <Text style={styles.balanceItemLabel}>Despesas do Mês</Text>
-                <Text style={styles.balanceItemValue}>
-                  {showBalances ? fmt(totalExpensed) : 'R$ ••••••'}
+          </LinearGradient>
+
+          {/* ── Cartão de Crédito ────────────────────────────── */}
+          <View style={[styles.section, isDesktop && { flex: 1, marginBottom: 0 }]}>
+            <Text style={styles.sectionTitle}>Cartão de Crédito</Text>
+            <View style={styles.creditCard}>
+              <View style={styles.creditHeader}>
+                <View style={styles.creditIconWrapper}>
+                  <Ionicons name="card" size={22} color={colors.brand.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.creditLabel}>Crédito Utilizado</Text>
+                  <Text style={styles.creditValue}>
+                    {showBalances ? fmt(totalCreditExpensed) : 'R$ ••••••'}
+                  </Text>
+                </View>
+                <Text style={styles.creditLimitText}>
+                  Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'}
                 </Text>
               </View>
-            </View>
-          </View>
-        </LinearGradient>
 
-        {/* ── Cartão de Crédito ────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cartão de Crédito</Text>
-          <View style={styles.creditCard}>
-            <View style={styles.creditHeader}>
-              <View style={styles.creditIconWrapper}>
-                <Ionicons name="card" size={22} color={colors.brand.accent} />
+              {/* Progress Bar */}
+              <View style={styles.progressContainer}>
+                <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${creditUsagePercentage}%` }]} />
+                </View>
+                <Text style={styles.progressPercentage}>{creditUsagePercentage.toFixed(0)}% utilizado</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.creditLabel}>Crédito Utilizado</Text>
-                <Text style={styles.creditValue}>
-                  {showBalances ? fmt(totalCreditExpensed) : 'R$ ••••••'}
-                </Text>
-              </View>
-              <Text style={styles.creditLimitText}>
-                Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'}
-              </Text>
-            </View>
-
-            {/* Progress Bar */}
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${creditUsagePercentage}%` }]} />
-              </View>
-              <Text style={styles.progressPercentage}>{creditUsagePercentage.toFixed(0)}% utilizado</Text>
             </View>
           </View>
         </View>
@@ -223,23 +228,29 @@ export default function DashboardScreen() {
         {/* ── Distribuição das Projeções por Categoria ─────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Distribuição das Projeções</Text>
-          <CategoryPieChart
-            data={dashboardData?.projectedIncomesByCategory ?? []}
-            title="Receitas Previstas por Categoria"
-            emptyMessage="Nenhuma receita prevista para este mês."
-          />
-          <CategoryPieChart
-            data={dashboardData?.projectedExpensesByCategory ?? []}
-            title="Despesas Previstas por Categoria"
-            emptyMessage="Nenhuma despesa prevista para este mês."
-          />
+          <View style={isDesktop ? styles.desktopRow : undefined}>
+            <View style={isDesktop && { flex: 1 }}>
+              <CategoryPieChart
+                data={dashboardData?.projectedIncomesByCategory ?? []}
+                title="Receitas Previstas por Categoria"
+                emptyMessage="Nenhuma receita prevista para este mês."
+              />
+            </View>
+            <View style={isDesktop && { flex: 1 }}>
+              <CategoryPieChart
+                data={dashboardData?.projectedExpensesByCategory ?? []}
+                title="Despesas Previstas por Categoria"
+                emptyMessage="Nenhuma despesa prevista para este mês."
+              />
+            </View>
+          </View>
         </View>
 
         {/* ── Atalhos de Acesso Rápido ─────────────────────── */}
         <View style={[styles.section, { marginBottom: spacing.xl }]}>
           <Text style={styles.sectionTitle}>Acesso Rápido</Text>
-          <View style={styles.shortcutsGrid}>
-            <View style={styles.shortcutRow}>
+          <View style={isDesktop ? styles.desktopShortcutsRow : styles.shortcutsGrid}>
+            <View style={isDesktop ? styles.shortcutCardDesktop : styles.shortcutRow}>
               <TouchableOpacity 
                 style={styles.shortcutCard} 
                 onPress={() => router.push('/accounts-payable')}
@@ -261,7 +272,7 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.shortcutRow}>
+            <View style={isDesktop ? styles.shortcutCardDesktop : styles.shortcutRow}>
               <TouchableOpacity 
                 style={styles.shortcutCard} 
                 onPress={() => router.push('/recurring-expenses')}
@@ -292,7 +303,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg.primary },
-  container: { flex: 1, paddingHorizontal: spacing.lg },
+  container: { flex: 1, paddingHorizontal: spacing.lg, maxWidth: 1200, alignSelf: 'center', width: '100%' },
   
   // Loading
   loadingContainer: { flex: 1, backgroundColor: colors.bg.primary, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
@@ -456,5 +467,19 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  desktopRow: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  desktopShortcutsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  shortcutCardDesktop: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
   },
 });

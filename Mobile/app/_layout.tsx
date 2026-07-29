@@ -60,15 +60,11 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? '#0d0d0f' : colors.bg.primary,
-    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
-    justifyContent: 'center',
+    backgroundColor: colors.bg.primary,
   },
   appContainer: {
     flex: 1,
     width: '100%',
-    maxWidth: Platform.OS === 'web' ? 480 : '100%',
     backgroundColor: colors.bg.primary,
-    overflow: 'hidden',
   },
 });
