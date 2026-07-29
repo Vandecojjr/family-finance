@@ -3,7 +3,7 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform, StyleSheet } from 'react-native';
 import { colors } from '@/theme';
 
 const queryClient = new QueryClient({
@@ -48,7 +48,27 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
-      <RootLayoutNav />
+      <View style={styles.rootContainer}>
+        <View style={styles.appContainer}>
+          <RootLayoutNav />
+        </View>
+      </View>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: Platform.OS === 'web' ? '#0d0d0f' : colors.bg.primary,
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+    justifyContent: 'center',
+  },
+  appContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 480 : '100%',
+    backgroundColor: colors.bg.primary,
+    overflow: 'hidden',
+  },
+});

@@ -3,21 +3,25 @@ import { storage } from '../utils/storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Configura o IP dinamicamente para rodar no Celular Físico (obtém IP do Metro), Android (10.0.2.2) ou iOS/Web (localhost)
+// Configura o IP dinamicamente dando preferência para a variável de ambiente EXPO_PUBLIC_API_URL
 const getBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
   if (!__DEV__) return 'https://api.familyfinance.app';
   
   const hostUri = Constants.expoConfig?.hostUri; // Ex: "192.168.1.15:8081"
   const host = hostUri ? hostUri.split(':')[0] : null;
   
   if (host && !host.startsWith('127.0.0.1') && host !== 'localhost') {
-    return `http://${host}:5068`;
+    return `http://${host}:8080`;
   }
   
   if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5068';
+    return 'http://10.0.2.2:8080';
   }
-  return 'http://localhost:5068';
+  return 'http://localhost:8080';
 };
 
 const BASE_URL = getBaseUrl();

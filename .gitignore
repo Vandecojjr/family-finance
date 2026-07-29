@@ -487,5 +487,5 @@ $RECYCLE.BIN/
 AGENTS.md
 
 # AppSettings (Configurações locais e segredos)
-appsettings.json
-appsettings.*.json
+#appsettings.json
+#appsettings.*.json
