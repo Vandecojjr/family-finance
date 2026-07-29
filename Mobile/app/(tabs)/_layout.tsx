@@ -51,7 +51,10 @@ export default function TabsLayout() {
             <TouchableOpacity
               key={tab.name}
               style={[styles.sidebarItem, isActive && styles.sidebarItemActive]}
-              onPress={() => router.navigate(`/(tabs)/${tab.name}`)}
+              onPress={() => {
+                const destination = tab.name === 'index' ? '/(tabs)' : `/(tabs)/${tab.name}`;
+                router.navigate(destination as any);
+              }}
             >
               <Ionicons
                 name={isActive ? tab.iconActive : tab.icon}
