@@ -2,55 +2,55 @@
 export const colors = {
   // Backgrounds
   bg: {
-    primary: '#0f0f1a',
-    secondary: '#16162a',
-    card: '#1e1e35',
-    elevated: '#252540',
+    primary: '#09090b', // zinc-950
+    secondary: '#18181b', // zinc-900
+    card: '#18181b', // zinc-900
+    elevated: '#27272a', // zinc-800
   },
   // Brand
   brand: {
-    primary: '#7c6aff',
-    secondary: '#5e4fff',
-    accent: '#ff6b9d',
-    teal: '#00d4aa',
+    primary: '#3b82f6', // blue-500
+    secondary: '#2563eb', // blue-600
+    accent: '#10b981', // emerald-500
+    teal: '#14b8a6', // teal-500
   },
   // Gradients
   gradient: {
-    primary: ['#7c6aff', '#5e4fff'],
-    income: ['#00d4aa', '#00a885'],
-    expense: ['#ff6b9d', '#e0437a'],
-    card: ['#1e1e35', '#252540'],
+    primary: ['#3b82f6', '#2563eb'],
+    income: ['#10b981', '#059669'],
+    expense: ['#ef4444', '#dc2626'],
+    card: ['#18181b', '#27272a'],
   },
   // Text
   text: {
-    primary: '#f0f0ff',
-    secondary: '#9898b8',
-    muted: '#5a5a7a',
-    inverse: '#0f0f1a',
+    primary: '#fafafa', // zinc-50
+    secondary: '#a1a1aa', // zinc-400
+    muted: '#71717a', // zinc-500
+    inverse: '#09090b', // zinc-950
   },
   // Semantic
-  success: '#00d4aa',
-  danger: '#ff6b9d',
-  warning: '#ffb347',
-  info: '#7c6aff',
+  success: '#10b981', // emerald-500
+  danger: '#ef4444', // red-500
+  warning: '#f59e0b', // amber-500
+  info: '#3b82f6', // blue-500
   // UI
-  border: '#2a2a45',
-  divider: '#1e1e35',
-  overlay: 'rgba(15,15,26,0.85)',
+  border: '#27272a', // zinc-800
+  divider: '#27272a', // zinc-800
+  overlay: 'rgba(9, 9, 11, 0.85)',
   white: '#ffffff',
   transparent: 'transparent',
   // Chart segment colors
   chart: [
-    '#7c6aff',
-    '#ff6b9d',
-    '#00d4aa',
-    '#ffb347',
-    '#4ea8de',
-    '#9b5de5',
-    '#f15bb5',
-    '#00f5d4',
-    '#00bbf9',
-    '#fee440',
+    '#3b82f6', // blue
+    '#10b981', // emerald
+    '#ef4444', // red
+    '#f59e0b', // amber
+    '#8b5cf6', // violet
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#84cc16', // lime
+    '#f97316', // orange
+    '#6366f1', // indigo
   ],
 } as const;
 
@@ -84,24 +84,24 @@ export const typography = {
 
 export const shadow = {
   sm: {
-    shadowColor: '#7c6aff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#7c6aff',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   lg: {
-    shadowColor: '#7c6aff',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
 } as const;
