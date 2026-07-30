@@ -457,6 +457,9 @@ export default function WalletsScreen() {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
                         <Text style={styles.walletName}>{w.name}</Text>
+                        <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 10, color: colors.text.secondary }}>{w.memberName}</Text>
+                        </View>
                         <Ionicons 
                           name={isCollapsed ? 'chevron-down' : 'chevron-up'} 
                           size={14} 
@@ -472,9 +475,11 @@ export default function WalletsScreen() {
                   </TouchableOpacity>
 
                   <View style={styles.walletActions}>
-                    <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleOpenWalletModal(w)}>
-                      <Ionicons name="pencil-sharp" size={13} color={colors.text.secondary} />
-                    </TouchableOpacity>
+                    {currentMemberId === w.memberId && (
+                      <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleOpenWalletModal(w)}>
+                        <Ionicons name="pencil-sharp" size={13} color={colors.text.secondary} />
+                      </TouchableOpacity>
+                    )}
                     {currentMemberId === w.memberId && (
                       <TouchableOpacity style={styles.actionBtnIcon} onPress={() => handleConfirmDeleteWallet(w)}>
                         <Ionicons name="trash-sharp" size={13} color={colors.danger} />
@@ -488,13 +493,15 @@ export default function WalletsScreen() {
                   <View style={styles.accountsSection}>
                     <View style={styles.sectionHeaderRow}>
                       <Text style={styles.sectionHeaderTitle}>Contas e Cartões</Text>
-                      <TouchableOpacity
-                        style={styles.addAccountLink}
-                        onPress={() => handleOpenAccountModal(w.id)}
-                      >
-                        <Ionicons name="add-circle" size={16} color={colors.brand.teal} />
-                        <Text style={styles.addAccountLinkText}>Nova Conta</Text>
-                      </TouchableOpacity>
+                      {currentMemberId === w.memberId && (
+                        <TouchableOpacity
+                          style={styles.addAccountLink}
+                          onPress={() => handleOpenAccountModal(w.id)}
+                        >
+                          <Ionicons name="add-circle" size={16} color={colors.brand.teal} />
+                          <Text style={styles.addAccountLinkText}>Nova Conta</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
 
                     {w.accounts.length === 0 ? (
@@ -579,32 +586,33 @@ export default function WalletsScreen() {
                                   )}
                                 </View>
                               </TouchableOpacity>
- 
-                              <View style={styles.accountActionsGroup}>
-                                <TouchableOpacity
-                                  style={[styles.accountActionCircle, { borderColor: 'rgba(0, 212, 170, 0.25)', backgroundColor: 'rgba(0, 212, 170, 0.05)' }]}
-                                  onPress={() => handleOpenCardModal(w.id, acc.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Ionicons name="card-outline" size={12} color={colors.brand.teal} />
-                                </TouchableOpacity>
- 
-                                <TouchableOpacity
-                                  style={styles.accountActionCircle}
-                                  onPress={() => handleOpenAccountModal(w.id, acc)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Ionicons name="pencil-sharp" size={12} color={colors.text.secondary} />
-                                </TouchableOpacity>
- 
-                                <TouchableOpacity
-                                  style={styles.accountActionCircle}
-                                  onPress={() => handleConfirmDeleteAccount(w.id, acc)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Ionicons name="trash-sharp" size={12} color={colors.danger} />
-                                </TouchableOpacity>
-                              </View>
+                              {currentMemberId === w.memberId && (
+                                <View style={styles.accountActionsGroup}>
+                                  <TouchableOpacity
+                                    style={[styles.accountActionCircle, { borderColor: 'rgba(0, 212, 170, 0.25)', backgroundColor: 'rgba(0, 212, 170, 0.05)' }]}
+                                    onPress={() => handleOpenCardModal(w.id, acc.id)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Ionicons name="card-outline" size={12} color={colors.brand.teal} />
+                                  </TouchableOpacity>
+  
+                                  <TouchableOpacity
+                                    style={styles.accountActionCircle}
+                                    onPress={() => handleOpenAccountModal(w.id, acc)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Ionicons name="pencil-sharp" size={12} color={colors.text.secondary} />
+                                  </TouchableOpacity>
+  
+                                  <TouchableOpacity
+                                    style={styles.accountActionCircle}
+                                    onPress={() => handleConfirmDeleteAccount(w.id, acc)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Ionicons name="trash-sharp" size={12} color={colors.danger} />
+                                  </TouchableOpacity>
+                                </View>
+                              )}
                             </View>
  
                             {/* Credit Cards list - horizontal carousel */}
@@ -630,12 +638,14 @@ export default function WalletsScreen() {
                                           <Ionicons name="card" size={14} color="rgba(255, 255, 255, 0.7)" />
                                           <Text style={styles.miniCardBrandText}>{card.brand.toUpperCase()}</Text>
                                         </View>
-                                        <TouchableOpacity
-                                          style={styles.cardDeleteBtnGlass}
-                                          onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
-                                        >
-                                          <Ionicons name="trash-sharp" size={11} color="rgba(255, 255, 255, 0.95)" />
-                                        </TouchableOpacity>
+                                        {currentMemberId === w.memberId && (
+                                          <TouchableOpacity
+                                            style={styles.cardDeleteBtnGlass}
+                                            onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
+                                          >
+                                            <Ionicons name="trash-sharp" size={11} color="rgba(255, 255, 255, 0.95)" />
+                                          </TouchableOpacity>
+                                        )}
                                       </View>
  
                                       <View style={styles.miniCardBody}>

@@ -78,4 +78,11 @@ public class Role : Entity
         role.AddPermission(Permission.CategoryView);
         return role;
     }
+
+    public static Role Master()
+    {
+        var role = new Role("Master", "System administrator access");
+        role.AddPermission(Permission.SystemAdmin);
+        return role;
+    }
 }

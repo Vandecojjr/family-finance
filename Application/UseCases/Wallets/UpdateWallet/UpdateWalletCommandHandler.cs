@@ -31,7 +31,13 @@ public sealed class UpdateWalletCommandHandler(
         if (wallet.FamilyId != member.FamilyId)
         {
             return Result.Failure(
-                Error.Failure("Family.AccessDenied", "Você não tem permissão para editar esta carteira."));
+                Error.Failure("Family.AccessDenied", "Você não tem permissão para acessar esta carteira."));
+        }
+
+        if (wallet.MemberId != member.Id)
+        {
+            return Result.Failure(
+                Error.Forbidden("Wallet.OwnershipRequired", "Somente o dono da carteira pode editá-la."));
         }
 
         wallet.Update(command.Name, command.CashBalance);

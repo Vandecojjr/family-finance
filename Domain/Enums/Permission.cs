@@ -38,5 +38,8 @@ public enum Permission
     RecurringIncomeView = 60,
     RecurringIncomeCreate = 61,
     RecurringIncomeUpdate = 62,
-    RecurringIncomeDelete = 63
+    RecurringIncomeDelete = 63,
+    
+    // System Administration
+    SystemAdmin = 99
 }

@@ -12,7 +12,6 @@ public class DataSeeder(AppDbContext dbContext, IPasswordHasher passwordHasher)
     {
         if (await dbContext.Set<Account>().AnyAsync())
         {
-            // Sync permissions for existing roles in case new permissions were added
             await dbContext.Database.ExecuteSqlRawAsync(
                 @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,FamilyManage,MemberView,MemberCreate,MemberUpdate,MemberDelete,WalletView,WalletCreate,WalletUpdate,WalletDelete,TransactionView,TransactionCreate,TransactionUpdate,TransactionDelete,RecurringExpenseView,RecurringExpenseCreate,RecurringExpenseUpdate,RecurringExpenseDelete,RecurringIncomeView,RecurringIncomeCreate,RecurringIncomeUpdate,RecurringIncomeDelete,CategoryView,CategoryCreate' WHERE ""Name"" = 'Admin';"
             );
@@ -22,14 +21,40 @@ public class DataSeeder(AppDbContext dbContext, IPasswordHasher passwordHasher)
             await dbContext.Database.ExecuteSqlRawAsync(
                 @"UPDATE ""Roles"" SET ""Permissions"" = 'FamilyView,MemberView,WalletView,TransactionView,RecurringExpenseView,RecurringIncomeView,CategoryView' WHERE ""Name"" = 'Viewer';"
             );
+            
+            var hasMasterRole = await dbContext.Set<Role>().AnyAsync(r => r.Name == "Master");
+            Role existingMasterRole;
+            if (!hasMasterRole)
+            {
+                existingMasterRole = Role.Master();
+                await dbContext.Set<Role>().AddAsync(existingMasterRole);
+                await dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                existingMasterRole = await dbContext.Set<Role>().FirstAsync(r => r.Name == "Master");
+            }
+
+            var masterEmail = Domain.AccessContext.Entities.Accounts.ValueObjects.Email.Create("master@familyfinance.com");
+            var hasMasterUser = await dbContext.Set<Account>().AnyAsync(a => a.Email == masterEmail);
+            if (!hasMasterUser)
+            {
+                var newMasterAccount = new Account("master@familyfinance.com", passwordHasher.Hash("Master123!"), null);
+                newMasterAccount.Activate();
+                newMasterAccount.AddRole(existingMasterRole);
+                await dbContext.Set<Account>().AddAsync(newMasterAccount);
+                await dbContext.SaveChangesAsync();
+            }
+
             return;
         }
 
         var adminRole = Role.Admin();
         var memberRole = Role.Member();
         var viewerRole = Role.Viewer();
+        var masterRole = Role.Master();
 
-        await dbContext.Set<Role>().AddRangeAsync(adminRole, memberRole, viewerRole);
+        await dbContext.Set<Role>().AddRangeAsync(adminRole, memberRole, viewerRole, masterRole);
         await dbContext.SaveChangesAsync();
 
         var family = new Family("Family Admin");
@@ -47,6 +72,13 @@ public class DataSeeder(AppDbContext dbContext, IPasswordHasher passwordHasher)
         account.AddRole(adminRole);
 
         await dbContext.Set<Account>().AddAsync(account);
+
+        var masterAccount = new Account("master@familyfinance.com", passwordHasher.Hash("Master123!"), null);
+        masterAccount.Activate();
+        masterAccount.AddRole(masterRole);
+
+        await dbContext.Set<Account>().AddAsync(masterAccount);
+
         await dbContext.SaveChangesAsync();
     }
 }

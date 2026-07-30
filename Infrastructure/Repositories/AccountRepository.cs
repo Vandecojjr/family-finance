@@ -105,4 +105,10 @@ public class AccountRepository(AppDbContext context) : IAccountRepository
             await context.SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task<Role?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Role>()
+            .FirstOrDefaultAsync(r => r.Name == name, cancellationToken);
+    }
 }

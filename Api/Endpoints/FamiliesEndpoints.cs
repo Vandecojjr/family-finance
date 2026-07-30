@@ -3,6 +3,7 @@ using Application.Shared.Results;
 using Application.UseCases.Families.GetFamilyById;
 using Application.UseCases.Families.GetFamilyName;
 using Application.UseCases.Families.GetMyFamily;
+using Application.UseCases.Families.AddMember;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using HttpResult = Microsoft.AspNetCore.Http.IResult;
@@ -43,6 +44,15 @@ public sealed class FamiliesEndpoints : IEndpointGroup
             .Produces<Result<FamilyNameResponse>>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/members", AddMember)
+            .WithName("Families.AddMember")
+            .WithSummary("Adiciona um novo membro à família especificada pelo ID.")
+            .WithTags("Families")
+            .RequireAuthorization()
+            .Produces<Result<Guid>>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<HttpResult> GetMyFamily(
@@ -73,5 +83,20 @@ public sealed class FamiliesEndpoints : IEndpointGroup
         var result = await mediator.Send(query, cancellationToken);
         return result.ToResult();
     }
+
+    private static async Task<HttpResult> AddMember(
+        [FromRoute] Guid id,
+        [FromBody] AddFamilyMemberRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new AddFamilyMemberCommand(id, request.Name, request.Email, request.Password, request.RoleName);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.IsSuccess 
+            ? Microsoft.AspNetCore.Http.TypedResults.Created($"/api/families/{id}/members/{result.Value}", result)
+            : result.ToResult();
+    }
 }
+
+public sealed record AddFamilyMemberRequest(string Name, string Email, string Password, string RoleName);
 

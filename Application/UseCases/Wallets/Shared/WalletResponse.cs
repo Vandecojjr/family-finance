@@ -10,6 +10,7 @@ public sealed record WalletResponse(
     decimal CashBalance,
     Guid FamilyId,
     Guid MemberId,
+    string MemberName,
     List<BankAccountResponse> Accounts);
 
 public sealed record BankAccountResponse(
@@ -40,6 +41,7 @@ public static class WalletResponseFactory
             wallet.CashBalance.Value,
             wallet.FamilyId,
             wallet.MemberId,
+            wallet.Member?.Name.Value ?? "Desconhecido",
             wallet.Accounts.Select(ToResponse).ToList()
         );
     }

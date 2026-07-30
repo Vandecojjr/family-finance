@@ -27,4 +27,18 @@ export const familyApi = {
       throw error;
     }
   },
+
+  addMember: async (familyId: string, name: string, email: string, password: string, roleName: string): Promise<string> => {
+    try {
+      const { data } = await apiClient.post<ApiResult<string>>(`/api/families/${familyId}/members`, { name, email, password, roleName });
+      if (!data.isSuccess || !data.value) {
+        const msg = data.errors?.[0]?.description ?? 'Erro ao adicionar membro à família.';
+        throw new Error(msg);
+      }
+      return data.value;
+    } catch (error: any) {
+      console.error('[familyApi] Error adding family member:', error.message);
+      throw error;
+    }
+  },
 };

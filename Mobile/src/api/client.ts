@@ -87,9 +87,9 @@ apiClient.interceptors.response.use(
       const refreshToken = await storage.getItemAsync(TOKEN_KEYS.REFRESH);
       if (!refreshToken) throw new Error('No refresh token');
 
-      const { data } = await apiClient.post<{
+      const { data } = await axios.post<{
         value: { accessToken: string; refreshToken: string; accessTokenExpiresAt: string; refreshTokenExpiresAt: string };
-      }>('/api/auth/refresh', { refreshToken });
+      }>(`${BASE_URL}/api/auth/refresh`, { refreshToken });
 
       const { accessToken, refreshToken: newRefresh, accessTokenExpiresAt, refreshTokenExpiresAt } = data.value!;
 

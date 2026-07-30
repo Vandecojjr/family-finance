@@ -26,7 +26,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "Family Finance",
+      "shortName": "FamFin",
+      "themeColor": "#0f0f1a",
+      "backgroundColor": "#0f0f1a",
+      "display": "standalone",
+      "scope": "/",
+      "startUrl": "/"
     },
     "plugins": [
       "expo-router",

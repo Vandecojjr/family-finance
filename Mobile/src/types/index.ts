@@ -46,6 +46,7 @@ export interface Wallet {
   cashBalance: number;
   familyId: string;
   memberId: string;
+  memberName: string;
   accounts: BankAccount[];
 }
 
@@ -127,6 +128,7 @@ export interface RegisterTransactionRequest {
   walletId: string | null;
   bankAccountId: string | null;
   creditCardId: string | null;
+  useCredit?: boolean | null;
   notes?: string;
 }
 

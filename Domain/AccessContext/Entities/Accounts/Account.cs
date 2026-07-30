@@ -12,8 +12,8 @@ public class Account : Entity, IAggregateRoot
     public PasswordHash PasswordHash { get; private set; }
     public AccountStatus Status { get; private set; } = AccountStatus.Active;
 
-    public Guid MemberId { get; private set; }
-    public Member Member { get; private set; } = null!;
+    public Guid? MemberId { get; private set; }
+    public Member? Member { get; private set; }
 
     public ICollection<Role> Roles { get; private set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; private set; } = [];
@@ -25,7 +25,7 @@ public class Account : Entity, IAggregateRoot
     }
     #pragma warning restore CS8618
 
-    public Account(string email, string passwordHash, Guid memberId)
+    public Account(string email, string passwordHash, Guid? memberId = null)
     {
         MemberId = memberId;
         Email = Email.Create(email);
@@ -54,7 +54,7 @@ public class Account : Entity, IAggregateRoot
 
     public void AssignMember(Guid memberId)
     {
-        if (MemberId != Guid.Empty && MemberId != memberId)
+        if (MemberId.HasValue && MemberId.Value != Guid.Empty && MemberId.Value != memberId)
             throw new Exceptions.AccountAlreadyLinkedException();
 
         MemberId = memberId;
@@ -97,6 +97,9 @@ public class Account : Entity, IAggregateRoot
 
     public bool HasPermission(Permission permission)
     {
+        if (Roles.Any(r => r.Permissions.Contains(Permission.SystemAdmin)))
+            return true;
+
         return Roles.Any(r => r.Permissions.Contains(permission));
     }
 }

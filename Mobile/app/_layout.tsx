@@ -22,7 +22,11 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return;
     if (isAuthenticated) {
-      router.replace('/(tabs)');
+      if (useAuthStore.getState().roles.includes('Master')) {
+        router.replace('/admin');
+      } else {
+        router.replace('/(tabs)');
+      }
     } else {
       router.replace('/(auth)/login');
     }

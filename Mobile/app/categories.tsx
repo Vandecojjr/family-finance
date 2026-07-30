@@ -177,7 +177,7 @@ export default function CategoriesScreen() {
   const availableParents = categories.filter(c => c.type === type && c.parentId === null);
 
   // Cor ativa baseada na aba
-  const activeColor = activeTab === 'expense' ? colors.brand.accent : colors.brand.teal;
+  const activeColor = activeTab === 'expense' ? colors.danger : colors.brand.teal;
 
   // Verificar se categorias com sub existem e se todas estão expandidas
   const categoriesWithSubs = filteredCategories.filter(c => c.subCategories && c.subCategories.length > 0);
@@ -554,7 +554,7 @@ export default function CategoriesScreen() {
 
                 {/* Submit button */}
                 <TouchableOpacity
-                  style={[styles.saveBtn, { backgroundColor: type === 'Income' ? colors.brand.teal : colors.brand.accent }]}
+                  style={[styles.saveBtn, { backgroundColor: type === 'Income' ? colors.brand.teal : colors.danger }]}
                   activeOpacity={0.8}
                   onPress={handleSave}
                   disabled={createMutation.isPending}
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   activeTabExpense: {
-    backgroundColor: colors.brand.accent,
+    backgroundColor: colors.danger,
     ...shadow.sm,
   },
   activeTabIncome: {
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   formTypeBtnExpenseActive: {
-    backgroundColor: colors.brand.accent,
+    backgroundColor: colors.danger,
     ...shadow.sm,
   },
   formTypeBtnIncomeActive: {

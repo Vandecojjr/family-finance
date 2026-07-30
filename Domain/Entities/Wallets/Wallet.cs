@@ -14,6 +14,7 @@ public class Wallet : Entity, IAggregateRoot
     public CashBalance CashBalance { get; private set; } = null!;
     public Guid FamilyId { get; private set; }
     public Guid MemberId { get; private set; }
+    public Domain.Entities.Members.Member? Member { get; private set; }
 
     private readonly List<BankAccount> _accounts = [];
     public virtual IReadOnlyCollection<BankAccount> Accounts => _accounts.AsReadOnly();

@@ -37,8 +37,8 @@ public sealed class JwtAuthTokenService : IAuthTokenService
             new("accountId", account.Id.ToString())
         };
 
-        if (account.MemberId != Guid.Empty)
-            claims.Add(new Claim("memberId", account.MemberId.ToString()));
+        if (account.MemberId.HasValue && account.MemberId.Value != Guid.Empty)
+            claims.Add(new Claim("memberId", account.MemberId.Value.ToString()));
 
         foreach (var role in account.Roles)
         {

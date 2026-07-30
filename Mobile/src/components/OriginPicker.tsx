@@ -16,6 +16,7 @@ interface OriginSelection {
   walletId: string;
   bankAccountId: string | null;
   creditCardId: string | null;
+  useCredit?: boolean | null;
   label: string;
 }
 
@@ -26,6 +27,7 @@ interface OriginPickerProps {
   selectedWalletId: string | null;
   selectedBankAccountId: string | null;
   selectedCreditCardId: string | null;
+  selectedUseCredit?: boolean | null;
   onSelect: (selection: OriginSelection) => void;
   allowCreditCards?: boolean;
 }
@@ -37,6 +39,7 @@ export function OriginPicker({
   selectedWalletId,
   selectedBankAccountId,
   selectedCreditCardId,
+  selectedUseCredit,
   onSelect,
   allowCreditCards = true,
 }: OriginPickerProps) {
@@ -92,6 +95,7 @@ export function OriginPicker({
                               walletId: wallet.id,
                               bankAccountId: null,
                               creditCardId: null,
+                              useCredit: null,
                               label: `Dinheiro Vivo (${wallet.name})`,
                             });
                             onClose();
@@ -118,24 +122,32 @@ export function OriginPicker({
 
                     {/* 2. Bank Accounts */}
                     {wallet.accounts && wallet.accounts.map((acc) => {
-                      const isAccSelected =
+                      const isAccSelectedDebit =
                         selectedWalletId === wallet.id &&
                         selectedBankAccountId === acc.id &&
-                        selectedCreditCardId === null;
+                        selectedCreditCardId === null &&
+                        selectedUseCredit !== true;
+
+                      const isAccSelectedCredit =
+                        selectedWalletId === wallet.id &&
+                        selectedBankAccountId === acc.id &&
+                        selectedCreditCardId === null &&
+                        selectedUseCredit === true;
                       
                       return (
                         <View key={acc.id}>
                           <TouchableOpacity
                             style={[
                               styles.optionRow,
-                              isAccSelected && styles.optionSelected,
+                              isAccSelectedDebit && styles.optionSelected,
                             ]}
                             onPress={() => {
                               onSelect({
                                 walletId: wallet.id,
                                 bankAccountId: acc.id,
                                 creditCardId: null,
-                                label: `${acc.bankName} - ${acc.type === 5 ? 'Poupança' : 'Corrente'} (${wallet.name})`,
+                                useCredit: false,
+                                label: `${acc.bankName} - Saldo (${wallet.name})`,
                               });
                               onClose();
                             }}
@@ -145,17 +157,55 @@ export function OriginPicker({
                               <Ionicons name="business" size={16} color={colors.brand.primary} />
                             </View>
                             <View style={styles.optionInfo}>
-                              <Text style={[styles.optionLabel, isAccSelected && styles.selectedText]}>
-                                {acc.bankName}
+                              <Text style={[styles.optionLabel, isAccSelectedDebit && styles.selectedText]}>
+                                {acc.bankName} - Saldo
                               </Text>
                               <Text style={styles.optionSub}>
                                 {acc.type === 5 ? 'Conta Poupança' : 'Conta Corrente'} • Saldo: {fmt(acc.debitBalance)}
                               </Text>
                             </View>
-                            {isAccSelected && (
+                            {isAccSelectedDebit && (
                               <Ionicons name="checkmark" size={18} color={colors.brand.primary} />
                             )}
                           </TouchableOpacity>
+
+                          {/* Cheque Especial / Crédito da Conta */}
+                          {acc.creditLimit > 0 && (
+                            <TouchableOpacity
+                              style={[
+                                styles.optionRow,
+                                styles.creditCardRow,
+                                isAccSelectedCredit && styles.optionSelected,
+                              ]}
+                              onPress={() => {
+                                onSelect({
+                                  walletId: wallet.id,
+                                  bankAccountId: acc.id,
+                                  creditCardId: null,
+                                  useCredit: true,
+                                  label: `${acc.bankName} - Crédito Especial (${wallet.name})`,
+                                });
+                                onClose();
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <View style={styles.treeConnector} />
+                              <View style={[styles.iconWrap, { backgroundColor: 'rgba(255, 165, 0, 0.12)' }]}>
+                                <Ionicons name="alert-circle-outline" size={16} color="#FFA500" />
+                              </View>
+                              <View style={styles.optionInfo}>
+                                <Text style={[styles.optionLabel, isAccSelectedCredit && styles.selectedText]}>
+                                  {acc.bankName} - Crédito Especial
+                                </Text>
+                                <Text style={styles.optionSub}>
+                                  Limite Disp: {fmt(acc.remainingCreditLimit)}
+                                </Text>
+                              </View>
+                              {isAccSelectedCredit && (
+                                <Ionicons name="checkmark" size={18} color={colors.brand.primary} />
+                              )}
+                            </TouchableOpacity>
+                          )}
 
                           {/* 3. Credit Cards */}
                           {allowCreditCards && acc.creditCards && acc.creditCards.map((card) => {
@@ -177,6 +227,7 @@ export function OriginPicker({
                                     walletId: wallet.id,
                                     bankAccountId: acc.id,
                                     creditCardId: card.id,
+                                    useCredit: null,
                                     label: `${card.brand} •••• ${card.lastFourDigits} (${acc.bankName})`,
                                   });
                                   onClose();

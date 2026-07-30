@@ -20,4 +20,6 @@ public interface IAccountRepository : IRepository<Account>
     Task RevokeRefreshTokenAsync(Guid accountId, string token, CancellationToken cancellationToken = default);
     Task RevokeAllRefreshTokensAsync(Guid accountId, CancellationToken cancellationToken = default);
     Task RemoveExpiredRefreshTokensAsync(Guid accountId, CancellationToken cancellationToken = default);
+
+    Task<Role?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default);
 }

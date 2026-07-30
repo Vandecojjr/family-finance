@@ -56,6 +56,11 @@ export default function FamilyScreen() {
   const [selectedMember, setSelectedMember] = useState<FamilyMemberResponse | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RecurringExpense | RecurringIncome | null>(null);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<'Admin' | 'Member' | 'Viewer'>('Member');
 
   // Form local states
   const [description, setDescription] = useState('');
@@ -123,6 +128,29 @@ export default function FamilyScreen() {
   }, [categories, activeTab]);
 
   // Mutations
+  const addMemberMutation = useMutation({
+    mutationFn: async () => {
+      if (!newMemberName.trim()) throw new Error('O nome é obrigatório.');
+      if (!newMemberEmail.trim()) throw new Error('O e-mail é obrigatório.');
+      if (!newMemberPassword.trim() || newMemberPassword.length < 6) throw new Error('A senha deve ter no mínimo 6 caracteres.');
+      if (!family?.id) throw new Error('Família não carregada.');
+      
+      await familyApi.addMember(family.id, newMemberName, newMemberEmail, newMemberPassword, newMemberRole);
+    },
+    onSuccess: () => {
+      setIsAddMemberOpen(false);
+      setNewMemberName('');
+      setNewMemberEmail('');
+      setNewMemberPassword('');
+      setNewMemberRole('Member');
+      refetchFamily();
+      Alert.alert('Sucesso', 'Membro adicionado à família!');
+    },
+    onError: (err: any) => {
+      Alert.alert('Erro', err.message);
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (activeTab === 'expense') {
@@ -309,7 +337,7 @@ export default function FamilyScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Família</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => Alert.alert('Informação', 'Para adicionar membros, utilize o painel de administração.')}>
+        <TouchableOpacity style={styles.addBtn} onPress={() => setIsAddMemberOpen(true)}>
           <Ionicons name="person-add-outline" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
@@ -761,6 +789,7 @@ export default function FamilyScreen() {
                     </TouchableOpacity>
                   </ScrollView>
 
+
                   {/* Date Pickers Modals */}
                   <DatePicker
                     visible={isStartDatePickerOpen}
@@ -847,6 +876,117 @@ export default function FamilyScreen() {
             </View>
           </KeyboardAvoidingView>
         </Modal>
+      </Modal>
+
+      {/* ── MODAL: ADICIONAR MEMBRO ────────────────────────────── */}
+      <Modal visible={isAddMemberOpen} animationType="fade" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { justifyContent: 'center', padding: spacing.lg }]}>
+            <View style={{
+                backgroundColor: colors.bg.secondary, 
+                borderRadius: radius.xl, 
+                padding: spacing.lg, 
+                width: '100%',
+                ...shadow.lg
+            }}>
+              <View style={[styles.modalHeader, { paddingHorizontal: 0, paddingTop: 0, borderBottomWidth: 0, paddingBottom: spacing.sm }]}>
+                <View style={styles.modalHeaderInfo}>
+                  <Text style={styles.modalTitle}>Adicionar Membro</Text>
+                  <Text style={styles.modalSubtitle}>Nova pessoa na família</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.closeBtn}
+                  onPress={() => {
+                    setIsAddMemberOpen(false);
+                    setNewMemberName('');
+                    setNewMemberEmail('');
+                    setNewMemberPassword('');
+                    setNewMemberRole('Member');
+                  }}
+                >
+                  <Ionicons name="close" size={24} color={colors.text.muted} />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={{ marginTop: spacing.sm }} contentContainerStyle={{ gap: spacing.md }} showsVerticalScrollIndicator={false}>
+                <View>
+                  <Text style={[styles.label, { marginBottom: spacing.xs }]}>Nome do Membro</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ex: João, Maria"
+                    placeholderTextColor={colors.text.muted}
+                    value={newMemberName}
+                    onChangeText={setNewMemberName}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[styles.label, { marginBottom: spacing.xs }]}>E-mail</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ex: joao@email.com"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={newMemberEmail}
+                    onChangeText={setNewMemberEmail}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[styles.label, { marginBottom: spacing.xs }]}>Senha de Acesso</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={colors.text.muted}
+                    secureTextEntry
+                    value={newMemberPassword}
+                    onChangeText={setNewMemberPassword}
+                  />
+                </View>
+
+                <View>
+                  <Text style={[styles.label, { marginBottom: spacing.xs }]}>Nível de Acesso (Role)</Text>
+                  <View style={styles.segmentContainer}>
+                    <TouchableOpacity
+                      style={[styles.segmentBtn, newMemberRole === 'Admin' && styles.segmentActive, newMemberRole === 'Admin' && { backgroundColor: colors.brand.primary }]}
+                      onPress={() => setNewMemberRole('Admin')}
+                    >
+                      <Text style={[styles.segmentText, newMemberRole === 'Admin' && styles.segmentTextActive]}>Admin</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.segmentBtn, newMemberRole === 'Member' && styles.segmentActive, newMemberRole === 'Member' && { backgroundColor: colors.brand.primary }]}
+                      onPress={() => setNewMemberRole('Member')}
+                    >
+                      <Text style={[styles.segmentText, newMemberRole === 'Member' && styles.segmentTextActive]}>Member</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.segmentBtn, newMemberRole === 'Viewer' && styles.segmentActive, newMemberRole === 'Viewer' && { backgroundColor: colors.brand.primary }]}
+                      onPress={() => setNewMemberRole('Viewer')}
+                    >
+                      <Text style={[styles.segmentText, newMemberRole === 'Viewer' && styles.segmentTextActive]}>Viewer</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+              
+              <TouchableOpacity
+                style={[styles.saveBtn, { marginTop: spacing.lg }]}
+                onPress={() => addMemberMutation.mutate()}
+                disabled={addMemberMutation.isPending}
+              >
+                {addMemberMutation.isPending ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} />
+                    <Text style={styles.saveBtnText}>Confirmar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

@@ -92,6 +92,7 @@ export default function TransactionsScreen() {
     walletId: string;
     bankAccountId: string | null;
     creditCardId: string | null;
+    useCredit?: boolean | null;
     label: string;
   } | null>(null);
 
@@ -193,6 +194,7 @@ export default function TransactionsScreen() {
         walletId: selectedOrigin.walletId,
         bankAccountId: selectedOrigin.bankAccountId,
         creditCardId: selectedOrigin.creditCardId,
+        useCredit: selectedOrigin.useCredit,
         notes: '',
       });
     },
@@ -482,7 +484,7 @@ export default function TransactionsScreen() {
               <TouchableOpacity
                 style={[
                   styles.submitBtn,
-                  { backgroundColor: type === 1 ? colors.brand.teal : colors.brand.primary },
+                  { backgroundColor: type === 1 ? colors.brand.teal : colors.danger },
                 ]}
                 onPress={() => registerMutation.mutate()}
                 disabled={registerMutation.isPending}
@@ -511,6 +513,7 @@ export default function TransactionsScreen() {
               selectedWalletId={selectedOrigin?.walletId ?? null}
               selectedBankAccountId={selectedOrigin?.bankAccountId ?? null}
               selectedCreditCardId={selectedOrigin?.creditCardId ?? null}
+              selectedUseCredit={selectedOrigin?.useCredit ?? null}
               onSelect={(selection) => {
                 setSelectedOrigin(selection);
               }}
@@ -663,7 +666,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   typeBtnExpense: {
-    backgroundColor: colors.brand.accent,
+    backgroundColor: colors.danger,
   },
   typeBtnIncome: {
     backgroundColor: colors.brand.teal,

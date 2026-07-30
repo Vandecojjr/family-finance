@@ -26,6 +26,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
     public async Task<IReadOnlyCollection<Wallet>> GetByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default)
     {
         var list = await context.Set<Wallet>()
+            .Include(x => x.Member)
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
             .Include(x => x.Transactions)
