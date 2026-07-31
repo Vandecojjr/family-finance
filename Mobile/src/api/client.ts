@@ -110,6 +110,11 @@ apiClient.interceptors.response.use(
         storage.deleteItemAsync(TOKEN_KEYS.REFRESH_EXPIRES),
       ]);
       pendingRequests = [];
+      
+      // Importa dinamicamente para evitar ciclo de dependência, caso exista
+      const { useAuthStore } = require('../stores/authStore');
+      useAuthStore.getState().logout();
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
