@@ -98,6 +98,7 @@ export interface CreateCreditCardRequest {
   brand: string;
   lastFourDigits: string;
   totalLimit: number;
+  availableLimit: number;
 }
 
 

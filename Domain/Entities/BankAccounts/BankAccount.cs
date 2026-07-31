@@ -49,9 +49,9 @@ public class BankAccount : Entity
         SeUpdate();
     }
 
-    public void AddCreditCard(string brand, string lastFourDigits, decimal totalLimit)
+    public void AddCreditCard(string brand, string lastFourDigits, decimal totalLimit, decimal availableLimit)
     {
-        var card = new CreditCard(brand, lastFourDigits, totalLimit, Id);
+        var card = new CreditCard(brand, lastFourDigits, totalLimit, availableLimit, Id);
         _creditCards.Add(card);
         SeUpdate();
     }

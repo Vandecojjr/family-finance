@@ -23,6 +23,11 @@ public sealed class CreateCreditCardCommandValidator : AbstractValidator<CreateC
 
         RuleFor(x => x.TotalLimit)
             .GreaterThanOrEqualTo(0).WithMessage("O limite total do cartão deve ser maior ou igual a zero.");
+
+        RuleFor(x => x.AvailableLimit)
+            .GreaterThanOrEqualTo(0).WithMessage("O limite disponível do cartão deve ser maior ou igual a zero.")
+            .Must((command, availableLimit) => availableLimit <= command.TotalLimit)
+            .WithMessage("O limite disponível não pode ser maior que o limite total.");
     }
 }
 

@@ -44,7 +44,8 @@ public sealed class CreateCreditCardCommandHandler(
         account.AddCreditCard(
             command.Brand,
             command.LastFourDigits,
-            command.TotalLimit);
+            command.TotalLimit,
+            command.AvailableLimit);
 
         await walletRepository.UpdateAsync(wallet, cancellationToken);
 

@@ -25,12 +25,12 @@ public class CreditCard : Entity
     }
     #pragma warning restore CS8618
 
-    public CreditCard(string brand, string lastFourDigits, decimal totalLimit, Guid bankAccountId)
+    public CreditCard(string brand, string lastFourDigits, decimal totalLimit, decimal availableLimit, Guid bankAccountId)
     {
         Brand = CreditCardBrand.Create(brand);
         LastFourDigits = LastFourDigits.Create(lastFourDigits);
         TotalLimit = CreditCardLimit.Create(totalLimit);
-        RemainingLimit = CreditCardLimit.Create(totalLimit);
+        RemainingLimit = CreditCardLimit.Create(availableLimit);
         BankAccountId = bankAccountId;
     }
 

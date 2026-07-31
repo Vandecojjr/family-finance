@@ -27,6 +27,18 @@ import { DeleteWarningModal } from '@/components/DeleteWarningModal';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+const formatCurrencyInput = (value: string) => {
+  const numStr = value.replace(/\D/g, '');
+  if (!numStr) return '';
+  const num = parseInt(numStr, 10) / 100;
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const parseCurrencyValue = (val: string) => {
+  if (!val) return 0;
+  const numStr = val.replace(/\./g, '').replace(',', '.');
+  return parseFloat(numStr) || 0;
+};
 export default function WalletsScreen() {
   const queryClient = useQueryClient();
   const { isAuthenticated, tokens } = useAuthStore();
@@ -129,13 +141,18 @@ export default function WalletsScreen() {
     brand: string;
     lastFourDigits: string;
     totalLimit: string;
+    availableLimit: string;
   }>({
     walletId: '',
     accountId: '',
     brand: '',
     lastFourDigits: '',
     totalLimit: '',
+    availableLimit: '',
   });
+
+  // Expanded Card State
+  const [expandedCard, setExpandedCard] = useState<CreditCard | null>(null);
 
   // Delete Warning Modal State
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -155,7 +172,7 @@ export default function WalletsScreen() {
   // Wallet Mutations
   const walletSaveMutation = useMutation({
     mutationFn: async () => {
-      const parsedBalance = parseFloat(walletForm.cashBalance.replace(',', '.'));
+      const parsedBalance = parseCurrencyValue(walletForm.cashBalance);
       if (!walletForm.name.trim()) throw new Error('Nome da carteira é obrigatório.');
       if (isNaN(parsedBalance) || parsedBalance < 0) throw new Error('Saldo em dinheiro deve ser maior ou igual a zero.');
 
@@ -195,8 +212,8 @@ export default function WalletsScreen() {
   // BankAccount Mutations
   const accountSaveMutation = useMutation({
     mutationFn: async () => {
-      const parsedDebit = parseFloat(accountForm.debitBalance.replace(',', '.'));
-      const parsedCredit = parseFloat(accountForm.creditLimit.replace(',', '.'));
+      const parsedDebit = parseCurrencyValue(accountForm.debitBalance);
+      const parsedCredit = parseCurrencyValue(accountForm.creditLimit);
 
       if (!accountForm.bankName.trim()) throw new Error('Nome do banco é obrigatório.');
       if (isNaN(parsedDebit)) throw new Error('Saldo de débito é inválido.');
@@ -240,18 +257,22 @@ export default function WalletsScreen() {
   // CreditCard Mutations
   const cardSaveMutation = useMutation({
     mutationFn: async () => {
-      const parsedLimit = parseFloat(cardForm.totalLimit.replace(',', '.'));
+      const parsedLimit = parseCurrencyValue(cardForm.totalLimit);
+      const parsedAvailableLimit = parseCurrencyValue(cardForm.availableLimit);
 
-      if (!cardForm.brand.trim()) throw new Error('Bandeira do cartão é obrigatória.');
-      if (cardForm.lastFourDigits.length !== 4 || isNaN(parseInt(cardForm.lastFourDigits, 10))) {
+      if (!cardForm.brand?.trim()) throw new Error('Bandeira do cartão é obrigatória.');
+      if (!cardForm.lastFourDigits || cardForm.lastFourDigits.length !== 4 || isNaN(parseInt(cardForm.lastFourDigits, 10))) {
         throw new Error('Últimos 4 dígitos devem conter exatamente 4 números.');
       }
       if (isNaN(parsedLimit) || parsedLimit < 0) throw new Error('Limite total deve ser maior ou igual a zero.');
+      if (isNaN(parsedAvailableLimit) || parsedAvailableLimit < 0) throw new Error('Limite disponível deve ser maior ou igual a zero.');
+      if (parsedAvailableLimit > parsedLimit) throw new Error('Limite disponível não pode ser maior que o limite total.');
 
       await walletsApi.createCreditCard(cardForm.walletId, cardForm.accountId, {
         brand: cardForm.brand,
         lastFourDigits: cardForm.lastFourDigits,
         totalLimit: parsedLimit,
+        availableLimit: parsedAvailableLimit,
       });
     },
     onSuccess: () => {
@@ -338,6 +359,7 @@ export default function WalletsScreen() {
       brand: '',
       lastFourDigits: '',
       totalLimit: '0',
+      availableLimit: '0',
     });
     setCardModalOpen(true);
   };
@@ -627,66 +649,69 @@ export default function WalletsScreen() {
                                   contentContainerStyle={styles.cardsScrollContent}
                                 >
                                   {acc.creditCards.map((card) => (
-                                    <LinearGradient
+                                    <TouchableOpacity 
                                       key={card.id}
-                                      colors={getCardGradient(card.brand)}
-                                      start={{ x: 0, y: 0 }}
-                                      end={{ x: 1, y: 1 }}
-                                      style={styles.creditCardMini}
+                                      activeOpacity={0.9} 
+                                      onPress={() => setExpandedCard(card)}
                                     >
-                                      <View style={styles.cardGlossyShine} />
-                                      
-                                      <View style={styles.miniCardHeader}>
-                                        <View style={styles.miniCardBrandRow}>
-                                          <Ionicons name="card" size={14} color="rgba(255, 255, 255, 0.7)" />
-                                          <Text style={styles.miniCardBrandText}>{card.brand.toUpperCase()}</Text>
+                                      <LinearGradient
+                                        colors={getCardGradient(card.brand)}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={styles.creditCardMini}
+                                      >
+                                        <View style={styles.cardGlossyShine} />
+                                        
+                                        <View style={styles.miniCardHeader}>
+                                          <View style={styles.miniCardBrandRow}>
+                                            <Ionicons name="card" size={14} color="rgba(255, 255, 255, 0.7)" />
+                                            <Text style={styles.miniCardBrandText}>{card.brand.toUpperCase()}</Text>
+                                          </View>
+                                          {currentMemberId === w.memberId && (
+                                            <TouchableOpacity
+                                              style={styles.cardDeleteBtnGlass}
+                                              onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
+                                            >
+                                              <Ionicons name="trash-sharp" size={11} color="rgba(255, 255, 255, 0.95)" />
+                                            </TouchableOpacity>
+                                          )}
                                         </View>
-                                        {currentMemberId === w.memberId && (
-                                          <TouchableOpacity
-                                            style={styles.cardDeleteBtnGlass}
-                                            onPress={() => handleConfirmDeleteCard(w.id, acc.id, card)}
-                                          >
-                                            <Ionicons name="trash-sharp" size={11} color="rgba(255, 255, 255, 0.95)" />
-                                          </TouchableOpacity>
-                                        )}
-                                      </View>
- 
-                                      <View style={styles.miniCardBody}>
-                                        <View style={styles.miniCardChip}>
-                                          <View style={styles.miniCardChipLine} />
+  
+                                        <View style={styles.miniCardBody}>
+                                          <View style={styles.miniCardChip}>
+                                            <View style={styles.miniCardChipLine} />
+                                          </View>
+                                          <Ionicons name="wifi-sharp" size={14} color="rgba(255,255,255,0.4)" style={styles.cardWifiIcon} />
                                         </View>
-                                        <Ionicons name="wifi-sharp" size={14} color="rgba(255,255,255,0.4)" style={styles.cardWifiIcon} />
-                                      </View>
-
-                                      <View style={styles.miniCardFooter}>
-                                        <View style={{ flex: 1 }}>
-                                          <Text style={styles.miniCardNumbers}>
-                                            ••••  ••••  ••••  {card.lastFourDigits}
-                                          </Text>
-                                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginRight: spacing.sm, alignItems: 'flex-end' }}>
-                                            <View>
-                                              <Text style={styles.miniCardLabel}>Disponível</Text>
-                                              <Text style={styles.miniCardValue}>
-                                                {showBalances ? fmt(card.remainingLimit) : 'R$ •••'}
-                                              </Text>
-                                            </View>
-                                            <View>
-                                              <Text style={styles.miniCardLabel}>Utilizado</Text>
-                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.85)' }]}>
-                                                {showBalances ? fmt(card.usedLimit ?? 0) : 'R$ •••'}
-                                              </Text>
-                                            </View>
-                                            <View>
-                                              <Text style={styles.miniCardLabel}>Limite</Text>
-                                              <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]}>
-                                                {showBalances ? fmt(card.totalLimit) : 'R$ •••'}
-                                              </Text>
+                                        <View style={styles.miniCardFooter}>
+                                          <View style={{ flex: 1, gap: 6 }}>
+                                            <Text style={styles.miniCardNumbers}>
+                                              ••••  ••••  ••••  {card.lastFourDigits}
+                                            </Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <View style={{ flex: 1, paddingRight: 4 }}>
+                                                <Text style={styles.miniCardLabel}>Disponível</Text>
+                                                <Text style={styles.miniCardValue} numberOfLines={1} adjustsFontSizeToFit>
+                                                  {showBalances ? fmt(card.remainingLimit) : 'R$ •••'}
+                                                </Text>
+                                              </View>
+                                              <View style={{ flex: 1, paddingRight: 4 }}>
+                                                <Text style={styles.miniCardLabel}>Utilizado</Text>
+                                                <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.85)' }]} numberOfLines={1} adjustsFontSizeToFit>
+                                                  {showBalances ? fmt(card.usedLimit ?? 0) : 'R$ •••'}
+                                                </Text>
+                                              </View>
+                                              <View style={{ flex: 1 }}>
+                                                <Text style={styles.miniCardLabel}>Limite</Text>
+                                                <Text style={[styles.miniCardValue, { fontSize: 10, color: 'rgba(255, 255, 255, 0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>
+                                                  {showBalances ? fmt(card.totalLimit) : 'R$ •••'}
+                                                </Text>
+                                              </View>
                                             </View>
                                           </View>
                                         </View>
-                                        <Text style={styles.premiumCardBadge}>PLATINUM</Text>
-                                      </View>
-                                    </LinearGradient>
+                                      </LinearGradient>
+                                    </TouchableOpacity>
                                   ))}
                                 </ScrollView>
                               </View>
@@ -734,11 +759,11 @@ export default function WalletsScreen() {
               <Text style={styles.label}>Saldo Físico (Dinheiro em Mãos)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="0.00"
+                placeholder="0,00"
                 placeholderTextColor={colors.text.muted}
                 keyboardType="decimal-pad"
                 value={walletForm.cashBalance}
-                onChangeText={(text) => setWalletForm({ ...walletForm, cashBalance: text })}
+                onChangeText={(text) => setWalletForm({ ...walletForm, cashBalance: formatCurrencyInput(text) })}
               />
             </View>
 
@@ -811,11 +836,11 @@ export default function WalletsScreen() {
                 <Text style={styles.label}>Saldo em Débito</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="0.00"
+                  placeholder="0,00"
                   placeholderTextColor={colors.text.muted}
                   keyboardType="decimal-pad"
                   value={accountForm.debitBalance}
-                  onChangeText={(text) => setAccountForm({ ...accountForm, debitBalance: text })}
+                  onChangeText={(text) => setAccountForm({ ...accountForm, debitBalance: formatCurrencyInput(text) })}
                 />
               </View>
 
@@ -823,11 +848,11 @@ export default function WalletsScreen() {
                 <Text style={styles.label}>Limite de Crédito</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="0.00"
+                  placeholder="0,00"
                   placeholderTextColor={colors.text.muted}
                   keyboardType="decimal-pad"
                   value={accountForm.creditLimit}
-                  onChangeText={(text) => setAccountForm({ ...accountForm, creditLimit: text })}
+                  onChangeText={(text) => setAccountForm({ ...accountForm, creditLimit: formatCurrencyInput(text) })}
                 />
               </View>
             </View>
@@ -890,11 +915,23 @@ export default function WalletsScreen() {
                 <Text style={styles.label}>Limite Total</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="0.00"
+                  placeholder="0,00"
                   placeholderTextColor={colors.text.muted}
                   keyboardType="decimal-pad"
                   value={cardForm.totalLimit}
-                  onChangeText={(text) => setCardForm({ ...cardForm, totalLimit: text })}
+                  onChangeText={(text) => setCardForm({ ...cardForm, totalLimit: formatCurrencyInput(text) })}
+                />
+              </View>
+
+              <View style={[styles.formGroup, { flex: 1, marginLeft: spacing.md }]}>
+                <Text style={styles.label}>Limite Disponível</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0,00"
+                  placeholderTextColor={colors.text.muted}
+                  keyboardType="decimal-pad"
+                  value={cardForm.availableLimit}
+                  onChangeText={(text) => setCardForm({ ...cardForm, availableLimit: formatCurrencyInput(text) })}
                 />
               </View>
             </View>
@@ -913,6 +950,68 @@ export default function WalletsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* --- Expanded Card Overlay Modal --- */}
+      <Modal visible={!!expandedCard} transparent animationType="fade">
+        {expandedCard && (
+          <TouchableOpacity 
+            style={styles.expandedCardOverlay} 
+            activeOpacity={1} 
+            onPress={() => setExpandedCard(null)}
+          >
+            <LinearGradient
+              colors={getCardGradient(expandedCard.brand)}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.expandedCreditCard}
+            >
+              <View style={[styles.cardGlossyShine, { width: 150, height: 400, transform: [{ rotate: '-45deg' }, { translateY: -100 }] }]} />
+              
+              <View style={styles.miniCardHeader}>
+                <View style={styles.miniCardBrandRow}>
+                  <Ionicons name="card" size={24} color="rgba(255, 255, 255, 0.7)" />
+                  <Text style={[styles.miniCardBrandText, { fontSize: 16 }]}>{expandedCard.brand.toUpperCase()}</Text>
+                </View>
+              </View>
+
+              <View style={styles.miniCardBody}>
+                <View style={[styles.miniCardChip, { width: 45, height: 32 }]} />
+                <Ionicons name="wifi-sharp" size={28} color="rgba(255,255,255,0.4)" style={styles.cardWifiIcon} />
+              </View>
+
+              <View style={styles.miniCardFooter}>
+                <View style={{ flex: 1, gap: 10 }}>
+                  <Text style={[styles.miniCardNumbers, { fontSize: 18 }]}>
+                    ••••  ••••  ••••  {expandedCard.lastFourDigits}
+                  </Text>
+
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1, paddingRight: 4 }}>
+                      <Text style={[styles.miniCardLabel, { fontSize: 9 }]}>Disponível</Text>
+                      <Text style={[styles.miniCardValue, { fontSize: 14 }]} numberOfLines={1} adjustsFontSizeToFit>
+                        {showBalances ? fmt(expandedCard.remainingLimit) : 'R$ •••'}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, paddingRight: 4 }}>
+                      <Text style={[styles.miniCardLabel, { fontSize: 9 }]}>Utilizado</Text>
+                      <Text style={[styles.miniCardValue, { fontSize: 13, color: 'rgba(255, 255, 255, 0.85)' }]} numberOfLines={1} adjustsFontSizeToFit>
+                        {showBalances ? fmt(expandedCard.usedLimit ?? 0) : 'R$ •••'}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.miniCardLabel, { fontSize: 9 }]}>Limite</Text>
+                      <Text style={[styles.miniCardValue, { fontSize: 13, color: 'rgba(255, 255, 255, 0.7)' }]} numberOfLines={1} adjustsFontSizeToFit>
+                        {showBalances ? fmt(expandedCard.totalLimit) : 'R$ •••'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      </Modal>
+
       <DeleteWarningModal
         visible={deleteModalVisible}
         title={deleteModalConfig?.title || 'Confirmar Exclusão'}
@@ -1353,4 +1452,26 @@ const styles = StyleSheet.create({
   submitBtnText: { ...typography.button, color: colors.white },
   headerActions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   toggleBalancesBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  
+  // Expanded Card Overlay
+  expandedCardOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  expandedCreditCard: {
+    width: '100%',
+    maxWidth: 380,
+    aspectRatio: 1.586,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'space-between',
+    ...shadow.lg,
+  },
 });

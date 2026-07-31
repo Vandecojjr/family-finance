@@ -128,7 +128,8 @@ public sealed class WalletsEndpoints : IEndpointGroup
     public record CreateCreditCardRequest(
         string Brand,
         string LastFourDigits,
-        decimal TotalLimit);
+        decimal TotalLimit,
+        decimal AvailableLimit);
 
     private static async Task<HttpResult> CreateWallet([FromBody] CreateWalletCommand request, IMediator mediator, CancellationToken cancellationToken)
     {
@@ -233,7 +234,8 @@ public sealed class WalletsEndpoints : IEndpointGroup
             accountId,
             request.Brand,
             request.LastFourDigits,
-            request.TotalLimit);
+            request.TotalLimit,
+            request.AvailableLimit);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }
