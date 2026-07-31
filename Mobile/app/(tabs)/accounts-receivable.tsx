@@ -340,7 +340,7 @@ export default function AccountsReceivableScreen({ isEmbedded = false }: { isEmb
                       style={styles.input}
                       placeholder="0.00"
                       placeholderTextColor={colors.text.muted}
-                      keyboardType="numeric"
+                      keyboardType="decimal-pad"
                       value={receiveAmount}
                       onChangeText={setReceiveAmount}
                     />

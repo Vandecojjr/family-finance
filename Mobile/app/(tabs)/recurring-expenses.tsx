@@ -1038,7 +1038,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                         style={styles.input}
                         placeholder={viewMode === 'planned' ? '0.00' : (type === 2 ? 'Valor esperado (ex: 100.00)' : '0.00')}
                         placeholderTextColor={colors.text.muted}
-                        keyboardType="numeric"
+                        keyboardType="decimal-pad"
                         value={amount}
                         onChangeText={setAmount}
                       />
@@ -1054,7 +1054,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           style={styles.input}
                           placeholder={dueDayType === 'business' ? "5" : "10"}
                           placeholderTextColor={colors.text.muted}
-                          keyboardType="numeric"
+                          keyboardType="decimal-pad"
                           maxLength={2}
                           value={dueDay}
                           onChangeText={setDueDay}
@@ -1285,7 +1285,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                       style={styles.input}
                       placeholder="0.00"
                       placeholderTextColor={colors.text.muted}
-                      keyboardType="numeric"
+                      keyboardType="decimal-pad"
                       value={payAmount}
                       onChangeText={setPayAmount}
                     />

@@ -27,6 +27,7 @@ import { Transaction, Category, Wallet } from '@/types';
 import DatePicker from '@/components/DatePicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
 import { OriginPicker } from '@/components/OriginPicker';
+import { DeleteWarningModal } from '@/components/DeleteWarningModal';
 import { getCategoryMeta } from '@/utils/categoryHelpers';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -208,11 +209,16 @@ export default function TransactionsScreen() {
     },
   });
 
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => transactionsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      setDeleteModalOpen(false);
+      setTransactionToDelete(null);
     },
     onError: (err: any) => {
       Alert.alert('Erro ao excluir/estornar transação', err.message);
@@ -220,18 +226,8 @@ export default function TransactionsScreen() {
   });
 
   const handleDelete = (t: Transaction) => {
-    Alert.alert(
-      'Confirmar Estorno',
-      `Deseja realmente remover esta transação de "${t.description}"? Isso estornará o valor de ${fmt(t.amount)} no saldo correspondente.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Estornar',
-          style: 'destructive',
-          onPress: () => deleteMutation.mutate(t.id),
-        },
-      ]
-    );
+    setTransactionToDelete(t);
+    setDeleteModalOpen(true);
   };
 
   const closeForm = () => {
@@ -432,7 +428,7 @@ export default function TransactionsScreen() {
                   style={styles.input}
                   placeholder="0,00"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={amount}
                   onChangeText={setAmount}
                 />
@@ -531,6 +527,15 @@ export default function TransactionsScreen() {
           setDate(d);
           setIsDatePickerOpen(false);
         }}
+      />
+
+      <DeleteWarningModal
+        visible={deleteModalOpen}
+        title="Confirmar Estorno"
+        description={`Deseja realmente remover esta transação de "${transactionToDelete?.description}"? Isso estornará o valor de ${transactionToDelete ? fmt(transactionToDelete.amount) : ''} no saldo correspondente.`}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={() => transactionToDelete && deleteMutation.mutate(transactionToDelete.id)}
+        isLoading={deleteMutation.isPending}
       />
     </SafeAreaView>
   );

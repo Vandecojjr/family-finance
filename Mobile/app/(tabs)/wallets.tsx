@@ -23,6 +23,7 @@ import { walletsApi } from '@/api/endpoints/wallets';
 import { Wallet, BankAccount, CreditCard } from '@/types';
 import { usePreferenceStore } from '@/stores/preferenceStore';
 import { decodeJwt } from '@/utils/jwt';
+import { DeleteWarningModal } from '@/components/DeleteWarningModal';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -136,6 +137,19 @@ export default function WalletsScreen() {
     totalLimit: '',
   });
 
+  // Delete Warning Modal State
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteModalConfig, setDeleteModalConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const openDeleteModal = (title: string, description: string, onConfirm: () => void) => {
+    setDeleteModalConfig({ title, description, onConfirm });
+    setDeleteModalVisible(true);
+  };
+
   // --- Mutations ---
 
   // Wallet Mutations
@@ -170,9 +184,11 @@ export default function WalletsScreen() {
     mutationFn: (id: string) => walletsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      setDeleteModalVisible(false);
     },
     onError: (err: any) => {
       Alert.alert('Erro ao excluir carteira', err.message);
+      setDeleteModalVisible(false);
     },
   });
 
@@ -213,9 +229,11 @@ export default function WalletsScreen() {
       walletsApi.deleteBankAccount(walletId, accountId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      setDeleteModalVisible(false);
     },
     onError: (err: any) => {
       Alert.alert('Erro ao excluir conta', err.message);
+      setDeleteModalVisible(false);
     },
   });
 
@@ -250,9 +268,11 @@ export default function WalletsScreen() {
       walletsApi.deleteCreditCard(walletId, accountId, cardId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      setDeleteModalVisible(false);
     },
     onError: (err: any) => {
       Alert.alert('Erro ao excluir cartão de crédito', err.message);
+      setDeleteModalVisible(false);
     },
   });
 
@@ -274,13 +294,10 @@ export default function WalletsScreen() {
   };
 
   const handleConfirmDeleteWallet = (w: Wallet) => {
-    Alert.alert(
+    openDeleteModal(
       'Confirmar Exclusão',
       `Deseja realmente remover a carteira "${w.name}"? Isso também excluirá todas as suas contas e cartões associados.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: () => walletDeleteMutation.mutate(w.id) },
-      ]
+      () => walletDeleteMutation.mutate(w.id)
     );
   };
 
@@ -307,17 +324,10 @@ export default function WalletsScreen() {
   };
 
   const handleConfirmDeleteAccount = (walletId: string, acc: BankAccount) => {
-    Alert.alert(
+    openDeleteModal(
       'Confirmar Exclusão',
       `Deseja realmente remover a conta "${acc.bankName}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => accountDeleteMutation.mutate({ walletId, accountId: acc.id }),
-        },
-      ]
+      () => accountDeleteMutation.mutate({ walletId, accountId: acc.id })
     );
   };
 
@@ -333,17 +343,10 @@ export default function WalletsScreen() {
   };
 
   const handleConfirmDeleteCard = (walletId: string, accountId: string, card: CreditCard) => {
-    Alert.alert(
+    openDeleteModal(
       'Confirmar Exclusão',
       `Deseja remover o cartão final ${card.lastFourDigits} (${card.brand})?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => cardDeleteMutation.mutate({ walletId, accountId, cardId: card.id }),
-        },
-      ]
+      () => cardDeleteMutation.mutate({ walletId, accountId, cardId: card.id })
     );
   };
 
@@ -733,7 +736,7 @@ export default function WalletsScreen() {
                 style={styles.input}
                 placeholder="0.00"
                 placeholderTextColor={colors.text.muted}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 value={walletForm.cashBalance}
                 onChangeText={(text) => setWalletForm({ ...walletForm, cashBalance: text })}
               />
@@ -810,7 +813,7 @@ export default function WalletsScreen() {
                   style={styles.input}
                   placeholder="0.00"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={accountForm.debitBalance}
                   onChangeText={(text) => setAccountForm({ ...accountForm, debitBalance: text })}
                 />
@@ -822,7 +825,7 @@ export default function WalletsScreen() {
                   style={styles.input}
                   placeholder="0.00"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={accountForm.creditLimit}
                   onChangeText={(text) => setAccountForm({ ...accountForm, creditLimit: text })}
                 />
@@ -876,7 +879,7 @@ export default function WalletsScreen() {
                   style={styles.input}
                   placeholder="1234"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   maxLength={4}
                   value={cardForm.lastFourDigits}
                   onChangeText={(text) => setCardForm({ ...cardForm, lastFourDigits: text })}
@@ -889,7 +892,7 @@ export default function WalletsScreen() {
                   style={styles.input}
                   placeholder="0.00"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={cardForm.totalLimit}
                   onChangeText={(text) => setCardForm({ ...cardForm, totalLimit: text })}
                 />
@@ -910,6 +913,18 @@ export default function WalletsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      <DeleteWarningModal
+        visible={deleteModalVisible}
+        title={deleteModalConfig?.title || 'Confirmar Exclusão'}
+        description={deleteModalConfig?.description || ''}
+        onClose={() => setDeleteModalVisible(false)}
+        onConfirm={() => deleteModalConfig?.onConfirm()}
+        isLoading={
+          walletDeleteMutation.isPending || 
+          accountDeleteMutation.isPending || 
+          cardDeleteMutation.isPending
+        }
+      />
     </SafeAreaView>
   );
 }

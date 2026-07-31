@@ -622,7 +622,7 @@ export default function FamilyScreen() {
                           style={styles.input}
                           placeholder={type === 2 ? 'Valor esperado (ex: 100.00)' : '0.00'}
                           placeholderTextColor={colors.text.muted}
-                          keyboardType="numeric"
+                          keyboardType="decimal-pad"
                           value={amount}
                           onChangeText={setAmount}
                         />
@@ -637,7 +637,7 @@ export default function FamilyScreen() {
                           style={styles.input}
                           placeholder={dueDayType === 'business' ? "5" : "10"}
                           placeholderTextColor={colors.text.muted}
-                          keyboardType="numeric"
+                          keyboardType="decimal-pad"
                           maxLength={2}
                           value={dueDay}
                           onChangeText={setDueDay}
