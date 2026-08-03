@@ -60,7 +60,7 @@ public class CreditCard : Entity
         if (amount <= 0)
             throw new ArgumentException("O valor do ajuste deve ser maior que zero.", nameof(amount));
         
-        if (type == TransactionType.Income)
+        if (type == TransactionType.Income || type == TransactionType.TransferIn)
             throw new BankAccountCreditTransactionMustBeExpenseException();
 
         if (RemainingLimit.Value < amount)

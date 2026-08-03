@@ -67,7 +67,7 @@ public class BankAccount : Entity
 
     public (string DisplayName, IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice> AffectedInvoices) RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId, DateTime transactionDate, int installments = 1)
     {
-        if (type == TransactionType.Income)
+        if (type == TransactionType.Income || type == TransactionType.TransferIn)
             throw new CreditCardTransactionMustBeExpenseException();
 
         var card = _creditCards.FirstOrDefault(c => c.Id == creditCardId);
@@ -90,7 +90,7 @@ public class BankAccount : Entity
 
         if (useCredit.Value)
         {
-            if (type == TransactionType.Income)
+            if (type == TransactionType.Income || type == TransactionType.TransferIn)
                 throw new BankAccountCreditTransactionMustBeExpenseException();
 
             if (RemainingCreditLimit.Value < amount)
@@ -100,11 +100,11 @@ public class BankAccount : Entity
         }
         else
         {
-            if (type == TransactionType.Income)
+            if (type == TransactionType.Income || type == TransactionType.TransferIn)
             {
                 DebitBalance += amount;
             }
-            else if (type == TransactionType.Expense)
+            else if (type == TransactionType.Expense || type == TransactionType.TransferOut)
             {
                 if (DebitBalance < amount)
                     throw new InvalidOperationException("Saldo em conta insuficiente.");

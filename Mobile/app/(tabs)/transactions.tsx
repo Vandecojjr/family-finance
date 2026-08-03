@@ -117,12 +117,20 @@ export default function TransactionsScreen() {
     useCredit?: boolean | null;
     label: string;
   } | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<{
+    walletId: string;
+    bankAccountId: string | null;
+    creditCardId: string | null;
+    useCredit?: boolean | null;
+    label: string;
+  } | null>(null);
   const [installments, setInstallments] = useState('1');
 
   // Picker States
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isOriginPickerOpen, setIsOriginPickerOpen] = useState(false);
+  const [isDestinationPickerOpen, setIsDestinationPickerOpen] = useState(false);
 
   // Flattened Categories for display
   const targetCategories = React.useMemo(() => {
@@ -203,24 +211,41 @@ export default function TransactionsScreen() {
   const registerMutation = useMutation({
     mutationFn: async () => {
       const parsedAmount = parseFloat(amount.replace(',', '.'));
-      if (!description.trim()) throw new Error('A descrição é obrigatória.');
       if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error('O valor deve ser maior que zero.');
       if (!categoryId) throw new Error('Selecione uma categoria.');
-      if (!selectedOrigin) throw new Error('Selecione uma origem/destino de saldo.');
-
-      await transactionsApi.register({
-        description,
-        amount: parsedAmount,
-        type,
-        date,
-        categoryId,
-        walletId: selectedOrigin.walletId,
-        bankAccountId: selectedOrigin.bankAccountId,
-        creditCardId: selectedOrigin.creditCardId,
-        useCredit: selectedOrigin.useCredit,
-        installments: parseInt(installments, 10) || 1,
-        notes: '',
-      });
+      
+      if (type === 3) {
+        if (!selectedOrigin) throw new Error('Selecione uma origem.');
+        if (!selectedDestination) throw new Error('Selecione um destino.');
+        
+        await transactionsApi.transfer({
+          amount: parsedAmount,
+          date,
+          categoryId,
+          sourceWalletId: selectedOrigin.walletId,
+          sourceBankAccountId: selectedOrigin.bankAccountId,
+          destinationWalletId: selectedDestination.walletId,
+          destinationBankAccountId: selectedDestination.bankAccountId,
+          notes: description || undefined,
+        });
+      } else {
+        if (!description.trim()) throw new Error('A descrição é obrigatória.');
+        if (!selectedOrigin) throw new Error('Selecione uma origem/destino de saldo.');
+        
+        await transactionsApi.register({
+          description,
+          amount: parsedAmount,
+          type,
+          date,
+          categoryId,
+          walletId: selectedOrigin.walletId,
+          bankAccountId: selectedOrigin.bankAccountId,
+          creditCardId: selectedOrigin.creditCardId,
+          useCredit: selectedOrigin.useCredit,
+          installments: parseInt(installments, 10) || 1,
+          notes: '',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -260,6 +285,7 @@ export default function TransactionsScreen() {
     setDate(new Date().toISOString().split('T')[0] ?? '');
     setCategoryId('');
     setSelectedOrigin(null);
+    setSelectedDestination(null);
     setInstallments('1');
     setModalOpen(false);
   };
@@ -464,7 +490,7 @@ export default function TransactionsScreen() {
                   setCategoryId('');
                 }}
               >
-                <Text style={[styles.typeBtnText, type === 2 && styles.typeBtnTextActive]}>Saída / Despesa</Text>
+                <Text style={[styles.typeBtnText, type === 2 && styles.typeBtnTextActive]}>Saída</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.typeBtn, type === 1 && styles.typeBtnIncome]}
@@ -476,7 +502,19 @@ export default function TransactionsScreen() {
                   }
                 }}
               >
-                <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada / Receita</Text>
+                <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.typeBtn, type === 3 && { backgroundColor: colors.brand.primary }]}
+                onPress={() => {
+                  setType(3);
+                  setCategoryId('');
+                  if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
+                    setSelectedOrigin(null);
+                  }
+                }}
+              >
+                <Text style={[styles.typeBtnText, type === 3 && styles.typeBtnTextActive]}>Transferência</Text>
               </TouchableOpacity>
             </View>
 
@@ -536,7 +574,7 @@ export default function TransactionsScreen() {
 
               {/* Origin Balance Resource */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Destino / Origem do Lançamento</Text>
+                <Text style={styles.label}>{type === 3 ? 'Origem' : 'Destino / Origem do Lançamento'}</Text>
                 <TouchableOpacity
                   style={styles.pickerTrigger}
                   onPress={() => setIsOriginPickerOpen(true)}
@@ -547,6 +585,22 @@ export default function TransactionsScreen() {
                   <Ionicons name="wallet-outline" size={18} color={colors.text.secondary} />
                 </TouchableOpacity>
               </View>
+
+              {/* Destination Balance Resource (Only if Transfer) */}
+              {type === 3 && (
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Destino</Text>
+                  <TouchableOpacity
+                    style={styles.pickerTrigger}
+                    onPress={() => setIsDestinationPickerOpen(true)}
+                  >
+                    <Text style={styles.pickerTriggerText}>
+                      {selectedDestination ? selectedDestination.label : 'Selecionar Carteira ou Conta'}
+                    </Text>
+                    <Ionicons name="wallet-outline" size={18} color={colors.text.secondary} />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* Installments (Only if Credit) */}
               {(selectedOrigin?.useCredit || selectedOrigin?.creditCardId) && (
@@ -567,7 +621,7 @@ export default function TransactionsScreen() {
               <TouchableOpacity
                 style={[
                   styles.submitBtn,
-                  { backgroundColor: type === 1 ? colors.brand.teal : colors.danger },
+                  { backgroundColor: type === 1 ? colors.brand.teal : type === 3 ? colors.brand.primary : colors.danger },
                 ]}
                 onPress={() => registerMutation.mutate()}
                 disabled={registerMutation.isPending}
@@ -597,9 +651,23 @@ export default function TransactionsScreen() {
               selectedBankAccountId={selectedOrigin?.bankAccountId ?? null}
               selectedCreditCardId={selectedOrigin?.creditCardId ?? null}
               selectedUseCredit={selectedOrigin?.useCredit ?? null}
-              allowCreditCards={type !== 1}
+              allowCreditCards={type !== 1 && type !== 3}
               onSelect={(selection) => {
                 setSelectedOrigin(selection);
+              }}
+            />
+
+            <OriginPicker
+              visible={isDestinationPickerOpen}
+              onClose={() => setIsDestinationPickerOpen(false)}
+              wallets={wallets}
+              selectedWalletId={selectedDestination?.walletId ?? null}
+              selectedBankAccountId={selectedDestination?.bankAccountId ?? null}
+              selectedCreditCardId={null}
+              selectedUseCredit={null}
+              allowCreditCards={false}
+              onSelect={(selection) => {
+                setSelectedDestination(selection);
               }}
             />
           </View>

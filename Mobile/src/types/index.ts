@@ -150,6 +150,17 @@ export interface RegisterTransactionRequest {
   notes?: string;
 }
 
+export interface TransferMoneyRequest {
+  amount: number;
+  date: string;
+  categoryId: string;
+  sourceWalletId: string;
+  sourceBankAccountId: string | null;
+  destinationWalletId: string;
+  destinationBankAccountId: string | null;
+  notes?: string;
+}
+
 
 export interface Category {
   id: string;

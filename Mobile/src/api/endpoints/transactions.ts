@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import { ApiResult, Transaction, RegisterTransactionRequest } from '@/types';
+import { ApiResult, Transaction, RegisterTransactionRequest, TransferMoneyRequest } from '@/types';
 
 export const transactionsApi = {
   list: async (): Promise<Transaction[]> => {
@@ -15,6 +15,15 @@ export const transactionsApi = {
     const { data } = await apiClient.post<ApiResult<string>>('/api/transactions', payload);
     if (!data.isSuccess || !data.value) {
       const msg = data.errors?.[0]?.description ?? 'Erro ao registrar transação.';
+      throw new Error(msg);
+    }
+    return data.value;
+  },
+
+  transfer: async (payload: TransferMoneyRequest): Promise<string[]> => {
+    const { data } = await apiClient.post<ApiResult<string[]>>('/api/transactions/transfer', payload);
+    if (!data.isSuccess || !data.value) {
+      const msg = data.errors?.[0]?.description ?? 'Erro ao realizar transferência.';
       throw new Error(msg);
     }
     return data.value;

@@ -3,6 +3,7 @@ using Application.Shared.Results;
 using Application.UseCases.Transactions.DeleteTransaction;
 using Application.UseCases.Transactions.GetTransactionsByFamily;
 using Application.UseCases.Transactions.RegisterTransaction;
+using Application.UseCases.Transactions.TransferMoney;
 using Application.UseCases.Transactions.Shared;
 using Domain.Enums;
 using Mediator;
@@ -21,6 +22,14 @@ public sealed class TransactionsEndpoints : IEndpointGroup
             .WithTags("Transactions")
             .RequireAuthorization()
             .Produces<Result<Guid>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/transfer", TransferMoney)
+            .WithName("Transactions.Transfer")
+            .WithSummary("Transfere dinheiro entre contas/carteiras.")
+            .WithTags("Transactions")
+            .RequireAuthorization()
+            .Produces<Result<Guid[]>>()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapDelete("/{id:guid}", DeleteTransaction)
@@ -53,6 +62,16 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         string? Notes,
         int Installments = 1);
 
+    public record TransferMoneyRequest(
+        decimal Amount,
+        DateTime Date,
+        Guid CategoryId,
+        Guid SourceWalletId,
+        Guid? SourceBankAccountId,
+        Guid DestinationWalletId,
+        Guid? DestinationBankAccountId,
+        string? Notes);
+
     private static async Task<HttpResult> RegisterTransaction(
         [FromBody] RegisterTransactionRequest request,
         IMediator mediator,
@@ -70,6 +89,25 @@ public sealed class TransactionsEndpoints : IEndpointGroup
             request.UseCredit,
             request.Notes,
             request.Installments);
+
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
+
+    private static async Task<HttpResult> TransferMoney(
+        [FromBody] TransferMoneyRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new TransferMoneyCommand(
+            request.Amount,
+            request.Date,
+            request.CategoryId,
+            request.SourceWalletId,
+            request.SourceBankAccountId,
+            request.DestinationWalletId,
+            request.DestinationBankAccountId,
+            request.Notes);
 
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();

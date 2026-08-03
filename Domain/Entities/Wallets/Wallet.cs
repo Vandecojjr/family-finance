@@ -71,11 +71,11 @@ public class Wallet : Entity, IAggregateRoot
         if (amount <= 0)
             throw new ArgumentException("O valor do ajuste deve ser maior que zero.", nameof(amount));
 
-        if (type == TransactionType.Income)
+        if (type == TransactionType.Income || type == TransactionType.TransferIn)
         {
             CashBalance = CashBalance.Create(CashBalance.Value + amount);
         }
-        else if (type == TransactionType.Expense)
+        else if (type == TransactionType.Expense || type == TransactionType.TransferOut)
         {
             if (CashBalance.Value < amount)
                 throw new InvalidOperationException("Saldo em dinheiro vivo insuficiente para realizar esta despesa.");
