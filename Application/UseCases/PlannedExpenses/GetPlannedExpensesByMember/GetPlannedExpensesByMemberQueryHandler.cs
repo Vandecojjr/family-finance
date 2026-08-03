@@ -15,14 +15,20 @@ public sealed class GetPlannedExpensesByMemberQueryHandler(
         GetPlannedExpensesByMemberQuery query,
         CancellationToken cancellationToken)
     {
-        var currentMember = await familyRepository.ExistsMemberByIdAsync(currentUser.MemberId, cancellationToken);
-        if (!currentMember)
+        var currentMember = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
+        if (currentMember == null)
             return Result<IReadOnlyCollection<PlannedExpenseResponse>>.Failure(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
 
         if (currentUser.MemberId != query.MemberId)
-            return Result<IReadOnlyCollection<PlannedExpenseResponse>>.Failure(
-                Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar gastos previstos para este membro."));
+        {
+            var requestedMember = await familyRepository.GetMemberByIdAsync(query.MemberId, cancellationToken);
+            if (requestedMember == null || requestedMember.FamilyId != currentMember.FamilyId)
+            {
+                return Result<IReadOnlyCollection<PlannedExpenseResponse>>.Failure(
+                    Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar gastos previstos para este membro."));
+            }
+        }
 
         var plannedExpenses = await expenseRepository.GetAllPlannedByMemberAsync(query.MemberId, cancellationToken);
         return Result<IReadOnlyCollection<PlannedExpenseResponse>>.Success(plannedExpenses.ToResponse());

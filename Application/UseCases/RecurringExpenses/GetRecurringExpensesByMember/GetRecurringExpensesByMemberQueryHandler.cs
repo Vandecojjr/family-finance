@@ -16,14 +16,20 @@ public sealed class GetRecurringExpensesByMemberQueryHandler(
         GetRecurringExpensesByMemberQuery query,
         CancellationToken cancellationToken)
     {
-        var currentMember = await familyRepository.ExistsMemberByIdAsync(currentUser.MemberId, cancellationToken);
-        if (!currentMember)
+        var currentMember = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
+        if (currentMember == null)
             return Result<IReadOnlyCollection<RecurringExpenseResponse>>.Failure(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
 
         if (query.MemberId != currentUser.MemberId)
-            return Result<IReadOnlyCollection<RecurringExpenseResponse>>.Failure(
-                Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar os gastos recorrentes deste membro."));
+        {
+            var requestedMember = await familyRepository.GetMemberByIdAsync(query.MemberId, cancellationToken);
+            if (requestedMember == null || requestedMember.FamilyId != currentMember.FamilyId)
+            {
+                return Result<IReadOnlyCollection<RecurringExpenseResponse>>.Failure(
+                    Error.Failure("Family.AccessDenied", "Você não tem permissão para visualizar os gastos recorrentes deste membro."));
+            }
+        }
 
         var expenses = await expenseRepository.GetAllRecurringByMemberAsync(query.MemberId, cancellationToken);
         return Result<IReadOnlyCollection<RecurringExpenseResponse>>.Success(expenses.ToResponse());

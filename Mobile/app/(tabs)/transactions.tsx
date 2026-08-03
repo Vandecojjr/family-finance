@@ -72,7 +72,7 @@ export default function TransactionsScreen() {
     transactions.forEach((t) => {
       if (t.type === 1) {
         totalIncome += t.amount;
-      } else {
+      } else if (t.type === 2) {
         totalExpense += t.amount;
       }
     });
@@ -405,10 +405,11 @@ export default function TransactionsScreen() {
                 );
               }}
               renderItem={({ item, index, section }) => {
-                const isIncome = item.type === 1;
-                const meta = getCategoryMeta(item.categoryName || '', isIncome ? 'Income' : 'Expense');
-                const itemColor = meta.color;
-                const itemIcon = meta.icon;
+                const isIncome = item.type === 1 || item.type === 3;
+                const isTransfer = item.type === 3 || item.type === 4;
+                const meta = getCategoryMeta(item.categoryName || '', item.type === 1 || item.type === 3 ? 'Income' : 'Expense');
+                const itemColor = isTransfer ? colors.brand.primary : meta.color;
+                const itemIcon = isTransfer ? 'swap-horizontal-outline' : meta.icon;
                 const isLast = index === section.data.length - 1;
 
                 return (
@@ -442,7 +443,7 @@ export default function TransactionsScreen() {
                       </View>
 
                       <View style={styles.cardRight}>
-                        <Text style={[styles.amount, { color: isIncome ? colors.success : colors.danger }]}>
+                        <Text style={[styles.amount, { color: isTransfer ? colors.brand.primary : (isIncome ? colors.success : colors.danger) }]}>
                           {isIncome ? '+' : '-'}{fmt(item.amount)}
                         </Text>
 

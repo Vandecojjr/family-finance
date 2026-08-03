@@ -85,9 +85,9 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
     if (family?.members && family.members.length > 0 && !selectedMember) {
       const self = family.members.find((m) => m.id === currentMemberId);
       if (self) {
-        setSelectedMember(self);
+        setSelectedMember({ id: 'all', name: 'Todos', familyId: self.familyId, cpf: '' });
       } else if (family.members[0]) {
-        setSelectedMember(family.members[0]);
+        setSelectedMember({ id: 'all', name: 'Todos', familyId: family.members[0].familyId, cpf: '' });
       }
     }
   }, [family, currentMemberId, selectedMember]);
@@ -95,29 +95,53 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
   // Fetch Recurring Expenses for selected member
   const { data: expenses, isLoading: isLoadingExpenses, refetch: refetchExpenses } = useQuery({
     queryKey: ['recurringExpenses', selectedMember?.id],
-    queryFn: () => recurringExpensesApi.getByMemberId(selectedMember!.id),
-    enabled: !!selectedMember,
+    queryFn: async () => {
+      if (selectedMember!.id === 'all') {
+        const results = await Promise.all(family!.members.map(m => recurringExpensesApi.getByMemberId(m.id)));
+        return results.flat();
+      }
+      return recurringExpensesApi.getByMemberId(selectedMember!.id);
+    },
+    enabled: !!selectedMember && !!family,
   });
 
   // Fetch Recurring Incomes for selected member
   const { data: incomes, isLoading: isLoadingIncomes, refetch: refetchIncomes } = useQuery({
     queryKey: ['recurringIncomes', selectedMember?.id],
-    queryFn: () => recurringIncomesApi.getByMemberId(selectedMember!.id),
-    enabled: !!selectedMember,
+    queryFn: async () => {
+      if (selectedMember!.id === 'all') {
+        const results = await Promise.all(family!.members.map(m => recurringIncomesApi.getByMemberId(m.id)));
+        return results.flat();
+      }
+      return recurringIncomesApi.getByMemberId(selectedMember!.id);
+    },
+    enabled: !!selectedMember && !!family,
   });
 
   // Fetch Planned Expenses for selected member
   const { data: plannedExpenses, isLoading: isLoadingPlannedExpenses, refetch: refetchPlannedExpenses } = useQuery({
     queryKey: ['plannedExpenses', selectedMember?.id],
-    queryFn: () => plannedExpensesApi.getByMemberId(selectedMember!.id),
-    enabled: !!selectedMember,
+    queryFn: async () => {
+      if (selectedMember!.id === 'all') {
+        const results = await Promise.all(family!.members.map(m => plannedExpensesApi.getByMemberId(m.id)));
+        return results.flat();
+      }
+      return plannedExpensesApi.getByMemberId(selectedMember!.id);
+    },
+    enabled: !!selectedMember && !!family,
   });
 
   // Fetch Planned Incomes for selected member
   const { data: plannedIncomes, isLoading: isLoadingPlannedIncomes, refetch: refetchPlannedIncomes } = useQuery({
     queryKey: ['plannedIncomes', selectedMember?.id],
-    queryFn: () => plannedIncomesApi.getByMemberId(selectedMember!.id),
-    enabled: !!selectedMember,
+    queryFn: async () => {
+      if (selectedMember!.id === 'all') {
+        const results = await Promise.all(family!.members.map(m => plannedIncomesApi.getByMemberId(m.id)));
+        return results.flat();
+      }
+      return plannedIncomesApi.getByMemberId(selectedMember!.id);
+    },
+    enabled: !!selectedMember && !!family,
   });
 
   // Fetch Categories for selection
@@ -730,12 +754,12 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
-            data={family.members}
+            data={[{ id: 'all', name: 'Todos', familyId: family.members[0].familyId, cpf: '' }, ...family.members]}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.memberChipsList}
             renderItem={({ item, index }) => {
               const isSelected = selectedMember?.id === item.id;
-              const memberColor = MEMBER_COLORS[index % MEMBER_COLORS.length] ?? colors.brand.primary;
+              const memberColor = item.id === 'all' ? colors.brand.primary : (MEMBER_COLORS[index % MEMBER_COLORS.length] ?? colors.brand.primary);
               return (
                 <TouchableOpacity
                   style={[
@@ -746,10 +770,10 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                   onPress={() => setSelectedMember(item)}
                 >
                   <View style={[styles.avatarMini, { backgroundColor: `${memberColor}22` }]}>
-                    <Text style={[styles.avatarMiniText, { color: memberColor }]}>{getInitials(item.name)}</Text>
+                    <Text style={[styles.avatarMiniText, { color: memberColor }]}>{item.id === 'all' ? 'All' : getInitials(item.name)}</Text>
                   </View>
                   <Text style={[styles.memberChipName, isSelected && styles.memberChipNameSelected]}>
-                    {item.name.split(' ')[0]}
+                    {item.id === 'all' ? 'Todos' : item.name.split(' ')[0]}
                   </Text>
                 </TouchableOpacity>
               );
