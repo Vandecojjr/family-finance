@@ -69,7 +69,7 @@ public sealed class PlannedIncomesEndpoints : IEndpointGroup
         string Description,
         decimal Amount,
         DateTime Date,
-        Guid MemberId,
+        Guid? MemberId,
         Guid CategoryId);
 
     public record UpdateRequest(
@@ -87,7 +87,7 @@ public sealed class PlannedIncomesEndpoints : IEndpointGroup
             request.Description,
             request.Amount,
             request.Date,
-            request.MemberId,
+            request.MemberId ?? Guid.Empty,
             request.CategoryId);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
@@ -139,4 +139,6 @@ public sealed class PlannedIncomesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+
+
 

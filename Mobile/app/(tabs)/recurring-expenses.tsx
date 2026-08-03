@@ -239,6 +239,8 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
   const [payCreditCardId, setPayCreditCardId] = useState('');
   const [payUseCredit, setPayUseCredit] = useState(false);
   const [isWalletSelectOpen, setIsWalletSelectOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceModalCallback, setInvoiceModalCallback] = useState<((forceNext: boolean) => void) | null>(null);
 
   // Mutations
   const deleteMutation = useMutation({
@@ -269,13 +271,14 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
   });
 
   const payMutation = useMutation({
-    mutationFn: async (payload: { id: string, amount: number, walletId: string, bankAccountId?: string | null, creditCardId?: string | null, useCredit?: boolean | null }) => {
+    mutationFn: async (payload: { id: string, amount: number, walletId: string, bankAccountId?: string | null, creditCardId?: string | null, useCredit?: boolean | null, forceNextInvoice?: boolean | null }) => {
       await recurringExpensesApi.pay(payload.id, {
         walletId: payload.walletId,
         amount: payload.amount,
         bankAccountId: payload.bankAccountId,
         creditCardId: payload.creditCardId,
         useCredit: payload.useCredit,
+        forceNextInvoice: payload.forceNextInvoice,
       });
     },
     onSuccess: () => {
@@ -320,6 +323,39 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
       return;
     }
 
+    if (payCreditCardId) {
+      const selectedWallet = wallets?.find(w => w.id === payWalletId);
+      const selectedAccount = selectedWallet?.accounts.find(a => a.id === payBankAccountId);
+      const selectedCard = selectedAccount?.creditCards.find(c => c.id === payCreditCardId);
+
+      if (selectedCard && selectedCard.dueDay) {
+        const txDate = new Date();
+        const dueDay = selectedCard.dueDay;
+        const dueThisMonth = new Date(txDate.getFullYear(), txDate.getMonth(), dueDay, 12, 0, 0);
+        
+        const diffTime = dueThisMonth.getTime() - txDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Se a compra for entre 7 e 5 dias do vencimento (janela de dúvida)
+        if (diffDays >= 5 && diffDays <= 7) {
+          setInvoiceModalCallback(() => (forceNext: boolean) => {
+            setIsInvoiceModalOpen(false);
+            payMutation.mutate({
+              id: payingItem.id,
+              amount: amountNum,
+              walletId: payWalletId,
+              bankAccountId: payBankAccountId || null,
+              creditCardId: payCreditCardId || null,
+              useCredit: payBankAccountId ? payUseCredit : null,
+              forceNextInvoice: forceNext,
+            });
+          });
+          setIsInvoiceModalOpen(true);
+          return;
+        }
+      }
+    }
+
     payMutation.mutate({
       id: payingItem.id,
       amount: amountNum,
@@ -327,6 +363,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
       bankAccountId: payBankAccountId || null,
       creditCardId: payCreditCardId || null,
       useCredit: payBankAccountId ? payUseCredit : null,
+      forceNextInvoice: null,
     });
   };
 
@@ -352,7 +389,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
               description,
               amount: parsedAmount,
               date: startDate,
-              memberId: selectedMember!.id,
+              memberId: selectedMember!.id === 'all' ? null : selectedMember!.id,
               categoryId,
             });
           }
@@ -369,7 +406,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
               description,
               amount: parsedAmount,
               date: startDate,
-              memberId: selectedMember!.id,
+              memberId: selectedMember!.id === 'all' ? null : selectedMember!.id,
               categoryId,
             });
           }
@@ -403,7 +440,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
               dueDay: parsedDueDay,
               startDate,
               endDate: endDate || null,
-              memberId: selectedMember!.id,
+              memberId: selectedMember!.id === 'all' ? null : selectedMember!.id,
               categoryId,
             });
           }
@@ -428,7 +465,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
               dueDay: parsedDueDay,
               startDate,
               endDate: endDate || null,
-              memberId: selectedMember!.id,
+              memberId: selectedMember!.id === 'all' ? null : selectedMember!.id,
               categoryId,
             });
           }
@@ -1275,6 +1312,42 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Invoice Modal */}
+      <Modal visible={isInvoiceModalOpen} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.formCard, { maxWidth: 320, alignSelf: 'center', marginHorizontal: 20 }]}>
+            <Text style={{ ...typography.h3, color: colors.text.primary, marginBottom: spacing.md, textAlign: 'center' }}>
+              Atenção
+            </Text>
+            <Text style={{ ...typography.body, color: colors.text.secondary, marginBottom: spacing.lg, textAlign: 'center' }}>
+              O vencimento da fatura deste cartão está próximo. Onde deseja lançar este pagamento?
+            </Text>
+            <View style={{ gap: spacing.sm }}>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.brand.primary, marginTop: 0 }]}
+                onPress={() => invoiceModalCallback?.(false)}
+              >
+                <Text style={styles.saveBtnText}>Cair na Fatura Atual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.brand.teal, marginTop: 0 }]}
+                onPress={() => invoiceModalCallback?.(true)}
+              >
+                <Text style={styles.saveBtnText}>Cair na Próxima Fatura</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ padding: spacing.sm, marginTop: spacing.xs }}
+                onPress={() => setIsInvoiceModalOpen(false)}
+              >
+                <Text style={{ ...typography.body, color: colors.danger, textAlign: 'center', fontWeight: '600' }}>
+                  Cancelar Pagamento
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Pay Modal */}
       <Modal visible={isPayModalOpen} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -1895,3 +1968,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

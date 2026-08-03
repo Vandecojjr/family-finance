@@ -60,7 +60,8 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         Guid? CreditCardId,
         bool? UseCredit,
         string? Notes,
-        int Installments = 1);
+        int Installments = 1,
+        bool? ForceNextInvoice = null);
 
     public record TransferMoneyRequest(
         decimal Amount,
@@ -88,7 +89,8 @@ public sealed class TransactionsEndpoints : IEndpointGroup
             request.CreditCardId,
             request.UseCredit,
             request.Notes,
-            request.Installments);
+            request.Installments,
+            request.ForceNextInvoice);
 
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();

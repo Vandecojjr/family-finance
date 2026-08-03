@@ -24,9 +24,6 @@ public sealed class CreateRecurringExpenseCommandValidator : AbstractValidator<C
             .When(x => x.EndDate.HasValue)
             .WithMessage("A data de término deve ser posterior ou igual à data de início.");
 
-        RuleFor(x => x.MemberId)
-            .NotEmpty().WithMessage("O ID do membro é obrigatório.");
-
         RuleFor(x => x.Type)
             .IsInEnum().WithMessage("O tipo de gasto recorrente informado é inválido.");
 

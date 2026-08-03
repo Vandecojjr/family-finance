@@ -276,54 +276,20 @@ export default function WalletsScreen() {
 
   // CreditCard Mutations
   const cardSaveMutation = useMutation({
-    mutationFn: async () => {
-      const parsedLimit = parseCurrencyValue(cardForm.totalLimit);
-      const parsedAvailableLimit = parseCurrencyValue(cardForm.availableLimit);
-      const parsedDueDay = parseInt(cardForm.dueDay, 10);
-
-      if (!cardForm.brand?.trim()) throw new Error('Bandeira do cartão é obrigatória.');
-      if (!cardForm.lastFourDigits || cardForm.lastFourDigits.length !== 4 || isNaN(parseInt(cardForm.lastFourDigits, 10))) {
-        throw new Error('Últimos 4 dígitos devem conter exatamente 4 números.');
+    mutationFn: async (payload: {
+      walletId: string,
+      accountId: string,
+      data: {
+        brand: string;
+        lastFourDigits: string;
+        totalLimit: number;
+        availableLimit: number;
+        dueDay: number;
+        categoryId: string;
+        invoices?: any[];
       }
-      if (isNaN(parsedLimit) || parsedLimit < 0) throw new Error('Limite total deve ser maior ou igual a zero.');
-      if (isNaN(parsedAvailableLimit) || parsedAvailableLimit < 0) throw new Error('Limite disponível deve ser maior ou igual a zero.');
-      if (parsedAvailableLimit > parsedLimit) throw new Error('Limite disponível não pode ser maior que o limite total.');
-      if (isNaN(parsedDueDay) || parsedDueDay < 1 || parsedDueDay > 31) throw new Error('O dia de vencimento deve ser entre 1 e 31.');
-      if (!cardForm.categoryId) throw new Error('Categoria das faturas é obrigatória.');
-
-      const usedLimit = parsedLimit - parsedAvailableLimit;
-      let invoicesPayload: any[] | undefined = undefined;
-
-      if (usedLimit > 0) {
-        if (!cardForm.invoices || cardForm.invoices.length === 0) {
-          throw new Error('Como existe limite comprometido, adicione as faturas correspondentes.');
-        }
-        
-        invoicesPayload = cardForm.invoices.map(inv => {
-          const amount = parseCurrencyValue(inv.amount);
-          
-          if (isNaN(amount) || amount <= 0) throw new Error('Existem faturas com valores inválidos.');
-          
-          if (!inv.dueDate) throw new Error('A data de vencimento da fatura é obrigatória.');
-
-          // Generate ISO format string to pass to the backend
-          return { dueDate: new Date(inv.dueDate + 'T00:00:00').toISOString(), amount };
-        });
-
-        const totalInvoices = invoicesPayload.reduce((acc, inv) => acc + inv.amount, 0);
-        if (Math.abs(totalInvoices - usedLimit) > 0.01) {
-          throw new Error(`A soma das faturas não corresponde ao limite comprometido.`);
-        }
-      }
-      await walletsApi.createCreditCard(cardForm.walletId, cardForm.accountId, {
-        brand: cardForm.brand,
-        lastFourDigits: cardForm.lastFourDigits,
-        totalLimit: parsedLimit,
-        availableLimit: parsedAvailableLimit,
-        dueDay: parsedDueDay,
-        categoryId: cardForm.categoryId,
-        invoices: invoicesPayload,
-      });
+    }) => {
+      await walletsApi.createCreditCard(payload.walletId, payload.accountId, payload.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
@@ -348,6 +314,60 @@ export default function WalletsScreen() {
   });
 
   // --- Handlers ---
+  const handleCardSave = () => {
+    const parsedLimit = parseCurrencyValue(cardForm.totalLimit);
+    const parsedAvailableLimit = parseCurrencyValue(cardForm.availableLimit);
+    const parsedDueDay = parseInt(cardForm.dueDay, 10);
+
+    if (!cardForm.brand?.trim()) return Alert.alert('Validação', 'A bandeira do cartão é obrigatória.');
+    if (!cardForm.lastFourDigits || cardForm.lastFourDigits.length !== 4 || isNaN(parseInt(cardForm.lastFourDigits, 10))) {
+      return Alert.alert('Validação', 'Os últimos 4 dígitos devem conter exatamente 4 números.');
+    }
+    if (isNaN(parsedLimit) || parsedLimit <= 0) return Alert.alert('Validação', 'O limite total deve ser maior que zero.');
+    if (isNaN(parsedAvailableLimit) || parsedAvailableLimit < 0) return Alert.alert('Validação', 'O limite disponível deve ser maior ou igual a zero.');
+    if (parsedAvailableLimit > parsedLimit) return Alert.alert('Validação', 'O limite disponível não pode ser maior que o limite total.');
+    if (isNaN(parsedDueDay) || parsedDueDay < 1 || parsedDueDay > 31) return Alert.alert('Validação', 'O dia de vencimento deve ser entre 1 e 31.');
+    if (!cardForm.categoryId) return Alert.alert('Validação', 'A categoria para as faturas é obrigatória.');
+
+    const usedLimit = parsedLimit - parsedAvailableLimit;
+    let invoicesPayload: any[] | undefined = undefined;
+
+    if (usedLimit > 0) {
+      if (!cardForm.invoices || cardForm.invoices.length === 0) {
+        return Alert.alert('Validação', 'Como existe limite comprometido, adicione as faturas correspondentes.');
+      }
+      
+      try {
+        invoicesPayload = cardForm.invoices.map(inv => {
+          const amount = parseCurrencyValue(inv.amount);
+          if (isNaN(amount) || amount <= 0) throw new Error('Existem faturas com valores inválidos.');
+          if (!inv.dueDate) throw new Error('A data de vencimento da fatura é obrigatória.');
+          return { dueDate: new Date(inv.dueDate + 'T00:00:00').toISOString(), amount };
+        });
+      } catch (err: any) {
+        return Alert.alert('Validação', err.message);
+      }
+
+      const totalInvoices = invoicesPayload.reduce((acc, inv) => acc + inv.amount, 0);
+      if (Math.abs(totalInvoices - usedLimit) > 0.01) {
+        return Alert.alert('Validação', `A soma das faturas não corresponde ao limite comprometido.`);
+      }
+    }
+
+    cardSaveMutation.mutate({
+      walletId: cardForm.walletId,
+      accountId: cardForm.accountId,
+      data: {
+        brand: cardForm.brand,
+        lastFourDigits: cardForm.lastFourDigits,
+        totalLimit: parsedLimit,
+        availableLimit: parsedAvailableLimit,
+        dueDay: parsedDueDay,
+        categoryId: cardForm.categoryId,
+        invoices: invoicesPayload,
+      }
+    });
+  };
   const handleOpenWalletModal = (w?: Wallet) => {
     if (w) {
       setWalletForm({
@@ -941,6 +961,8 @@ export default function WalletsScreen() {
               </TouchableOpacity>
             </View>
 
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl, paddingHorizontal: 2 }}>
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Bandeira / Nome do Cartão</Text>
               <TextInput
@@ -1166,7 +1188,7 @@ export default function WalletsScreen() {
 
             <TouchableOpacity
               style={[styles.submitBtn, { backgroundColor: colors.brand.accent }]}
-              onPress={() => cardSaveMutation.mutate()}
+              onPress={handleCardSave}
               disabled={cardSaveMutation.isPending}
             >
               {cardSaveMutation.isPending ? (
@@ -1175,6 +1197,7 @@ export default function WalletsScreen() {
                 <Text style={styles.submitBtnText}>Criar Cartão</Text>
               )}
             </TouchableOpacity>
+            </ScrollView>
             <CategoryPicker
               visible={isCategoryPickerOpen}
               onClose={() => setIsCategoryPickerOpen(false)}

@@ -11,6 +11,7 @@ public class ExpenseRepository(AppDbContext context) : IExpenseRepository
     public async Task<Expense?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await context.Expenses
+            .Include(x => x.Category)
             .Include(x => x.Payments)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
@@ -18,6 +19,7 @@ public class ExpenseRepository(AppDbContext context) : IExpenseRepository
     public async Task<IReadOnlyCollection<Expense>> GetAllByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
         return await context.Expenses
+            .Include(x => x.Category)
             .Where(x => x.MemberId == memberId)
             .ToListAsync(cancellationToken);
     }
@@ -25,6 +27,7 @@ public class ExpenseRepository(AppDbContext context) : IExpenseRepository
     public async Task<IReadOnlyCollection<Expense>> GetAllRecurringByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
         return await context.Expenses
+            .Include(x => x.Category)
             .Include(x => x.Payments)
             .Where(x => x.MemberId == memberId && x.Type == ExpenseType.Recurring)
             .ToListAsync(cancellationToken);
@@ -33,6 +36,7 @@ public class ExpenseRepository(AppDbContext context) : IExpenseRepository
     public async Task<IReadOnlyCollection<Expense>> GetAllPlannedByMemberAsync(Guid memberId, CancellationToken cancellationToken = default)
     {
         return await context.Expenses
+            .Include(x => x.Category)
             .Include(x => x.Payments)
             .Where(x => x.MemberId == memberId && x.Type == ExpenseType.Planned)
             .ToListAsync(cancellationToken);

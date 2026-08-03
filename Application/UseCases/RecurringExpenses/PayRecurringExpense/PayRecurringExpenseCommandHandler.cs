@@ -72,7 +72,8 @@ public sealed class PayRecurringExpenseCommandHandler(
                 command.BankAccountId,
                 command.CreditCardId,
                 command.UseCredit,
-                command.Installments);
+                command.Installments,
+                command.ForceNextInvoice);
 
             if (invoiceWallet != null)
             {

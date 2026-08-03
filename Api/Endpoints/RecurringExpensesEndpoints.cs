@@ -90,18 +90,7 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
-
-    public record CreateRequest(
-        string Description,
-        decimal Amount,
-        RecurringExpenseType Type,
-        RecurringFrequency Frequency,
-        int DueDay,
-        DateTime StartDate,
-        DateTime? EndDate,
-        Guid MemberId,
-        Guid CategoryId);
-
+    
     public record UpdateRequest(
         string Description,
         decimal Amount,
@@ -118,24 +107,15 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         Guid? BankAccountId = null,
         Guid? CreditCardId = null,
         bool? UseCredit = null,
-        int Installments = 1);
+        int Installments = 1,
+        bool? ForceNextInvoice = null);
 
     private static async Task<HttpResult> Create(
-        [FromBody] CreateRequest request,
+        [FromBody] CreateRecurringExpenseCommand request,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
-        var command = new CreateRecurringExpenseCommand(
-            request.Description,
-            request.Amount,
-            request.Type,
-            request.Frequency,
-            request.DueDay,
-            request.StartDate,
-            request.EndDate,
-            request.MemberId,
-            request.CategoryId);
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(request, cancellationToken);
         return result.ToResult();
     }
 
@@ -212,9 +192,11 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             request.BankAccountId,
             request.CreditCardId,
             request.UseCredit,
-            request.Installments);
+            request.Installments,
+            request.ForceNextInvoice);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }
 }
+
 

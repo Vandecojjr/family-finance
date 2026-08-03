@@ -15,7 +15,8 @@ public class ExpensePaymentService
         Guid? bankAccountId = null,
         Guid? creditCardId = null,
         bool? useCredit = null,
-        int installments = 1)
+        int installments = 1,
+        bool? forceNextInvoice = null)
     {
         var payment = expense.Pay(date.Month, date.Year, amount, date);
         
@@ -29,7 +30,8 @@ public class ExpensePaymentService
             creditCardId,
             useCredit,
             "Pagamento de despesa",
-            installments
+            installments,
+            forceNextInvoice
         );
 
         return (payment, result.Transaction, result.AffectedInvoices);

@@ -99,7 +99,7 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
         int DueDay,
         DateTime StartDate,
         DateTime? EndDate,
-        Guid MemberId,
+        Guid? MemberId,
         Guid CategoryId);
 
     public record UpdateRequest(
@@ -130,7 +130,7 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
             request.DueDay,
             request.StartDate,
             request.EndDate,
-            request.MemberId,
+            request.MemberId ?? Guid.Empty,
             request.CategoryId);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
@@ -211,4 +211,6 @@ public sealed class RecurringIncomesEndpoints : IEndpointGroup
         return result.ToResult();
     }
 }
+
+
 

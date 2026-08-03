@@ -12,7 +12,8 @@ public sealed record PayRecurringExpenseCommand(
     Guid? BankAccountId = null,
     Guid? CreditCardId = null,
     bool? UseCredit = null,
-    int Installments = 1) : ICommand<Result<Guid>>, IAuthorizeableRequest
+    int Installments = 1,
+    bool? ForceNextInvoice = null) : ICommand<Result<Guid>>, IAuthorizeableRequest
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseUpdate];
 }

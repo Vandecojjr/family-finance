@@ -35,6 +35,7 @@ public sealed record CreditCardResponse(
     string LastFourDigits,
     decimal TotalLimit,
     decimal RemainingLimit,
+    int DueDay,
     decimal UsedLimit = 0,
     List<CreditCardInvoiceResponse>? Invoices = null);
 
@@ -75,6 +76,7 @@ public static class WalletResponseFactory
             card.LastFourDigits.Value,
             card.TotalLimit.Value,
             card.RemainingLimit.Value,
+            card.DueDate.Value,
             card.UsagetotalLimit(),
             card.Invoices?.Select(i => new CreditCardInvoiceResponse(
                 i.Id,

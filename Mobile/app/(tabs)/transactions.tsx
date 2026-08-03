@@ -169,6 +169,8 @@ export default function TransactionsScreen() {
       creditCardId: string | null;
       label: string;
       typeLabel: string;
+      useCredit?: boolean;
+      dueDay?: number;
     }[] = [];
 
     wallets.forEach((w) => {
@@ -199,6 +201,8 @@ export default function TransactionsScreen() {
             creditCardId: card.id,
             label: `${card.brand} •••• ${card.lastFourDigits} (${acc.bankName})`,
             typeLabel: 'Cartão de Crédito',
+            useCredit: true,
+            dueDay: card.dueDay,
           });
         });
       });
@@ -207,9 +211,12 @@ export default function TransactionsScreen() {
     return list;
   }, [wallets]);
 
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceModalCallback, setInvoiceModalCallback] = useState<((forceNext: boolean) => void) | null>(null);
+
   // Mutations
   const registerMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (forceNextInvoice?: boolean | null) => {
       const parsedAmount = parseFloat(amount.replace(',', '.'));
       if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error('O valor deve ser maior que zero.');
       if (!categoryId) throw new Error('Selecione uma categoria.');
@@ -244,18 +251,43 @@ export default function TransactionsScreen() {
           useCredit: selectedOrigin.useCredit,
           installments: parseInt(installments, 10) || 1,
           notes: '',
+          forceNextInvoice,
         });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       closeForm();
     },
     onError: (err: any) => {
-      Alert.alert('Erro ao registrar transação', err.message);
+      Alert.alert('Erro ao salvar', err.message);
     },
   });
+
+  const handleSave = () => {
+    if (type !== 3 && selectedOrigin?.creditCardId && selectedOrigin.dueDay) {
+      const txDate = new Date(date + 'T12:00:00');
+      const dueDay = selectedOrigin.dueDay;
+      const dueThisMonth = new Date(txDate.getFullYear(), txDate.getMonth(), dueDay, 12, 0, 0);
+      
+      const diffTime = dueThisMonth.getTime() - txDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Se a compra for entre 7 e 5 dias do vencimento (janela de dúvida)
+      if (diffDays >= 5 && diffDays <= 7) {
+        setInvoiceModalCallback(() => (forceNext: boolean) => {
+          setIsInvoiceModalOpen(false);
+          registerMutation.mutate(forceNext);
+        });
+        setIsInvoiceModalOpen(true);
+        return;
+      }
+    }
+    
+    registerMutation.mutate(null);
+  };
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
@@ -624,7 +656,7 @@ export default function TransactionsScreen() {
                   styles.submitBtn,
                   { backgroundColor: type === 1 ? colors.brand.teal : type === 3 ? colors.brand.primary : colors.danger },
                 ]}
-                onPress={() => registerMutation.mutate()}
+                onPress={handleSave}
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? (
@@ -694,6 +726,42 @@ export default function TransactionsScreen() {
         onConfirm={() => transactionToDelete && deleteMutation.mutate(transactionToDelete.id)}
         isLoading={deleteMutation.isPending}
       />
+
+      {/* Invoice Modal */}
+      <Modal visible={isInvoiceModalOpen} transparent animationType="fade">
+        <View style={styles.pickerOverlay}>
+          <View style={[styles.pickerContent, { maxWidth: 320 }]}>
+            <Text style={{ ...typography.h3, color: colors.text.primary, marginBottom: spacing.md, textAlign: 'center' }}>
+              Atenção
+            </Text>
+            <Text style={{ ...typography.body, color: colors.text.secondary, marginBottom: spacing.lg, textAlign: 'center' }}>
+              O vencimento da fatura deste cartão está próximo. Onde deseja lançar esta compra?
+            </Text>
+            <View style={{ gap: spacing.sm }}>
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: colors.brand.primary, marginTop: 0 }]}
+                onPress={() => invoiceModalCallback?.(false)}
+              >
+                <Text style={styles.submitBtnText}>Cair na Fatura Atual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitBtn, { backgroundColor: colors.brand.teal, marginTop: 0 }]}
+                onPress={() => invoiceModalCallback?.(true)}
+              >
+                <Text style={styles.submitBtnText}>Cair na Próxima Fatura</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ padding: spacing.sm, marginTop: spacing.xs }}
+                onPress={() => setIsInvoiceModalOpen(false)}
+              >
+                <Text style={{ ...typography.body, color: colors.danger, textAlign: 'center', fontWeight: '600' }}>
+                  Cancelar Lançamento
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

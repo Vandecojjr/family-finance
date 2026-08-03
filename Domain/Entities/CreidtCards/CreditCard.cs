@@ -83,7 +83,7 @@ public class CreditCard : Entity
         RemainingLimit = CreditCardLimit.Create(newLimit);
     }
 
-    public List<CreditCardInvoice> AddExpenseToInvoices(decimal amount, DateTime transactionDate, int installments)
+    public List<CreditCardInvoice> AddExpenseToInvoices(decimal amount, DateTime transactionDate, int installments, bool? forceNextInvoice = null)
     {
         var updatedOrCreatedInvoices = new List<CreditCardInvoice>();
         decimal installmentAmount = Math.Round(amount / installments, 2);
@@ -98,7 +98,18 @@ public class CreditCard : Entity
         var dueThisMonth = new DateTime(transactionDate.Year, transactionDate.Month, DueDate.Value, 0, 0, 0, DateTimeKind.Utc);
         var closingDateForCurrentMonth = dueThisMonth.AddDays(-7);
 
-        if (transactionDate >= closingDateForCurrentMonth)
+        bool pushToNext = false;
+        
+        if (forceNextInvoice.HasValue)
+        {
+             pushToNext = forceNextInvoice.Value;
+        }
+        else
+        {
+             pushToNext = transactionDate >= closingDateForCurrentMonth;
+        }
+
+        if (pushToNext)
         {
             firstInvoiceMonth++;
             if (firstInvoiceMonth > 12)

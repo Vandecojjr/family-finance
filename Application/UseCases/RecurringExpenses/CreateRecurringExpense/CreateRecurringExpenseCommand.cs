@@ -13,7 +13,6 @@ public sealed record CreateRecurringExpenseCommand(
     int DueDay,
     DateTime StartDate,
     DateTime? EndDate,
-    Guid MemberId,
     Guid CategoryId) : ICommand<Result<Guid>>, IAuthorizeableRequest
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseCreate];

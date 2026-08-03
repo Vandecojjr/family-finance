@@ -70,7 +70,8 @@ public sealed class RegisterTransactionCommandHandler(
                 command.CreditCardId,
                 command.UseCredit,
                 command.Notes,
-                command.Installments);
+                command.Installments,
+                command.ForceNextInvoice);
 
             transaction = result.Transaction;
 

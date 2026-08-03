@@ -94,7 +94,8 @@ public class Wallet : Entity, IAggregateRoot
         Guid? creditCardId = null,
         bool? useCredit = null,
         string? notes = null,
-        int installments = 1)
+        int installments = 1,
+        bool? forceNextInvoice = null)
     {
         string? walletNameVal = Name.Value;
         string? bankAccountNameVal = null;
@@ -111,7 +112,7 @@ public class Wallet : Entity, IAggregateRoot
 
             if (creditCardId.HasValue)
             {
-                var result = account.RegisterCreditCardTransaction(amount, type, creditCardId.Value, date, installments);
+                var result = account.RegisterCreditCardTransaction(amount, type, creditCardId.Value, date, installments, forceNextInvoice);
                 creditCardDisplayNameVal = result.DisplayName;
                 affectedInvoices = result.AffectedInvoices;
             }

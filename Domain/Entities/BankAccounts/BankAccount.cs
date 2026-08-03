@@ -65,7 +65,7 @@ public class BankAccount : Entity
         SeUpdate();
     }
 
-    public (string DisplayName, IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice> AffectedInvoices) RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId, DateTime transactionDate, int installments = 1)
+    public (string DisplayName, IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice> AffectedInvoices) RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId, DateTime transactionDate, int installments = 1, bool? forceNextInvoice = null)
     {
         if (type == TransactionType.Income || type == TransactionType.TransferIn)
             throw new CreditCardTransactionMustBeExpenseException();
@@ -75,7 +75,7 @@ public class BankAccount : Entity
             throw new InvalidOperationException($"Cartão de crédito com ID '{creditCardId}' não foi encontrado nesta conta.");
 
         card.AdjustBalance(amount, type);
-        var affectedInvoices = card.AddExpenseToInvoices(amount, transactionDate, installments);
+        var affectedInvoices = card.AddExpenseToInvoices(amount, transactionDate, installments, forceNextInvoice);
 
         return ($"{card.Brand.Value} •••• {card.LastFourDigits.Value}", affectedInvoices);
     }

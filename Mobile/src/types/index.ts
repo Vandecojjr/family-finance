@@ -22,7 +22,7 @@ export interface ApiError {
 export interface Account {
   id: string;
   email: string;
-  memberId: string;
+  memberId: string | null;
   status: 'Active' | 'Inactive' | 'Blocked';
   roles: Role[];
 }
@@ -45,7 +45,7 @@ export interface Wallet {
   name: string;
   cashBalance: number;
   familyId: string;
-  memberId: string;
+  memberId: string | null;
   memberName: string;
   accounts: BankAccount[];
 }
@@ -67,6 +67,7 @@ export interface CreditCard {
   lastFourDigits: string;
   totalLimit: number;
   remainingLimit: number;
+  dueDay: number;
   usedLimit: number;
   invoices?: CreditCardInvoiceResponse[];
 }
@@ -148,6 +149,7 @@ export interface RegisterTransactionRequest {
   useCredit?: boolean | null;
   installments?: number;
   notes?: string;
+  forceNextInvoice?: boolean | null;
 }
 
 export interface TransferMoneyRequest {
@@ -180,7 +182,7 @@ export interface RecurringExpense {
   startDate: string;
   endDate: string | null;
   isActive: boolean;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
   categoryName: string;
   isPaid: boolean;
@@ -194,7 +196,7 @@ export interface CreateRecurringExpenseRequest {
   dueDay: number;
   startDate: string;
   endDate: string | null;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
 }
 
@@ -215,6 +217,7 @@ export interface PayRecurringExpenseRequest {
   bankAccountId?: string | null;
   creditCardId?: string | null;
   useCredit?: boolean | null;
+  forceNextInvoice?: boolean | null;
 }
 
 export interface RecurringIncome {
@@ -227,7 +230,7 @@ export interface RecurringIncome {
   startDate: string;
   endDate: string | null;
   isActive: boolean;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
   categoryName: string;
 }
@@ -240,7 +243,7 @@ export interface CreateRecurringIncomeRequest {
   dueDay: number;
   startDate: string;
   endDate: string | null;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
 }
 
@@ -260,7 +263,7 @@ export interface PlannedIncome {
   description: string;
   amount: number;
   date: string;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
   categoryName: string;
 }
@@ -269,7 +272,7 @@ export interface CreatePlannedIncomeRequest {
   description: string;
   amount: number;
   date: string;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
 }
 
@@ -285,7 +288,7 @@ export interface PlannedExpense {
   description: string;
   amount: number;
   date: string;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
   categoryName: string;
 }
@@ -294,7 +297,7 @@ export interface CreatePlannedExpenseRequest {
   description: string;
   amount: number;
   date: string;
-  memberId: string;
+  memberId: string | null;
   categoryId: string;
 }
 
@@ -352,3 +355,4 @@ export interface DashboardResponse {
   projectedIncomesByCategory: CategorySummary[];
   projectedExpensesByCategory: CategorySummary[];
 }
+
