@@ -132,5 +132,11 @@ public class Expense : Entity, IAggregateRoot
         return payment;
     }
 
+    public void UpdateAmount(decimal amount)
+    {
+        Amount = ExpenseAmount.Create(amount);
+        SeUpdate();
+    }
+
     public bool IsPaid() => _payments.Count != 0;
 }

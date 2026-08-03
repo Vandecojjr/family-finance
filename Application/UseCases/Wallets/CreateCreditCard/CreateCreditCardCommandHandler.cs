@@ -1,6 +1,7 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
 using Domain.Repositories;
+using Domain.Services;
 using Mediator;
 
 namespace Application.UseCases.Wallets.CreateCreditCard;
@@ -8,7 +9,8 @@ namespace Application.UseCases.Wallets.CreateCreditCard;
 public sealed class CreateCreditCardCommandHandler(
     IWalletRepository walletRepository,
     IFamilyRepository familyRepository,
-    ICurrentUser currentUser) : ICommandHandler<CreateCreditCardCommand, Result<Guid>>
+    ICurrentUser currentUser,
+    ICreditCardCreationService creditCardCreationService) : ICommandHandler<CreateCreditCardCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(
         CreateCreditCardCommand command,
@@ -41,16 +43,22 @@ public sealed class CreateCreditCardCommandHandler(
                 Error.NotFound("BankAccount.NotFound", $"Conta com ID '{command.AccountId}' não foi encontrada nesta carteira."));
         }
 
-        account.AddCreditCard(
+        var initialInvoices = command.Invoices?
+            .Select(i => (i.DueDate, i.Amount))
+            .ToList();
+
+        var cardId = await creditCardCreationService.CreateCreditCardWithInvoicesAsync(
+            wallet,
+            command.AccountId,
             command.Brand,
             command.LastFourDigits,
             command.TotalLimit,
-            command.AvailableLimit);
-
-        await walletRepository.UpdateAsync(wallet, cancellationToken);
-
-        var createdCard = account.CreditCards.LastOrDefault();
-        var cardId = createdCard?.Id ?? Guid.Empty;
+            command.AvailableLimit,
+            command.DueDay,
+            command.CategoryId,
+            member.Id,
+            initialInvoices,
+            cancellationToken);
 
         return Result<Guid>.Success(cardId);
     }

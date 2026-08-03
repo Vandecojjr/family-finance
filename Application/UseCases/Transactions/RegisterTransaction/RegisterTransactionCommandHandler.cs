@@ -11,6 +11,7 @@ public sealed class RegisterTransactionCommandHandler(
     IWalletRepository walletRepository,
     ICategoryRepository categoryRepository,
     IFamilyRepository familyRepository,
+    IExpenseRepository expenseRepository,
     ICurrentUser currentUser) : ICommandHandler<RegisterTransactionCommand, Result<Guid>>
 {
     public async ValueTask<Result<Guid>> Handle(
@@ -59,7 +60,7 @@ public sealed class RegisterTransactionCommandHandler(
         Transaction transaction;
         try
         {
-            transaction = wallet.RegisterTransaction(
+            var result = wallet.RegisterTransaction(
                 command.Description,
                 command.Amount,
                 command.Type,
@@ -68,7 +69,45 @@ public sealed class RegisterTransactionCommandHandler(
                 command.BankAccountId,
                 command.CreditCardId,
                 command.UseCredit,
-                command.Notes);
+                command.Notes,
+                command.Installments);
+
+            transaction = result.Transaction;
+
+            if (result.AffectedInvoices != null)
+            {
+                foreach (var invoice in result.AffectedInvoices)
+                {
+                    if (invoice.ExpenseId.HasValue)
+                    {
+                        var exp = await expenseRepository.GetByIdAsync(invoice.ExpenseId.Value, cancellationToken);
+                        if (exp != null)
+                        {
+                            exp.UpdateAmount(invoice.Amount.Value);
+                            await expenseRepository.UpdateAsync(exp, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        var affectedCreditCard = wallet.Accounts
+                            .SelectMany(a => a.CreditCards)
+                            .FirstOrDefault(c => c.Invoices.Any(i => i.Id == invoice.Id));
+
+                        if (affectedCreditCard != null)
+                        {
+                            var plannedExpense = Domain.Entities.Expenses.Expense.CreatePlanned(
+                                $"Fatura Cartão {affectedCreditCard.Brand.Value} final {affectedCreditCard.LastFourDigits.Value}",
+                                invoice.Amount.Value,
+                                invoice.DueDate.Value,
+                                member.Id,
+                                command.CategoryId);
+                                
+                            await expenseRepository.AddAsync(plannedExpense, cancellationToken);
+                            invoice.LinkExpense(plannedExpense.Id);
+                        }
+                    }
+                }
+            }
         }
         catch (DomainException ex)
         {

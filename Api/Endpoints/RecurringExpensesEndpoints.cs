@@ -117,7 +117,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
         decimal Amount,
         Guid? BankAccountId = null,
         Guid? CreditCardId = null,
-        bool? UseCredit = null);
+        bool? UseCredit = null,
+        int Installments = 1);
 
     private static async Task<HttpResult> Create(
         [FromBody] CreateRequest request,
@@ -210,7 +211,8 @@ public sealed class RecurringExpensesEndpoints : IEndpointGroup
             request.Amount,
             request.BankAccountId,
             request.CreditCardId,
-            request.UseCredit);
+            request.UseCredit,
+            request.Installments);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }

@@ -16,7 +16,7 @@ public class IncomePaymentService
     {
         var payment = income.Receive(date.Month, date.Year, amount, date);
         
-        var transaction = wallet.RegisterTransaction(
+        var result = wallet.RegisterTransaction(
             $"Recebimento de {income.Description.Value}",
             amount,
             TransactionType.Income,
@@ -28,6 +28,6 @@ public class IncomePaymentService
             "Recebimento de receita"
         );
 
-        return (payment, transaction);
+        return (payment, result.Transaction);
     }
 }

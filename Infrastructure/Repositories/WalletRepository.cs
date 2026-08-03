@@ -13,6 +13,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
         return await context.Set<Wallet>()
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
+                    .ThenInclude(c => c.Invoices)
             .Include(x => x.Transactions)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
@@ -29,6 +30,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
             .Include(x => x.Member)
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
+                    .ThenInclude(c => c.Invoices)
             .Include(x => x.Transactions)
             .Where(x => x.FamilyId == familyId)
             .ToListAsync(cancellationToken);
@@ -56,6 +58,15 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
     {
         return await context.Set<Transaction>()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task<Wallet?> GetWalletByExpenseIdAsync(Guid expenseId, CancellationToken cancellationToken = default)
+    {
+        return await context.Set<Wallet>()
+            .Include(x => x.Accounts)
+                .ThenInclude(x => x.CreditCards)
+                    .ThenInclude(c => c.Invoices)
+            .FirstOrDefaultAsync(x => x.Accounts.Any(a => a.CreditCards.Any(c => c.Invoices.Any(i => i.ExpenseId == expenseId))), cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<Transaction>> GetTransactionsByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default)

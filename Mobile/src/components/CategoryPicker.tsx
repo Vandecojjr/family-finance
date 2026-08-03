@@ -34,7 +34,7 @@ export function CategoryPicker({
   const [search, setSearch] = useState('');
 
   const filteredCategories = useMemo(() => {
-    const targetTypeParents = categories.filter(
+    const targetTypeParents = (categories || []).filter(
       (c) => c.type === type && c.parentId === null
     );
 

@@ -7,6 +7,8 @@ public static class ApplicationBuilderExtensions
 {
     public static WebApplication UsePresentation(this WebApplication app)
     {
+        app.UseExceptionHandler();
+        
         app.UseCors();
 
         app.UseAuthentication();

@@ -34,7 +34,7 @@ public static class RecurringExpenseResponseFactory
             expense.MemberId,
             expense.CategoryId,
             expense.IsPaid(),
-            expense.Category.Name
+            expense.Category?.Name?.Value
             );
     }
 

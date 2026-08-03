@@ -16,6 +16,7 @@ public class RegisterTransactionCommandHandlerTests
     private readonly Mock<IWalletRepository> _walletRepositoryMock;
     private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
+    private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
     private readonly RegisterTransactionCommandHandler _handler;
 
@@ -24,12 +25,14 @@ public class RegisterTransactionCommandHandlerTests
         _walletRepositoryMock = new Mock<IWalletRepository>();
         _categoryRepositoryMock = new Mock<ICategoryRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
+        _expenseRepositoryMock = new Mock<IExpenseRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
 
         _handler = new RegisterTransactionCommandHandler(
             _walletRepositoryMock.Object,
             _categoryRepositoryMock.Object,
             _familyRepositoryMock.Object,
+            _expenseRepositoryMock.Object,
             _currentUserMock.Object);
     }
 

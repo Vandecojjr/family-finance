@@ -68,6 +68,14 @@ export interface CreditCard {
   totalLimit: number;
   remainingLimit: number;
   usedLimit: number;
+  invoices?: CreditCardInvoiceResponse[];
+}
+
+export interface CreditCardInvoiceResponse {
+  id: string;
+  dueDate: string;
+  amount: number;
+  isPaid: boolean;
 }
 
 export interface CreateWalletRequest {
@@ -94,11 +102,19 @@ export interface UpdateBankAccountRequest {
   creditLimit: number;
 }
 
+export interface CreditCardInvoice {
+  dueDate: string;
+  amount: number;
+}
+
 export interface CreateCreditCardRequest {
   brand: string;
   lastFourDigits: string;
   totalLimit: number;
   availableLimit: number;
+  dueDay: number;
+  categoryId: string;
+  invoices?: CreditCardInvoice[];
 }
 
 
@@ -130,6 +146,7 @@ export interface RegisterTransactionRequest {
   bankAccountId: string | null;
   creditCardId: string | null;
   useCredit?: boolean | null;
+  installments?: number;
   notes?: string;
 }
 

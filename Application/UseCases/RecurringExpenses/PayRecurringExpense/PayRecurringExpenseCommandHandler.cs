@@ -51,6 +51,16 @@ public sealed class PayRecurringExpenseCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem acesso a esta carteira."));
         }
 
+        var invoiceWallet = await walletRepository.GetWalletByExpenseIdAsync(recurringExpense.Id, cancellationToken);
+        if (invoiceWallet != null)
+        {
+            if (command.UseCredit == true || command.CreditCardId != null)
+            {
+                return Result<Guid>.Failure(
+                    Error.Failure("Expense.InvalidPaymentMethod", "Não é permitido pagar a fatura de um cartão de crédito utilizando crédito."));
+            }
+        }
+
         Transaction transaction;
         try
         {
@@ -61,8 +71,59 @@ public sealed class PayRecurringExpenseCommandHandler(
                 DateTime.UtcNow,
                 command.BankAccountId,
                 command.CreditCardId,
-                command.UseCredit);
-            
+                command.UseCredit,
+                command.Installments);
+
+            if (invoiceWallet != null)
+            {
+                var creditCard = invoiceWallet.Accounts
+                    .SelectMany(a => a.CreditCards)
+                    .FirstOrDefault(c => c.Invoices.Any(i => i.ExpenseId == recurringExpense.Id));
+
+                if (creditCard != null)
+                {
+                    var invoice = creditCard.Invoices.First(i => i.ExpenseId == recurringExpense.Id);
+                    invoice.Pay();
+                    creditCard.RestoreLimit(command.Amount);
+                    await walletRepository.UpdateAsync(invoiceWallet, cancellationToken);
+                }
+            }
+
+            if (result.AffectedInvoices != null)
+            {
+                foreach (var invoice in result.AffectedInvoices)
+                {
+                    if (invoice.ExpenseId.HasValue)
+                    {
+                        var exp = await expenseRepository.GetByIdAsync(invoice.ExpenseId.Value, cancellationToken);
+                        if (exp != null)
+                        {
+                            exp.UpdateAmount(invoice.Amount.Value);
+                            await expenseRepository.UpdateAsync(exp, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        var affectedCreditCard = wallet.Accounts
+                            .SelectMany(a => a.CreditCards)
+                            .FirstOrDefault(c => c.Invoices.Any(i => i.Id == invoice.Id));
+
+                        if (affectedCreditCard != null)
+                        {
+                            var plannedExpense = Domain.Entities.Expenses.Expense.CreatePlanned(
+                                $"Fatura Cartão {affectedCreditCard.Brand.Value} final {affectedCreditCard.LastFourDigits.Value}",
+                                invoice.Amount.Value,
+                                invoice.DueDate.Value,
+                                member.Id,
+                                recurringExpense.CategoryId);
+                                
+                            await expenseRepository.AddAsync(plannedExpense, cancellationToken);
+                            invoice.LinkExpense(plannedExpense.Id);
+                        }
+                    }
+                }
+            }
+
             transaction = result.Transaction;
         }
         catch (Exception ex)

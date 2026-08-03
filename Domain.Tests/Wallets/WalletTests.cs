@@ -123,7 +123,7 @@ public class WalletTests
         var account = wallet.Accounts.First();
 
         // Act
-        account.AddCreditCard("Visa", "4321", 5000m);
+        account.AddCreditCard("Visa", "4321", 5000m, 5000m, 10);
 
         // Assert
         Assert.Single(account.CreditCards);
@@ -143,8 +143,8 @@ public class WalletTests
         var account = wallet.Accounts.First();
 
         // Act & Assert
-        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "432", 5000m));
-        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "4321a", 5000m));
+        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "432", 5000m, 5000m, 10));
+        Assert.Throws<InvalidLastFourDigitsException>(() => account.AddCreditCard("Visa", "4321a", 5000m, 5000m, 10));
     }
 
     [Fact]
@@ -154,11 +154,11 @@ public class WalletTests
         var wallet = new Wallet("Wallet", 0m, Guid.NewGuid(), Guid.NewGuid());
         wallet.AddAccount("Nubank", AccountType.Checking, 500m, 1000m);
         var account = wallet.Accounts.First();
-        account.AddCreditCard("Visa", "4321", 5000m);
+        account.AddCreditCard("Visa", "4321", 5000m, 5000m, 10);
         var card = account.CreditCards.First();
 
         // Act
-        account.RegisterCreditCardTransaction(1500m, TransactionType.Expense, card.Id);
+        account.RegisterCreditCardTransaction(1500m, TransactionType.Expense, card.Id, DateTime.UtcNow);
 
         // Assert
         Assert.Equal(5000m, card.TotalLimit.Value);

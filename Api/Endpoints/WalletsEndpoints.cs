@@ -63,7 +63,6 @@ public sealed class WalletsEndpoints : IEndpointGroup
             .Produces<Result<WalletResponse>>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // Bank Accounts
         group.MapPost("/{walletId:guid}/accounts", CreateBankAccount)
             .WithName("Wallets.CreateAccount")
             .WithSummary("Cria uma nova conta bancária na carteira.")
@@ -91,7 +90,6 @@ public sealed class WalletsEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        // Credit Cards
         group.MapPost("/{walletId:guid}/accounts/{accountId:guid}/cards", CreateCreditCard)
             .WithName("Wallets.CreateCreditCard")
             .WithSummary("Cria um cartão de crédito vinculado a uma conta bancária.")
@@ -129,7 +127,10 @@ public sealed class WalletsEndpoints : IEndpointGroup
         string Brand,
         string LastFourDigits,
         decimal TotalLimit,
-        decimal AvailableLimit);
+        decimal AvailableLimit,
+        int DueDay,
+        Guid CategoryId,
+        IEnumerable<Application.UseCases.Wallets.CreateCreditCard.CreditCardInvoiceRequest>? Invoices = null);
 
     private static async Task<HttpResult> CreateWallet([FromBody] CreateWalletCommand request, IMediator mediator, CancellationToken cancellationToken)
     {
@@ -235,7 +236,10 @@ public sealed class WalletsEndpoints : IEndpointGroup
             request.Brand,
             request.LastFourDigits,
             request.TotalLimit,
-            request.AvailableLimit);
+            request.AvailableLimit,
+            request.DueDay,
+            request.CategoryId,
+            request.Invoices);
         var result = await mediator.Send(command, cancellationToken);
         return result.ToResult();
     }

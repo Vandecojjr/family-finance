@@ -9,5 +9,7 @@ public sealed record CreateCreditCardCommand(
     string Brand,
     string LastFourDigits,
     decimal TotalLimit,
-    decimal AvailableLimit) : ICommand<Result<Guid>>;
-
+    decimal AvailableLimit,
+    int DueDay,
+    Guid CategoryId,
+    IEnumerable<CreditCardInvoiceRequest>? Invoices = null) : ICommand<Result<Guid>>;

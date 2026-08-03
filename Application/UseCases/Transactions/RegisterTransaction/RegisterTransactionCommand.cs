@@ -14,5 +14,6 @@ public sealed record RegisterTransactionCommand(
     Guid? BankAccountId = null,
     Guid? CreditCardId = null,
     bool? UseCredit = null,
-    string? Notes = null) : ICommand<Result<Guid>>;
+    string? Notes = null,
+    int Installments = 1) : ICommand<Result<Guid>>;
 

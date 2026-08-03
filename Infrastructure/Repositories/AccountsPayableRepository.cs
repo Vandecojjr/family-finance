@@ -9,9 +9,9 @@ namespace Infrastructure.Repositories;
 
 public class AccountsPayableRepository(AppDbContext context) : IAccountsPayableRepository
 {
-    public async Task<IReadOnlyCollection<AccountsPayableDto>> GetAllByMember(Guid memberId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<AccountsPayableDto>> GetAllByFamily(Guid familyId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default)
     {
-        var query = AccountsPayableSql.GetAllByMember(memberId, onlyDate);
+        var query = AccountsPayableSql.GetAllByFamily(familyId, onlyDate);
         
         return await context.Database
             .SqlQueryRaw<AccountsPayableDto>(query.Sql, query.Parameters)

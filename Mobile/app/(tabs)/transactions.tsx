@@ -5,6 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
+  SectionList,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -82,6 +83,26 @@ export default function TransactionsScreen() {
     };
   }, [transactions]);
 
+  // Group transactions by date for Timeline
+  const groupedTransactions = React.useMemo(() => {
+    const groups: { title: string; data: Transaction[] }[] = [];
+    
+    transactions.forEach((t) => {
+      const dateKey = t.date.split('T')[0];
+      let existing = groups.find((g) => g.title === dateKey);
+      if (!existing) {
+        existing = { title: dateKey, data: [] };
+        groups.push(existing);
+      }
+      existing.data.push(t);
+    });
+
+    // Sort groups descending by date
+    groups.sort((a, b) => new Date(b.title).getTime() - new Date(a.title).getTime());
+    
+    return groups;
+  }, [transactions]);
+
   // Form State
   const [modalOpen, setModalOpen] = useState(false);
   const [description, setDescription] = useState('');
@@ -96,6 +117,7 @@ export default function TransactionsScreen() {
     useCredit?: boolean | null;
     label: string;
   } | null>(null);
+  const [installments, setInstallments] = useState('1');
 
   // Picker States
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -196,6 +218,7 @@ export default function TransactionsScreen() {
         bankAccountId: selectedOrigin.bankAccountId,
         creditCardId: selectedOrigin.creditCardId,
         useCredit: selectedOrigin.useCredit,
+        installments: parseInt(installments, 10) || 1,
         notes: '',
       });
     },
@@ -237,6 +260,7 @@ export default function TransactionsScreen() {
     setDate(new Date().toISOString().split('T')[0] ?? '');
     setCategoryId('');
     setSelectedOrigin(null);
+    setInstallments('1');
     setModalOpen(false);
   };
 
@@ -279,24 +303,43 @@ export default function TransactionsScreen() {
         <View style={{ flex: 1 }}>
           {/* Top Metrics Banner */}
           <View style={styles.metricsContainer}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricTitle}>Entradas</Text>
-              <Text style={[styles.metricVal, { color: colors.success }]}>
-                {fmt(metrics.totalIncome)}
-              </Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricTitle}>Saídas</Text>
-              <Text style={[styles.metricVal, { color: colors.danger }]}>
-                {fmt(metrics.totalExpense)}
-              </Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricTitle}>Balanço</Text>
-              <Text style={[styles.metricVal, { color: metrics.balance >= 0 ? colors.brand.primary : colors.danger }]}>
+            <LinearGradient 
+              colors={colors.gradient.primary} 
+              start={{x: 0, y: 0}} end={{x: 1, y: 1}}
+              style={styles.mainMetricCard}
+            >
+              <View style={styles.mainMetricHeader}>
+                <Text style={styles.mainMetricTitle}>Balanço do Período</Text>
+                <Ionicons name="wallet-outline" size={20} color={colors.white} style={{ opacity: 0.8 }} />
+              </View>
+              <Text style={styles.mainMetricVal}>
                 {fmt(metrics.balance)}
               </Text>
-            </View>
+              
+              <View style={styles.metricRow}>
+                <View style={styles.metricItem}>
+                  <View style={styles.metricIconWrap}>
+                    <Ionicons name="arrow-up" size={14} color={colors.white} />
+                  </View>
+                  <View>
+                    <Text style={styles.subMetricTitle}>Entradas</Text>
+                    <Text style={styles.subMetricVal}>{fmt(metrics.totalIncome)}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.metricDivider} />
+                
+                <View style={styles.metricItem}>
+                  <View style={styles.metricIconWrap}>
+                    <Ionicons name="arrow-down" size={14} color={colors.white} />
+                  </View>
+                  <View>
+                    <Text style={styles.subMetricTitle}>Saídas</Text>
+                    <Text style={styles.subMetricVal}>{fmt(metrics.totalExpense)}</Text>
+                  </View>
+                </View>
+              </View>
+            </LinearGradient>
           </View>
 
           {/* List of Transactions */}
@@ -309,53 +352,79 @@ export default function TransactionsScreen() {
               </Text>
             </View>
           ) : (
-            <FlatList
-              data={transactions}
+            <SectionList
+              sections={groupedTransactions}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => {
+              renderSectionHeader={({ section: { title } }) => {
+                const today = new Date().toISOString().split('T')[0];
+                const yesterdayDate = new Date();
+                yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+                const yesterday = yesterdayDate.toISOString().split('T')[0];
+              
+                let headerText = '';
+                if (title === today) headerText = 'Hoje';
+                else if (title === yesterday) headerText = 'Ontem';
+                else {
+                  const [y, m, d] = title.split('-');
+                  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                  headerText = `${d} de ${months[parseInt(m, 10) - 1]}`;
+                }
+
+                return (
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderText}>{headerText}</Text>
+                  </View>
+                );
+              }}
+              renderItem={({ item, index, section }) => {
                 const isIncome = item.type === 1;
                 const meta = getCategoryMeta(item.categoryName || '', isIncome ? 'Income' : 'Expense');
                 const itemColor = meta.color;
                 const itemIcon = meta.icon;
+                const isLast = index === section.data.length - 1;
 
                 return (
-                  <View style={styles.card}>
-                    <View
-                      style={[
-                        styles.icon,
-                        { backgroundColor: `${itemColor}15` },
-                      ]}
-                    >
-                      <Ionicons
-                        name={itemIcon}
-                        size={20}
-                        color={itemColor}
-                      />
+                  <View style={styles.timelineRow}>
+                    <View style={styles.timelineLineContainer}>
+                      <View style={[styles.timelineDot, { backgroundColor: itemColor }]} />
+                      {!isLast && <View style={styles.timelineLine} />}
                     </View>
 
-                    <View style={styles.info}>
-                      <Text style={styles.desc}>{item.description}</Text>
-                      <View style={styles.metaRow}>
-                        <Text style={[styles.catText, { color: itemColor, fontWeight: '600' }]}>{item.categoryName}</Text>
-                        <Text style={styles.dot}>·</Text>
-                        <Text style={styles.originText}>{getOriginText(item)}</Text>
-                        <Text style={styles.dot}>·</Text>
-                        <Text style={styles.dateText}>
-                          {new Date(item.date).toLocaleDateString('pt-BR')}
-                        </Text>
+                    <View style={styles.card}>
+                      <View
+                        style={[
+                          styles.icon,
+                          { backgroundColor: `${itemColor}15` },
+                        ]}
+                      >
+                        <Ionicons
+                          name={itemIcon}
+                          size={24}
+                          color={itemColor}
+                        />
                       </View>
-                    </View>
 
-                    <View style={styles.cardRight}>
-                      <Text style={[styles.amount, { color: isIncome ? colors.success : colors.danger }]}>
-                        {isIncome ? '+' : '-'}{fmt(item.amount)}
-                      </Text>
+                      <View style={styles.info}>
+                        <Text style={styles.desc}>{item.description}</Text>
+                        <View style={styles.metaRow}>
+                          <Text style={[styles.catText, { color: itemColor, fontWeight: '600' }]}>{item.categoryName}</Text>
+                          <Text style={styles.dot}>·</Text>
+                          <Text style={styles.originText}>{getOriginText(item)}</Text>
+                        </View>
+                      </View>
 
-                      <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
-                        <Ionicons name="trash-outline" size={16} color={colors.text.muted} />
-                      </TouchableOpacity>
+                      <View style={styles.cardRight}>
+                        <Text style={[styles.amount, { color: isIncome ? colors.success : colors.danger }]}>
+                          {isIncome ? '+' : '-'}{fmt(item.amount)}
+                        </Text>
+
+                        <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item)}>
+                          <Ionicons name="trash-outline" size={12} color={colors.danger} />
+                          <Text style={{ fontSize: 10, color: colors.danger, marginLeft: 4, fontWeight: '600', textTransform: 'uppercase' }}>Estornar</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 );
@@ -402,6 +471,9 @@ export default function TransactionsScreen() {
                 onPress={() => {
                   setType(1);
                   setCategoryId('');
+                  if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
+                    setSelectedOrigin(null);
+                  }
                 }}
               >
                 <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada / Receita</Text>
@@ -476,6 +548,21 @@ export default function TransactionsScreen() {
                 </TouchableOpacity>
               </View>
 
+              {/* Installments (Only if Credit) */}
+              {(selectedOrigin?.useCredit || selectedOrigin?.creditCardId) && (
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Parcelas</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="1"
+                    placeholderTextColor={colors.text.muted}
+                    keyboardType="number-pad"
+                    value={installments}
+                    onChangeText={setInstallments}
+                  />
+                </View>
+              )}
+
               {/* Submit Button */}
               <TouchableOpacity
                 style={[
@@ -510,6 +597,7 @@ export default function TransactionsScreen() {
               selectedBankAccountId={selectedOrigin?.bankAccountId ?? null}
               selectedCreditCardId={selectedOrigin?.creditCardId ?? null}
               selectedUseCredit={selectedOrigin?.useCredit ?? null}
+              allowCreditCards={type !== 1}
               onSelect={(selection) => {
                 setSelectedOrigin(selection);
               }}
@@ -576,61 +664,144 @@ const styles = StyleSheet.create({
   },
   retryBtnText: { ...typography.bodySmall, color: colors.text.primary, fontWeight: '600' },
   metricsContainer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
   },
-  metricCard: {
-    flex: 1,
-    backgroundColor: colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: 4,
-    ...shadow.sm,
+  mainMetricCard: {
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    ...shadow.md,
   },
-  metricTitle: { ...typography.caption, color: colors.text.secondary },
-  metricVal: { ...typography.body, fontWeight: '700' },
+  mainMetricHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  mainMetricTitle: {
+    ...typography.bodySmall,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  mainMetricVal: {
+    ...typography.h1,
+    color: colors.white,
+    marginBottom: spacing.md,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: radius.lg,
+    padding: spacing.sm,
+  },
+  metricItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  metricIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subMetricTitle: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+  },
+  subMetricVal: {
+    ...typography.body,
+    color: colors.white,
+    fontWeight: '700',
+  },
+  metricDivider: {
+    width: 1,
+    height: '70%',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    marginHorizontal: spacing.xs,
+  },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, gap: spacing.md },
   emptyText: { ...typography.h3, color: colors.text.primary },
   emptySubText: { ...typography.bodySmall, color: colors.text.secondary, textAlign: 'center', paddingHorizontal: spacing.md },
-  list: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: 100 },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
+  sectionHeader: {
+    paddingVertical: spacing.md,
+    backgroundColor: colors.bg.primary,
+    marginTop: spacing.sm,
+  },
+  sectionHeaderText: {
+    ...typography.h4,
+    color: colors.text.secondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  timelineRow: {
+    flexDirection: 'row',
+  },
+  timelineLineContainer: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 32, // to align vertically with the center of the card
+    zIndex: 2,
+  },
+  timelineLine: {
+    width: 2,
+    backgroundColor: colors.border,
+    position: 'absolute',
+    top: 42,
+    bottom: -8, // extend to the next row's spacing
+    left: 11,
+    zIndex: 1,
+  },
   card: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bg.card,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.bg.secondary,
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
     gap: spacing.md,
     ...shadow.sm,
   },
   icon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm,
+    width: 48,
+    height: 48,
+    borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
   info: { flex: 1 },
-  desc: { ...typography.body, color: colors.text.primary, fontWeight: '600' },
-  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 2 },
-  catText: { fontSize: 11, color: colors.brand.primary, fontWeight: '500' },
-  originText: { fontSize: 11, color: colors.brand.teal, fontWeight: '500' },
-  dateText: { fontSize: 11, color: colors.text.muted },
-  dot: { fontSize: 11, color: colors.text.muted, marginHorizontal: 4 },
-  cardRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  amount: { ...typography.body, fontWeight: '700' },
+  desc: { ...typography.body, color: colors.text.primary, fontWeight: '600', marginBottom: 4 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  catText: { fontSize: 12, color: colors.brand.primary, fontWeight: '600' },
+  originText: { fontSize: 12, color: colors.text.secondary, fontWeight: '500' },
+  dateText: { fontSize: 12, color: colors.text.muted },
+  dot: { fontSize: 12, color: colors.text.muted, marginHorizontal: 6 },
+  cardRight: { alignItems: 'flex-end', justifyContent: 'center', gap: 6 },
+  amount: { ...typography.h4, fontWeight: '700' },
   deleteBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   fab: { position: 'absolute', bottom: 32, right: spacing.lg, borderRadius: radius.full, overflow: 'hidden', ...shadow.lg },
   fabGradient: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },

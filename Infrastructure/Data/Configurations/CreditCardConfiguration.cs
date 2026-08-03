@@ -47,5 +47,12 @@ public class CreditCardConfiguration : IEntityTypeConfiguration<CreditCard>
             )
             .IsRequired()
             .HasPrecision(18, 2);
+
+        builder.Property(x => x.DueDate)
+            .HasConversion(
+                dueDate => dueDate.Value,
+                value => CreditCardDueDate.Create(value)
+            )
+            .IsRequired();
     }
 }

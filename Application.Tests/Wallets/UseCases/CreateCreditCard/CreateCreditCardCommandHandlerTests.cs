@@ -4,6 +4,7 @@ using Domain.Entities.Families;
 using Domain.Entities.Wallets;
 using Domain.Enums;
 using Domain.Repositories;
+using Domain.Services;
 using FluentAssertions;
 using Moq;
 using Xunit;
@@ -15,6 +16,7 @@ public class CreateCreditCardCommandHandlerTests
     private readonly Mock<IWalletRepository> _walletRepositoryMock;
     private readonly Mock<IFamilyRepository> _familyRepositoryMock;
     private readonly Mock<ICurrentUser> _currentUserMock;
+    private readonly Mock<ICreditCardCreationService> _creditCardCreationServiceMock;
     private readonly CreateCreditCardCommandHandler _handler;
 
     public CreateCreditCardCommandHandlerTests()
@@ -22,10 +24,12 @@ public class CreateCreditCardCommandHandlerTests
         _walletRepositoryMock = new Mock<IWalletRepository>();
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
+        _creditCardCreationServiceMock = new Mock<ICreditCardCreationService>();
         _handler = new CreateCreditCardCommandHandler(
             _walletRepositoryMock.Object,
             _familyRepositoryMock.Object,
-            _currentUserMock.Object);
+            _currentUserMock.Object,
+            _creditCardCreationServiceMock.Object);
     }
 
     [Fact]
@@ -45,8 +49,12 @@ public class CreateCreditCardCommandHandlerTests
             account.Id,
             "Visa",
             "1234",
-            5000m);
+            5000m,
+            5000m,
+            10,
+            Guid.NewGuid());
 
+        var expectedCardId = Guid.NewGuid();
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock
             .Setup(repo => repo.GetMemberByIdAsync(currentMember.Id, It.IsAny<CancellationToken>()))
@@ -54,18 +62,17 @@ public class CreateCreditCardCommandHandlerTests
         _walletRepositoryMock
             .Setup(repo => repo.GetByIdAsync(wallet.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(wallet);
+        
+        _creditCardCreationServiceMock
+            .Setup(s => s.CreateCreditCardWithInvoicesAsync(wallet, account.Id, "Visa", "1234", 5000m, 5000m, 10, command.CategoryId, currentMember.Id, It.IsAny<List<(DateTime, decimal)>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedCardId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeEmpty();
-
-        account.CreditCards.Should().ContainSingle(c => c.Brand.Value == "Visa" && c.LastFourDigits.Value == "1234");
-        _walletRepositoryMock.Verify(
-            repo => repo.UpdateAsync(wallet, It.IsAny<CancellationToken>()),
-            Times.Once);
+        result.Value.Should().Be(expectedCardId);
     }
 
     [Fact]
@@ -84,7 +91,10 @@ public class CreateCreditCardCommandHandlerTests
             nonExistentAccountId,
             "Visa",
             "1234",
-            5000m);
+            5000m,
+            5000m,
+            10,
+            Guid.NewGuid());
 
         _currentUserMock.Setup(u => u.MemberId).Returns(currentMember.Id);
         _familyRepositoryMock

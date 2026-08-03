@@ -65,6 +65,21 @@ const drainQueue = (token: string) => {
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
+    // Extract Problem Details from backend before throwing
+    if (error.response?.data) {
+      const data = error.response.data as any;
+      if (data.errors && typeof data.errors === 'object') {
+        const errorMessages = Object.values(data.errors).flat().join('\n');
+        error.message = errorMessages || data.title || error.message;
+      } else if (data.detail) {
+        error.message = data.detail;
+      } else if (data.title) {
+        error.message = data.title;
+      }
+    } else if (error.message === 'Network Error') {
+      error.message = 'Erro de conexão com o servidor. Verifique sua internet.';
+    }
+
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status !== 401 || original._retry) {

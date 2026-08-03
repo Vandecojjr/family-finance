@@ -48,10 +48,9 @@ public class BankAccount : Entity
         RemainingCreditLimit = CreditLimit.Create(Math.Max(0, RemainingCreditLimit.Value + diff));
         SeUpdate();
     }
-
-    public void AddCreditCard(string brand, string lastFourDigits, decimal totalLimit, decimal availableLimit)
+    public void AddCreditCard(string brand, string lastFourDigits, decimal totalLimit, decimal availableLimit, int dueDay, IEnumerable<CreditCardInvoice>? initialInvoices = null)
     {
-        var card = new CreditCard(brand, lastFourDigits, totalLimit, availableLimit, Id);
+        var card = new CreditCard(brand, lastFourDigits, totalLimit, availableLimit, dueDay, Id, initialInvoices);
         _creditCards.Add(card);
         SeUpdate();
     }
@@ -66,7 +65,7 @@ public class BankAccount : Entity
         SeUpdate();
     }
 
-    public string RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId)
+    public (string DisplayName, IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice> AffectedInvoices) RegisterCreditCardTransaction(decimal amount, TransactionType type, Guid creditCardId, DateTime transactionDate, int installments = 1)
     {
         if (type == TransactionType.Income)
             throw new CreditCardTransactionMustBeExpenseException();
@@ -76,8 +75,9 @@ public class BankAccount : Entity
             throw new InvalidOperationException($"Cartão de crédito com ID '{creditCardId}' não foi encontrado nesta conta.");
 
         card.AdjustBalance(amount, type);
+        var affectedInvoices = card.AddExpenseToInvoices(amount, transactionDate, installments);
 
-        return $"{card.Brand.Value} •••• {card.LastFourDigits.Value}";
+        return ($"{card.Brand.Value} •••• {card.LastFourDigits.Value}", affectedInvoices);
     }
 
     public void AdjustBalance(decimal amount, TransactionType type, bool? useCredit)

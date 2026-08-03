@@ -16,6 +16,7 @@ public static class DependencyInjection
         
         services.AddScoped<ExpensePaymentService>();
         services.AddScoped<IncomePaymentService>();
+        services.AddScoped<ICreditCardCreationService, CreditCardCreationService>();
         
         services.AddMediator(o =>
         {

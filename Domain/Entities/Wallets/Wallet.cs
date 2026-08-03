@@ -84,7 +84,7 @@ public class Wallet : Entity, IAggregateRoot
         }
     }
 
-    public Transaction RegisterTransaction(
+    public (Transaction Transaction, IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice>? AffectedInvoices) RegisterTransaction(
         string description,
         decimal amount,
         TransactionType type,
@@ -93,11 +93,13 @@ public class Wallet : Entity, IAggregateRoot
         Guid? bankAccountId = null,
         Guid? creditCardId = null,
         bool? useCredit = null,
-        string? notes = null)
+        string? notes = null,
+        int installments = 1)
     {
         string? walletNameVal = Name.Value;
         string? bankAccountNameVal = null;
         string? creditCardDisplayNameVal = null;
+        IReadOnlyCollection<Domain.Entities.CreidtCards.CreditCardInvoice>? affectedInvoices = null;
 
         if (bankAccountId.HasValue)
         {
@@ -109,7 +111,9 @@ public class Wallet : Entity, IAggregateRoot
 
             if (creditCardId.HasValue)
             {
-                creditCardDisplayNameVal = account.RegisterCreditCardTransaction(amount, type, creditCardId.Value);
+                var result = account.RegisterCreditCardTransaction(amount, type, creditCardId.Value, date, installments);
+                creditCardDisplayNameVal = result.DisplayName;
+                affectedInvoices = result.AffectedInvoices;
             }
             else
             {
@@ -142,6 +146,6 @@ public class Wallet : Entity, IAggregateRoot
 
         _transactions.Add(transaction);
 
-        return transaction;
+        return (transaction, affectedInvoices);
     }
 }

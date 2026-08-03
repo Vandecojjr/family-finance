@@ -13,6 +13,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+
+import DatePicker from '../../src/components/DatePicker';
+import { CategoryPicker } from '@/components/CategoryPicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
@@ -20,6 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { walletsApi } from '@/api/endpoints/wallets';
+import { categoriesApi } from '@/api/endpoints/categories';
 import { Wallet, BankAccount, CreditCard } from '@/types';
 import { usePreferenceStore } from '@/stores/preferenceStore';
 import { decodeJwt } from '@/utils/jwt';
@@ -55,13 +59,20 @@ export default function WalletsScreen() {
     enabled: isAuthenticated,
   });
 
+  const { data: categories = [], refetch: refetchCategories } = useQuery({
+    queryKey: ['categories', isAuthenticated],
+    queryFn: () => categoriesApi.list(),
+    enabled: isAuthenticated,
+  });
+
   // Refetch data every time the tab is focused
   useFocusEffect(
     useCallback(() => {
       if (isAuthenticated) {
         refetch();
+        refetchCategories();
       }
-    }, [refetch, isAuthenticated])
+    }, [refetch, refetchCategories, isAuthenticated])
   );
 
   // Calculate Metrics
@@ -134,14 +145,17 @@ export default function WalletsScreen() {
   });
 
   // CreditCard Modal State
-  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [cardModalOpen, setCardModalOpen] = useState(false); // State for Credit Card Form
+  const [showDatePickerForInvoice, setShowDatePickerForInvoice] = useState<string | null>(null);
   const [cardForm, setCardForm] = useState<{
     walletId: string;
     accountId: string;
     brand: string;
     lastFourDigits: string;
-    totalLimit: string;
     availableLimit: string;
+    dueDay: string;
+    categoryId: string;
+    invoices: Array<{ id: string; dueDate: string; amount: string }>;
   }>({
     walletId: '',
     accountId: '',
@@ -149,10 +163,16 @@ export default function WalletsScreen() {
     lastFourDigits: '',
     totalLimit: '',
     availableLimit: '',
+    dueDay: '10',
+    categoryId: '',
+    invoices: [],
   });
+
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
 
   // Expanded Card State
   const [expandedCard, setExpandedCard] = useState<CreditCard | null>(null);
+  const [expandedInvoiceTab, setExpandedInvoiceTab] = useState<'open' | 'paid'>('open');
 
   // Delete Warning Modal State
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -259,6 +279,7 @@ export default function WalletsScreen() {
     mutationFn: async () => {
       const parsedLimit = parseCurrencyValue(cardForm.totalLimit);
       const parsedAvailableLimit = parseCurrencyValue(cardForm.availableLimit);
+      const parsedDueDay = parseInt(cardForm.dueDay, 10);
 
       if (!cardForm.brand?.trim()) throw new Error('Bandeira do cartão é obrigatória.');
       if (!cardForm.lastFourDigits || cardForm.lastFourDigits.length !== 4 || isNaN(parseInt(cardForm.lastFourDigits, 10))) {
@@ -267,12 +288,41 @@ export default function WalletsScreen() {
       if (isNaN(parsedLimit) || parsedLimit < 0) throw new Error('Limite total deve ser maior ou igual a zero.');
       if (isNaN(parsedAvailableLimit) || parsedAvailableLimit < 0) throw new Error('Limite disponível deve ser maior ou igual a zero.');
       if (parsedAvailableLimit > parsedLimit) throw new Error('Limite disponível não pode ser maior que o limite total.');
+      if (isNaN(parsedDueDay) || parsedDueDay < 1 || parsedDueDay > 31) throw new Error('O dia de vencimento deve ser entre 1 e 31.');
+      if (!cardForm.categoryId) throw new Error('Categoria das faturas é obrigatória.');
 
+      const usedLimit = parsedLimit - parsedAvailableLimit;
+      let invoicesPayload: any[] | undefined = undefined;
+
+      if (usedLimit > 0) {
+        if (!cardForm.invoices || cardForm.invoices.length === 0) {
+          throw new Error('Como existe limite comprometido, adicione as faturas correspondentes.');
+        }
+        
+        invoicesPayload = cardForm.invoices.map(inv => {
+          const amount = parseCurrencyValue(inv.amount);
+          
+          if (isNaN(amount) || amount <= 0) throw new Error('Existem faturas com valores inválidos.');
+          
+          if (!inv.dueDate) throw new Error('A data de vencimento da fatura é obrigatória.');
+
+          // Generate ISO format string to pass to the backend
+          return { dueDate: new Date(inv.dueDate + 'T00:00:00').toISOString(), amount };
+        });
+
+        const totalInvoices = invoicesPayload.reduce((acc, inv) => acc + inv.amount, 0);
+        if (Math.abs(totalInvoices - usedLimit) > 0.01) {
+          throw new Error(`A soma das faturas não corresponde ao limite comprometido.`);
+        }
+      }
       await walletsApi.createCreditCard(cardForm.walletId, cardForm.accountId, {
         brand: cardForm.brand,
         lastFourDigits: cardForm.lastFourDigits,
         totalLimit: parsedLimit,
         availableLimit: parsedAvailableLimit,
+        dueDay: parsedDueDay,
+        categoryId: cardForm.categoryId,
+        invoices: invoicesPayload,
       });
     },
     onSuccess: () => {
@@ -360,6 +410,9 @@ export default function WalletsScreen() {
       lastFourDigits: '',
       totalLimit: '0',
       availableLimit: '0',
+      dueDay: '10',
+      categoryId: '',
+      invoices: [],
     });
     setCardModalOpen(true);
   };
@@ -460,6 +513,8 @@ export default function WalletsScreen() {
               </View>
             </View>
           </View>
+
+
 
           {/* List of Wallets */}
           {wallets.map((w) => {
@@ -936,6 +991,179 @@ export default function WalletsScreen() {
               </View>
             </View>
 
+            <View style={styles.formRow}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Dia de Vencimento</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="10"
+                  placeholderTextColor={colors.text.muted}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                  value={cardForm.dueDay}
+                  onChangeText={(text) => setCardForm({ ...cardForm, dueDay: text.replace(/\D/g, '') })}
+                />
+              </View>
+            </View>
+
+            <View style={styles.formRow}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Categoria para as Faturas</Text>
+                <TouchableOpacity 
+                  style={styles.input} 
+                  onPress={() => setIsCategoryPickerOpen(true)}
+                >
+                  <Text style={{ color: cardForm.categoryId ? colors.text.primary : colors.text.muted }}>
+                    {(() => {
+                      if (!cardForm.categoryId) return "Selecione uma categoria...";
+                      for (const p of categories) {
+                        if (p.id === cardForm.categoryId) return p.name;
+                        if (p.subCategories) {
+                          const sub = p.subCategories.find(s => s.id === cardForm.categoryId);
+                          if (sub) return sub.name;
+                        }
+                      }
+                      return "Categoria Selecionada";
+                    })()}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {(() => {
+              const parsedLimit = parseCurrencyValue(cardForm.totalLimit) || 0;
+              const parsedAvailable = parseCurrencyValue(cardForm.availableLimit) || 0;
+              const usedLimit = parsedLimit - parsedAvailable;
+
+              if (usedLimit > 0) {
+                const totalInvoices = cardForm.invoices.reduce((acc, inv) => acc + (parseCurrencyValue(inv.amount) || 0), 0);
+                const remainingToDistribute = usedLimit - totalInvoices;
+                const isExact = Math.abs(remainingToDistribute) < 0.01;
+
+                return (
+                  <View style={{ marginTop: spacing.md, backgroundColor: 'rgba(255,255,255,0.03)', padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border }}>
+                    <Text style={{ color: colors.text.primary, fontSize: 14, fontWeight: '600', marginBottom: spacing.xs }}>
+                      Faturas Pendentes (Limite Comprometido)
+                    </Text>
+                    <Text style={{ color: colors.text.muted, fontSize: 12, marginBottom: spacing.md }}>
+                      Você possui {fmt(usedLimit)} de limite comprometido. Adicione as faturas em aberto.
+                    </Text>
+
+                    {cardForm.invoices.map((inv, index) => (
+                      <View key={inv.id} style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm, alignItems: 'flex-start' }}>
+                        <View style={{ flex: 2 }}>
+                          <TouchableOpacity 
+                            style={[styles.input, { paddingVertical: 12, justifyContent: 'center' }]} 
+                            onPress={() => setShowDatePickerForInvoice(inv.id)}
+                          >
+                            <Text style={{ color: inv.dueDate ? colors.text.primary : colors.text.muted }}>
+                              {inv.dueDate 
+                                ? inv.dueDate.split('-').reverse().join('/') 
+                                : 'Vencimento'}
+                            </Text>
+                          </TouchableOpacity>
+
+                          <DatePicker
+                            visible={showDatePickerForInvoice === inv.id}
+                            value={inv.dueDate}
+                            onClose={() => setShowDatePickerForInvoice(null)}
+                            onSelect={(date: string) => {
+                              const newInvoices = [...cardForm.invoices];
+                              newInvoices[index].dueDate = date;
+                              setCardForm({ ...cardForm, invoices: newInvoices });
+                              setShowDatePickerForInvoice(null);
+                            }}
+                            title="Vencimento da Fatura"
+                            accentColor={colors.brand.primary}
+                          />
+                        </View>
+                        <View style={{ flex: 2 }}>
+                          <TextInput
+                            style={[styles.input, { paddingVertical: 8 }]}
+                            placeholder="Valor"
+                            placeholderTextColor={colors.text.muted}
+                            keyboardType="decimal-pad"
+                            value={inv.amount}
+                            onChangeText={(text) => {
+                              const newInvoices = [...cardForm.invoices];
+                              newInvoices[index].amount = formatCurrencyInput(text);
+                              setCardForm({ ...cardForm, invoices: newInvoices });
+                            }}
+                          />
+                        </View>
+                        <TouchableOpacity 
+                          onPress={() => {
+                            const newInvoices = cardForm.invoices.filter((_, i) => i !== index);
+                            setCardForm({ ...cardForm, invoices: newInvoices });
+                          }}
+                          style={{ padding: spacing.sm, justifyContent: 'center' }}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs }}>
+                      <TouchableOpacity 
+                        style={styles.addInvoiceButton}
+                        onPress={() => {
+                          const parsedDay = parseInt(cardForm.dueDay, 10);
+                          const validDay = !isNaN(parsedDay) && parsedDay >= 1 && parsedDay <= 31 ? parsedDay : 10;
+                          
+                          let suggestedDate = '';
+                          if (cardForm.invoices.length === 0) {
+                            // First invoice: current or next month
+                            const now = new Date();
+                            let year = now.getFullYear();
+                            let month = now.getMonth(); // 0-11
+                            
+                            if (now.getDate() > validDay) {
+                              month++;
+                              if (month > 11) {
+                                month = 0;
+                                year++;
+                              }
+                            }
+                            suggestedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
+                          } else {
+                            // Next invoice: +1 month from the last invoice
+                            const lastInvoiceDate = cardForm.invoices[cardForm.invoices.length - 1].dueDate;
+                            if (lastInvoiceDate) {
+                              const [lastYear, lastMonth, lastDay] = lastInvoiceDate.split('-').map(Number);
+                              let nextMonth = lastMonth + 1; // 1-12
+                              let nextYear = lastYear;
+                              if (nextMonth > 12) {
+                                nextMonth = 1;
+                                nextYear++;
+                              }
+                              suggestedDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
+                            } else {
+                              const now = new Date();
+                              suggestedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
+                            }
+                          }
+
+                          setCardForm({
+                            ...cardForm,
+                            invoices: [
+                              ...cardForm.invoices,
+                              { id: Math.random().toString(), dueDate: suggestedDate, amount: '' }
+                            ]
+                          });
+                        }}
+                      >
+                        <Text style={{ color: colors.brand.primary, fontSize: 13, fontWeight: '600' }}>+ Adicionar Fatura</Text>
+                      </TouchableOpacity>
+                      <Text style={{ color: isExact ? colors.success : colors.danger, fontSize: 12, fontWeight: '500' }}>
+                        {isExact ? 'Valores conferem!' : `Falta alocar: ${fmt(remainingToDistribute)}`}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }
+              return null;
+            })()}
+
             <TouchableOpacity
               style={[styles.submitBtn, { backgroundColor: colors.brand.accent }]}
               onPress={() => cardSaveMutation.mutate()}
@@ -947,6 +1175,14 @@ export default function WalletsScreen() {
                 <Text style={styles.submitBtnText}>Criar Cartão</Text>
               )}
             </TouchableOpacity>
+            <CategoryPicker
+              visible={isCategoryPickerOpen}
+              onClose={() => setIsCategoryPickerOpen(false)}
+              onSelect={(catId) => setCardForm({ ...cardForm, categoryId: catId })}
+              selectedId={cardForm.categoryId}
+              type="Expense"
+              categories={categories}
+            />
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1008,6 +1244,58 @@ export default function WalletsScreen() {
                 </View>
               </View>
             </LinearGradient>
+            
+            {/* Faturas list */}
+            {expandedCard.invoices && expandedCard.invoices.length > 0 && (
+              <View style={styles.expandedInvoicesContainer} onStartShouldSetResponder={() => true}>
+                <View style={styles.expandedInvoicesHeaderRow}>
+                  <Text style={styles.expandedInvoicesTitle}>Faturas</Text>
+                  <View style={styles.expandedInvoiceTabs}>
+                    <TouchableOpacity
+                      style={[styles.expandedInvoiceTabBtn, expandedInvoiceTab === 'open' && styles.expandedInvoiceTabBtnActive]}
+                      onPress={() => setExpandedInvoiceTab('open')}
+                    >
+                      <Text style={[styles.expandedInvoiceTabText, expandedInvoiceTab === 'open' && styles.expandedInvoiceTabTextActive]}>Abertas</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.expandedInvoiceTabBtn, expandedInvoiceTab === 'paid' && styles.expandedInvoiceTabBtnActive]}
+                      onPress={() => setExpandedInvoiceTab('paid')}
+                    >
+                      <Text style={[styles.expandedInvoiceTabText, expandedInvoiceTab === 'paid' && styles.expandedInvoiceTabTextActive]}>Pagas</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                
+                <ScrollView style={styles.expandedInvoicesList} showsVerticalScrollIndicator={false}>
+                  {expandedCard.invoices.filter(i => (expandedInvoiceTab === 'paid' ? i.isPaid : !i.isPaid)).length === 0 ? (
+                    <Text style={{ textAlign: 'center', color: colors.text.muted, marginVertical: spacing.md }}>Nenhuma fatura encontrada.</Text>
+                  ) : (
+                    expandedCard.invoices
+                      .filter(i => (expandedInvoiceTab === 'paid' ? i.isPaid : !i.isPaid))
+                      .map((inv, idx) => {
+                        const dt = new Date(inv.dueDate);
+                        const formattedDate = `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+                        return (
+                          <View key={inv.id || idx.toString()} style={styles.expandedInvoiceItem}>
+                            <View style={styles.expandedInvoiceIconWrap}>
+                              <Ionicons name="document-text-outline" size={20} color={colors.brand.primary} />
+                            </View>
+                            <View style={styles.expandedInvoiceInfo}>
+                              <Text style={styles.expandedInvoiceDate}>Vencimento: {formattedDate}</Text>
+                              <Text style={styles.expandedInvoiceAmount}>{fmt(inv.amount)}</Text>
+                            </View>
+                            <View style={[styles.expandedInvoiceStatus, { backgroundColor: inv.isPaid ? `${colors.success}20` : `${colors.warning}20` }]}>
+                              <Text style={[styles.expandedInvoiceStatusText, { color: inv.isPaid ? colors.success : colors.warning }]}>
+                                {inv.isPaid ? 'Paga' : 'Aberta'}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                  )}
+                </ScrollView>
+              </View>
+            )}
           </TouchableOpacity>
         )}
       </Modal>
@@ -1473,5 +1761,88 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'space-between',
     ...shadow.lg,
+  },
+  expandedInvoicesContainer: {
+    width: '100%',
+    maxWidth: 380,
+    marginTop: spacing.xl,
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    maxHeight: 300,
+  },
+  expandedInvoicesTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  expandedInvoicesHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  expandedInvoiceTabs: {
+    flexDirection: 'row',
+    backgroundColor: colors.bg.primary,
+    borderRadius: radius.full,
+    padding: 2,
+  },
+  expandedInvoiceTabBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  expandedInvoiceTabBtnActive: {
+    backgroundColor: colors.brand.primary,
+  },
+  expandedInvoiceTabText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
+  expandedInvoiceTabTextActive: {
+    color: colors.white,
+  },
+  expandedInvoicesList: {
+    flexGrow: 0,
+  },
+  expandedInvoiceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  expandedInvoiceIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: `${colors.brand.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  expandedInvoiceInfo: {
+    flex: 1,
+  },
+  expandedInvoiceDate: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  expandedInvoiceAmount: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  expandedInvoiceStatus: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+  },
+  expandedInvoiceStatusText: {
+    ...typography.caption,
+    fontWeight: '700',
   },
 });

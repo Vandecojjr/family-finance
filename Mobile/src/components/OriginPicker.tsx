@@ -170,7 +170,7 @@ export function OriginPicker({
                           </TouchableOpacity>
 
                           {/* Cheque Especial / Crédito da Conta */}
-                          {acc.creditLimit > 0 && (
+                          {allowCreditCards && acc.creditLimit > 0 && (
                             <TouchableOpacity
                               style={[
                                 styles.optionRow,

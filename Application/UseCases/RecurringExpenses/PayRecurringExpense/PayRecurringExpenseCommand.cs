@@ -11,7 +11,8 @@ public sealed record PayRecurringExpenseCommand(
     decimal Amount,
     Guid? BankAccountId = null,
     Guid? CreditCardId = null,
-    bool? UseCredit = null) : ICommand<Result<Guid>>, IAuthorizeableRequest
+    bool? UseCredit = null,
+    int Installments = 1) : ICommand<Result<Guid>>, IAuthorizeableRequest
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseUpdate];
 }

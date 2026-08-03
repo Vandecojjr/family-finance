@@ -23,13 +23,20 @@ public sealed record BankAccountResponse(
     decimal UsedCreditLimit,
     List<CreditCardResponse> CreditCards);
 
+public sealed record CreditCardInvoiceResponse(
+    Guid Id,
+    DateTime DueDate,
+    decimal Amount,
+    bool IsPaid);
+
 public sealed record CreditCardResponse(
     Guid Id,
     string Brand,
     string LastFourDigits,
     decimal TotalLimit,
     decimal RemainingLimit,
-    decimal UsedLimit = 0);
+    decimal UsedLimit = 0,
+    List<CreditCardInvoiceResponse>? Invoices = null);
 
 public static class WalletResponseFactory
 {
@@ -68,7 +75,13 @@ public static class WalletResponseFactory
             card.LastFourDigits.Value,
             card.TotalLimit.Value,
             card.RemainingLimit.Value,
-            card.UsagetotalLimit()
+            card.UsagetotalLimit(),
+            card.Invoices?.Select(i => new CreditCardInvoiceResponse(
+                i.Id,
+                i.DueDate.Value,
+                i.Amount.Value,
+                i.IsPaid
+            )).ToList()
         );
     }
 

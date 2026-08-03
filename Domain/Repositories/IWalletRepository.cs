@@ -14,6 +14,7 @@ public interface IWalletRepository : IRepository<Wallet>
     Task DeleteAsync(Wallet wallet, CancellationToken cancellationToken = default);
 
     Task<Transaction?> GetTransactionByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Wallet?> GetWalletByExpenseIdAsync(Guid expenseId, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<Transaction>> GetTransactionsByFamilyIdAsync(Guid familyId, CancellationToken cancellationToken = default);
     Task DeleteTransactionAsync(Transaction transaction, CancellationToken cancellationToken = default);
 }
