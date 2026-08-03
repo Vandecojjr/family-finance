@@ -6,5 +6,5 @@ namespace Application.Shared.Repositories;
 public interface IAccountsReceivableRepository
 {
     Task<IReadOnlyCollection<AccountsReceivableDto>>
-        GetAllByMember(Guid memberId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default);
+        GetAllByFamily(Guid familyId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default);
 }

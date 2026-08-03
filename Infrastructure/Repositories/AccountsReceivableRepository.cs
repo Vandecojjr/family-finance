@@ -9,9 +9,9 @@ namespace Infrastructure.Repositories;
 
 public class AccountsReceivableRepository(AppDbContext context) : IAccountsReceivableRepository
 {
-    public async Task<IReadOnlyCollection<AccountsReceivableDto>> GetAllByMember(Guid memberId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<AccountsReceivableDto>> GetAllByFamily(Guid familyId, RecurringFrequency onlyDate, CancellationToken cancellationToken = default)
     {
-        var query = AccountsReceivableSql.GetAllByMember(memberId, onlyDate);
+        var query = AccountsReceivableSql.GetAllByFamily(familyId, onlyDate);
         
         return await context.Database
             .SqlQueryRaw<AccountsReceivableDto>(query.Sql, query.Parameters)

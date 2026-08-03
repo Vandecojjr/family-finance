@@ -16,12 +16,12 @@ public sealed class GetMemberAccountsReceivableHandler(
     public async ValueTask<Result<IReadOnlyCollection<AccountsReceivableDto>>> Handle(GetMemberAccountsReceivableQuery query, CancellationToken cancellationToken)
     {
         var memberId = currentUser.MemberId;
-        var memberExist = await familyRepository.ExistsMemberByIdAsync(memberId, cancellationToken);
-        if (!memberExist)
+        var familyId = await familyRepository.GetFamilyIdByMemberIdAsync(memberId, cancellationToken);
+        if (familyId == Guid.Empty)
             return Result<IReadOnlyCollection<AccountsReceivableDto>>.Failure(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
 
-        var incomes = await repository.GetAllByMember(query.MemberId, query.OnlyDate, cancellationToken);
+        var incomes = await repository.GetAllByFamily(familyId, query.OnlyDate, cancellationToken);
         return Result<IReadOnlyCollection<AccountsReceivableDto>>.Success(incomes);
     }
 }
