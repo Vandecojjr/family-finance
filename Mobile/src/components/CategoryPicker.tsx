@@ -8,10 +8,12 @@ import {
   TextInput,
   ScrollView,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
-import { CategoryResponse } from '@/api/endpoints/categories';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoriesApi, CategoryResponse } from '@/api/endpoints/categories';
 import { getCategoryMeta } from '@/utils/categoryHelpers';
 
 interface CategoryPickerProps {
@@ -32,6 +34,16 @@ export function CategoryPicker({
   type,
 }: CategoryPickerProps) {
   const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: (name: string) => categoriesApi.create({ name, type, parentId: null }),
+    onSuccess: (newId) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      onSelect(newId);
+      onClose();
+    },
+  });
 
   const filteredCategories = useMemo(() => {
     const targetTypeParents = (categories || []).filter(
@@ -86,6 +98,10 @@ export function CategoryPicker({
     onSelect(id);
     onClose();
   };
+
+  const exactMatchExists = filteredCategories.some(
+    c => c.name.toLowerCase() === search.trim().toLowerCase()
+  );
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -159,6 +175,24 @@ export function CategoryPicker({
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* Create inline */}
+            {search.trim().length > 0 && !exactMatchExists && (
+              <TouchableOpacity
+                style={[styles.createBtn, { backgroundColor: activeColor }]}
+                onPress={() => createMutation.mutate(search.trim())}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <>
+                    <Ionicons name="add-circle-outline" size={20} color={colors.white} />
+                    <Text style={styles.createBtnText}>Criar categoria "{search.trim()}"</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
             {/* List */}
             <ScrollView
@@ -290,6 +324,21 @@ export function CategoryPicker({
 }
 
 const styles = StyleSheet.create({
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    gap: spacing.xs,
+  },
+  createBtnText: {
+    ...typography.body,
+    color: colors.white,
+    fontWeight: '600',
+  },
   overlay: {
     flex: 1,
     backgroundColor: colors.overlay,

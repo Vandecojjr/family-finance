@@ -89,7 +89,7 @@ public class Wallet : Entity, IAggregateRoot
         decimal amount,
         TransactionType type,
         DateTime date,
-        Guid categoryId,
+        Guid? categoryId,
         Guid? bankAccountId = null,
         Guid? creditCardId = null,
         bool? useCredit = null,
@@ -148,5 +148,45 @@ public class Wallet : Entity, IAggregateRoot
         _transactions.Add(transaction);
 
         return (transaction, affectedInvoices);
+    }
+
+    public void RemoveAndRevertTransaction(Transaction transaction)
+    {
+        var t = _transactions.FirstOrDefault(x => x.Id == transaction.Id);
+        if (t == null) return;
+
+        if (t.BankAccountId.HasValue)
+        {
+            var account = _accounts.FirstOrDefault(a => a.Id == t.BankAccountId.Value);
+            if (account != null)
+            {
+                if (t.CreditCardId.HasValue)
+                {
+                    var card = account.CreditCards.FirstOrDefault(c => c.Id == t.CreditCardId.Value);
+                    if (card != null)
+                    {
+                        card.RestoreLimit(t.Amount.Value);
+                    }
+                }
+                else
+                {
+                    account.RevertTransaction(t.Amount.Value, t.Type, t.UseCredit);
+                }
+            }
+        }
+        else
+        {
+            if (t.Type == TransactionType.Income || t.Type == TransactionType.TransferIn)
+            {
+                CashBalance = CashBalance.Create(CashBalance.Value - t.Amount.Value);
+            }
+            else if (t.Type == TransactionType.Expense || t.Type == TransactionType.TransferOut)
+            {
+                CashBalance = CashBalance.Create(CashBalance.Value + t.Amount.Value);
+            }
+        }
+
+        _transactions.Remove(t);
+        SeUpdate();
     }
 }

@@ -11,7 +11,7 @@ public class Transaction : Entity
     public TransactionType Type { get; private set; }
     public DateTime Date { get; private set; }
     public Guid FamilyId { get; private set; }
-    public Guid CategoryId { get; private set; }
+    public Guid? CategoryId { get; private set; }
 
     public Guid? WalletId { get; private set; }
     public Guid? BankAccountId { get; private set; }
@@ -33,7 +33,7 @@ public class Transaction : Entity
         TransactionType type,
         DateTime date,
         Guid familyId,
-        Guid categoryId,
+        Guid? categoryId,
         Guid? walletId,
         Guid? bankAccountId,
         Guid? creditCardId,

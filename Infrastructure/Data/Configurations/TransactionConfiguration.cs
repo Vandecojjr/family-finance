@@ -44,7 +44,7 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .IsRequired();
 
         builder.Property(x => x.CategoryId)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(x => x.WalletId)
             .IsRequired(false);

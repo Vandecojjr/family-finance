@@ -219,7 +219,7 @@ export default function TransactionsScreen() {
     mutationFn: async (forceNextInvoice?: boolean | null) => {
       const parsedAmount = parseFloat(amount.replace(',', '.'));
       if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error('O valor deve ser maior que zero.');
-      if (!categoryId) throw new Error('Selecione uma categoria.');
+      if (type !== 3 && !categoryId) throw new Error('Selecione uma categoria.');
       
       if (type === 3) {
         if (!selectedOrigin) throw new Error('Selecione uma origem.');
@@ -228,7 +228,7 @@ export default function TransactionsScreen() {
         await transactionsApi.transfer({
           amount: parsedAmount,
           date,
-          categoryId,
+          categoryId: categoryId || undefined,
           sourceWalletId: selectedOrigin.walletId,
           sourceBankAccountId: selectedOrigin.bankAccountId,
           destinationWalletId: selectedDestination.walletId,
@@ -338,7 +338,7 @@ export default function TransactionsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Lançamentos</Text>
+        <Text style={styles.title}>Movimentações</Text>
         <TouchableOpacity style={styles.filterBtn} onPress={() => refetchTransactions()}>
           <Ionicons name="refresh-outline" size={20} color={colors.brand.primary} />
         </TouchableOpacity>
@@ -347,12 +347,12 @@ export default function TransactionsScreen() {
       {isLoadingTransactions ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.brand.primary} />
-          <Text style={styles.loadingText}>Carregando lançamentos...</Text>
+          <Text style={styles.loadingText}>Carregando movimentações...</Text>
         </View>
       ) : isErrorTransactions ? (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
-          <Text style={styles.errorText}>Erro ao carregar lançamentos.</Text>
+          <Text style={styles.errorText}>Erro ao carregar movimentações.</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => refetchTransactions()}>
             <Text style={styles.retryBtnText}>Tentar Novamente</Text>
           </TouchableOpacity>
@@ -493,12 +493,20 @@ export default function TransactionsScreen() {
         </View>
       )}
 
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => setModalOpen(true)}>
-        <LinearGradient colors={colors.gradient.primary} style={styles.fabGradient}>
-          <Ionicons name="add" size={28} color={colors.white} />
-        </LinearGradient>
-      </TouchableOpacity>
+      {/* FABs */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { setType(3); setCategoryId(''); setModalOpen(true); }}>
+          <LinearGradient colors={[colors.brand.primary, colors.brand.primary]} style={styles.fabGradient}>
+            <Ionicons name="swap-horizontal" size={28} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { setType(2); setCategoryId(''); setModalOpen(true); }}>
+          <LinearGradient colors={colors.gradient.primary} style={styles.fabGradient}>
+            <Ionicons name="add" size={28} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
 
       {/* Register Transaction Modal */}
       <Modal visible={modalOpen} animationType="slide" transparent>
@@ -508,48 +516,38 @@ export default function TransactionsScreen() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Novo Lançamento</Text>
+              <Text style={styles.modalTitle}>Nova Movimentação</Text>
               <TouchableOpacity onPress={closeForm}>
                 <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             {/* Type Switcher */}
-            <View style={styles.typeSelectorContainer}>
-              <TouchableOpacity
-                style={[styles.typeBtn, type === 2 && styles.typeBtnExpense]}
-                onPress={() => {
-                  setType(2);
-                  setCategoryId('');
-                }}
-              >
-                <Text style={[styles.typeBtnText, type === 2 && styles.typeBtnTextActive]}>Saída</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.typeBtn, type === 1 && styles.typeBtnIncome]}
-                onPress={() => {
-                  setType(1);
-                  setCategoryId('');
-                  if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
-                    setSelectedOrigin(null);
-                  }
-                }}
-              >
-                <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.typeBtn, type === 3 && { backgroundColor: colors.brand.primary }]}
-                onPress={() => {
-                  setType(3);
-                  setCategoryId('');
-                  if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
-                    setSelectedOrigin(null);
-                  }
-                }}
-              >
-                <Text style={[styles.typeBtnText, type === 3 && styles.typeBtnTextActive]}>Transferência</Text>
-              </TouchableOpacity>
-            </View>
+            {type !== 3 && (
+              <View style={styles.typeSelectorContainer}>
+                <TouchableOpacity
+                  style={[styles.typeBtn, type === 2 && styles.typeBtnExpense]}
+                  onPress={() => {
+                    setType(2);
+                    setCategoryId('');
+                  }}
+                >
+                  <Text style={[styles.typeBtnText, type === 2 && styles.typeBtnTextActive]}>Saída</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeBtn, type === 1 && styles.typeBtnIncome]}
+                  onPress={() => {
+                    setType(1);
+                    setCategoryId('');
+                    if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
+                      setSelectedOrigin(null);
+                    }
+                  }}
+                >
+                  <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
               {/* Description */}
@@ -579,7 +577,7 @@ export default function TransactionsScreen() {
 
               {/* Date */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Data do Lançamento</Text>
+                <Text style={styles.label}>Data da Movimentação</Text>
                 <TouchableOpacity
                   style={styles.pickerTrigger}
                   onPress={() => setIsDatePickerOpen(true)}
@@ -592,22 +590,24 @@ export default function TransactionsScreen() {
               </View>
 
               {/* Category Picker */}
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Categoria</Text>
-                <TouchableOpacity
-                  style={styles.pickerTrigger}
-                  onPress={() => setIsCategoryPickerOpen(true)}
-                >
-                  <Text style={styles.pickerTriggerText}>
-                    {selectedCategoryName}
-                  </Text>
-                  <Ionicons name="chevron-down-outline" size={18} color={colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
+              {type !== 3 && (
+                <View style={styles.formGroup}>
+                  <Text style={styles.label}>Categoria</Text>
+                  <TouchableOpacity
+                    style={styles.pickerTrigger}
+                    onPress={() => setIsCategoryPickerOpen(true)}
+                  >
+                    <Text style={styles.pickerTriggerText}>
+                      {selectedCategoryName}
+                    </Text>
+                    <Ionicons name="chevron-down-outline" size={18} color={colors.text.secondary} />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* Origin Balance Resource */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>{type === 3 ? 'Origem' : 'Destino / Origem do Lançamento'}</Text>
+                <Text style={styles.label}>{type === 3 ? 'Origem' : 'Destino / Origem da Movimentação'}</Text>
                 <TouchableOpacity
                   style={styles.pickerTrigger}
                   onPress={() => setIsOriginPickerOpen(true)}
@@ -662,7 +662,7 @@ export default function TransactionsScreen() {
                 {registerMutation.isPending ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <Text style={styles.submitBtnText}>Salvar Lançamento</Text>
+                  <Text style={styles.submitBtnText}>Salvar Movimentação</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -940,7 +940,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
-  fab: { position: 'absolute', bottom: 32, right: spacing.lg, borderRadius: radius.full, overflow: 'hidden', ...shadow.lg },
+  fabContainer: { position: 'absolute', bottom: 32, right: spacing.lg, gap: spacing.md, alignItems: 'center' },
+  fab: { borderRadius: radius.full, overflow: 'hidden', ...shadow.lg },
   fabGradient: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },
   modalOverlay: {
     flex: 1,

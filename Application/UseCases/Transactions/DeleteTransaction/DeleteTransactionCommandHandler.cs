@@ -34,8 +34,19 @@ public sealed class DeleteTransactionCommandHandler(
                 Error.Failure("Family.AccessDenied", "Você não tem acesso a esta transação."));
         }
 
-        return Result.Failure(
-            Error.Validation("Transaction.CannotBeDeleted", "Transações pertencem a uma Wallet e nunca podem ser deletadas."));
+        if (transaction.WalletId.HasValue)
+        {
+            var wallet = await walletRepository.GetByIdAsync(transaction.WalletId.Value, cancellationToken);
+            if (wallet is not null)
+            {
+                wallet.RemoveAndRevertTransaction(transaction);
+                await walletRepository.UpdateAsync(wallet, cancellationToken);
+            }
+        }
+
+        await walletRepository.DeleteTransactionAsync(transaction, cancellationToken);
+        
+        return Result.Success();
     }
 }
 

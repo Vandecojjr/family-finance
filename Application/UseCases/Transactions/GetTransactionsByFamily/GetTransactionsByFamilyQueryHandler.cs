@@ -35,7 +35,7 @@ public sealed class GetTransactionsByFamilyQueryHandler(
             t.Date,
             t.FamilyId,
             t.CategoryId,
-            categoryDict.TryGetValue(t.CategoryId, out var catName) ? catName : "Sem Categoria",
+            t.CategoryId.HasValue && categoryDict.TryGetValue(t.CategoryId.Value, out var catName) ? catName : "Transferência",
             t.WalletId,
             t.BankAccountId,
             t.CreditCardId,

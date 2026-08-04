@@ -6,7 +6,7 @@ namespace Application.UseCases.Transactions.TransferMoney;
 public sealed record TransferMoneyCommand(
     decimal Amount,
     DateTime Date,
-    Guid CategoryId,
+    Guid? CategoryId,
     Guid? SourceWalletId,
     Guid? SourceBankAccountId,
     Guid? DestinationWalletId,

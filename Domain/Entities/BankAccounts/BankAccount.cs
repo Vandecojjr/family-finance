@@ -116,4 +116,26 @@ public class BankAccount : Entity
     }
 
     public decimal UsageCreditLimit() => CreditLimit.Value - RemainingCreditLimit.Value;
+
+    public void RevertTransaction(decimal amount, TransactionType type, bool? useCredit)
+    {
+        if (useCredit.HasValue && useCredit.Value)
+        {
+            var newLimit = RemainingCreditLimit.Value + amount;
+            if (newLimit > CreditLimit.Value) newLimit = CreditLimit.Value;
+            RemainingCreditLimit = CreditLimit.Create(newLimit);
+        }
+        else
+        {
+            if (type == TransactionType.Income || type == TransactionType.TransferIn)
+            {
+                DebitBalance -= amount;
+            }
+            else if (type == TransactionType.Expense || type == TransactionType.TransferOut)
+            {
+                DebitBalance += amount;
+            }
+        }
+        SeUpdate();
+    }
 }
