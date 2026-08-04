@@ -43,7 +43,7 @@ public static class DashboardQuerySql
                    WHERE w."FamilyId" = @FamilyId) AS "TotalBalance",
 
                   -- 6. Total Credit Limit
-                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) + COALESCE(SUM(c."TotalLimit"), 0)
+                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) + COALESCE(SUM(c."RemainingLimit"), 0)
                    FROM "BankAccounts" b
                             LEFT JOIN "Wallets" w ON b."WalletId" = w."Id"
                             LEFT JOIN "CreditCards" c ON c."BankAccountId" = b."Id"
