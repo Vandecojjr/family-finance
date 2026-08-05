@@ -59,21 +59,18 @@ public static class DashboardQuerySql
                    WHERE w."FamilyId" = @FamilyId) AS "TotalBalance",
 
                   -- 6. Total Credit Limit
-                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) + COALESCE(SUM(c."RemainingLimit"), 0)
+                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) + COALESCE(SUM(c."TotalLimit"), 0)
                    FROM "BankAccounts" b
                             LEFT JOIN "Wallets" w ON b."WalletId" = w."Id"
                             LEFT JOIN "CreditCards" c ON c."BankAccountId" = b."Id"
                    WHERE w."FamilyId" = @FamilyId) AS "TotalCreditLimit",
 
                   -- 7. Total Credit Expensed
-                  (SELECT COALESCE(SUM(t."Amount"), 0)
-                   FROM "Transactions" t
-                            INNER JOIN "Wallets" tw ON tw."Id" = t."WalletId"
-                   WHERE t."Type" = 2
-                     AND t."UseCredit" IS NOT NULL OR t."CreditCardId" IS NOT NULL
-                     AND EXTRACT(MONTH FROM t."Date") = EXTRACT(MONTH FROM CURRENT_DATE)
-                     AND EXTRACT(YEAR FROM t."Date") = EXTRACT(YEAR FROM CURRENT_DATE)
-                     AND tw."FamilyId" = @FamilyId) AS "TotalCreditExpensed"
+                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) + COALESCE(SUM(c."TotalLimit"), 0) - COALESCE(SUM(c."RemainingLimit"), 0)
+                  FROM "BankAccounts" b
+                           LEFT JOIN "Wallets" w ON b."WalletId" = w."Id"
+                           LEFT JOIN "CreditCards" c ON c."BankAccountId" = b."Id"
+                  WHERE w."FamilyId" = @FamilyId) AS "TotalCreditExpensed"
                   ;
 
                   -- 8. Projected Income by Category
