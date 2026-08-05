@@ -1,56 +1,56 @@
-// Design tokens — paleta dark premium
+// Design tokens — Soft & Airy Dark Theme
 export const colors = {
   // Backgrounds
   bg: {
-    primary: '#09090b', // zinc-950
-    secondary: '#18181b', // zinc-900
-    card: '#18181b', // zinc-900
-    elevated: '#27272a', // zinc-800
+    primary: '#1A1D24', // Soft cool dark blue-gray (not heavy black)
+    secondary: '#222630', // Slightly lighter for contrast
+    card: '#222630', // Comfortable card background
+    elevated: '#2A2E39', // Elevated elements
   },
   // Brand
   brand: {
-    primary: '#3b82f6', // blue-500
-    secondary: '#2563eb', // blue-600
-    accent: '#10b981', // emerald-500
-    teal: '#14b8a6', // teal-500
+    primary: '#818CF8', // Soft Pastel Indigo
+    secondary: '#A78BFA', // Soft Pastel Violet
+    accent: '#34D399', // Soft Pastel Emerald
+    teal: '#2DD4BF', // Soft Teal
   },
   // Gradients
   gradient: {
-    primary: ['#3b82f6', '#2563eb'],
-    income: ['#10b981', '#059669'],
-    expense: ['#ef4444', '#dc2626'],
-    card: ['#18181b', '#27272a'],
+    primary: ['#818CF8', '#A78BFA'], // Soft Indigo to Violet
+    income: ['#34D399', '#10B981'], // Soft Emerald
+    expense: ['#FB7185', '#F43F5E'], // Soft Rose
+    card: ['#222630', '#2A2E39'],
   },
   // Text
   text: {
-    primary: '#fafafa', // zinc-50
-    secondary: '#a1a1aa', // zinc-400
-    muted: '#71717a', // zinc-500
-    inverse: '#09090b', // zinc-950
+    primary: '#F3F4F6', // Off-white (easy on the eyes)
+    secondary: '#9CA3AF', // Cool gray
+    muted: '#6B7280', // Darker gray
+    inverse: '#111827', // Dark for contrast on light badges
   },
   // Semantic
-  success: '#10b981', // emerald-500
-  danger: '#ef4444', // red-500
-  warning: '#f59e0b', // amber-500
-  info: '#3b82f6', // blue-500
+  success: '#34D399',
+  danger: '#FB7185',
+  warning: '#FBBF24',
+  info: '#60A5FA',
   // UI
-  border: '#27272a', // zinc-800
-  divider: '#27272a', // zinc-800
-  overlay: 'rgba(9, 9, 11, 0.85)',
+  border: '#374151', // Soft border
+  divider: '#2A2E39',
+  overlay: 'rgba(15, 23, 42, 0.6)',
   white: '#ffffff',
   transparent: 'transparent',
   // Chart segment colors
   chart: [
-    '#3b82f6', // blue
-    '#10b981', // emerald
-    '#ef4444', // red
-    '#f59e0b', // amber
-    '#8b5cf6', // violet
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#84cc16', // lime
-    '#f97316', // orange
-    '#6366f1', // indigo
+    '#818CF8', // Pastel Indigo
+    '#34D399', // Pastel Emerald
+    '#FB7185', // Pastel Rose
+    '#FBBF24', // Pastel Amber
+    '#A78BFA', // Pastel Violet
+    '#F472B6', // Pastel Pink
+    '#22D3EE', // Pastel Cyan
+    '#A3E635', // Pastel Lime
+    '#FB923C', // Pastel Orange
+    '#60A5FA', // Pastel Blue
   ],
 } as const;
 
@@ -64,10 +64,10 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  sm: 12,
+  md: 16,
+  lg: 24,
+  xl: 32,
   full: 9999,
 } as const;
 
@@ -85,22 +85,22 @@ export const typography = {
 export const shadow = {
   sm: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
     elevation: 2,
   },
   md: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
   lg: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 16,
     elevation: 8,
   },

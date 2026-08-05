@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/stores/authStore';
@@ -116,7 +117,38 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <View style={isDesktop ? styles.desktopRow : undefined}>
+        {/* ── Atalhos de Acesso Rápido (Top) ─────────────────────── */}
+        <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.topShortcutsContainer}>
+          <TouchableOpacity style={styles.topShortcutItem} onPress={() => router.push('/accounts-payable')}>
+            <View style={[styles.topShortcutBubble, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+              <Ionicons name="cash-outline" size={24} color={colors.brand.primary} />
+            </View>
+            <Text style={styles.topShortcutText}>A Pagar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.topShortcutItem} onPress={() => router.push('/accounts-receivable')}>
+            <View style={[styles.topShortcutBubble, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}>
+              <Ionicons name="receipt-outline" size={24} color={colors.brand.accent} />
+            </View>
+            <Text style={styles.topShortcutText}>A Receber</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.topShortcutItem} onPress={() => router.push('/recurring-expenses')}>
+            <View style={[styles.topShortcutBubble, { backgroundColor: 'rgba(244, 63, 94, 0.15)' }]}>
+              <Ionicons name="repeat-outline" size={24} color={colors.danger} />
+            </View>
+            <Text style={styles.topShortcutText}>Fixas</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.topShortcutItem} onPress={() => router.push('/wallets')}>
+            <View style={[styles.topShortcutBubble, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+              <Ionicons name="wallet-outline" size={24} color={colors.warning} />
+            </View>
+            <Text style={styles.topShortcutText}>Carteiras</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={isDesktop ? styles.desktopRow : undefined}>
           {/* ── Saldo Geral Consolidado ─────────────────────── */}
           <LinearGradient
             colors={colors.gradient.primary}
@@ -170,6 +202,9 @@ export default function DashboardScreen() {
                     {showBalances ? fmt(totalCreditExpensed) : 'R$ ••••••'}
                   </Text>
                 </View>
+              </View>
+
+              <View style={styles.creditLimitContainer}>
                 <Text style={styles.creditLimitText}>
                   Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'} • Disponível: {showBalances ? fmt(totalCreditRemainingLimit) : 'R$ ••••••'}
                 </Text>
@@ -184,10 +219,10 @@ export default function DashboardScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* ── Projeções Financeiras (Planejamento) ─────────── */}
-        <View style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
           <Text style={styles.sectionTitle}>Projeções do Mês</Text>
           <View style={styles.projectionsContainer}>
             <View style={styles.projectionGrid}>
@@ -224,10 +259,10 @@ export default function DashboardScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* ── Distribuição das Projeções por Categoria ─────────── */}
-        <View style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
           <Text style={styles.sectionTitle}>Distribuição das Projeções</Text>
           <View style={isDesktop ? styles.desktopRow : undefined}>
             <View style={isDesktop && { flex: 1 }}>
@@ -245,57 +280,7 @@ export default function DashboardScreen() {
               />
             </View>
           </View>
-        </View>
-
-        {/* ── Atalhos de Acesso Rápido ─────────────────────── */}
-        <View style={[styles.section, { marginBottom: spacing.xl }]}>
-          <Text style={styles.sectionTitle}>Acesso Rápido</Text>
-          <View style={isDesktop ? styles.desktopShortcutsRow : styles.shortcutsGrid}>
-            <View style={isDesktop ? styles.shortcutCardDesktop : styles.shortcutRow}>
-              <TouchableOpacity 
-                style={styles.shortcutCard} 
-                onPress={() => router.push('/accounts-payable')}
-              >
-                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
-                  <Ionicons name="cash-outline" size={24} color={colors.brand.primary} />
-                </View>
-                <Text style={styles.shortcutText}>A Pagar</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.shortcutCard} 
-                onPress={() => router.push('/accounts-receivable')}
-              >
-                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.12)' }]}>
-                  <Ionicons name="receipt-outline" size={24} color={colors.brand.teal} />
-                </View>
-                <Text style={styles.shortcutText}>A Receber</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={isDesktop ? styles.shortcutCardDesktop : styles.shortcutRow}>
-              <TouchableOpacity 
-                style={styles.shortcutCard} 
-                onPress={() => router.push('/recurring-expenses')}
-              >
-                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(255, 107, 157, 0.12)' }]}>
-                  <Ionicons name="repeat-outline" size={24} color={colors.brand.accent} />
-                </View>
-                <Text style={styles.shortcutText}>Recorrentes</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.shortcutCard} 
-                onPress={() => router.push('/wallets')}
-              >
-                <View style={[styles.shortcutIconWrap, { backgroundColor: 'rgba(124, 106, 255, 0.12)' }]}>
-                  <Ionicons name="wallet-outline" size={24} color={colors.brand.primary} />
-                </View>
-                <Text style={styles.shortcutText}>Carteiras</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+        </Animated.View>
 
       </ScrollView>
     </SafeAreaView>
@@ -317,6 +302,33 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   toggleBalancesBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   logoutBtn: { width: 40, height: 40, borderRadius: radius.full, backgroundColor: colors.bg.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+
+  // Top Shortcuts
+  topShortcutsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  topShortcutItem: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  topShortcutBubble: {
+    width: 60,
+    height: 60,
+    borderRadius: 30, // perfect circle
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.bg.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  topShortcutText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: '600',
+  },
 
   // Balance card
   balanceCard: { borderRadius: radius.xl, padding: spacing.xl, marginBottom: spacing.xl, ...shadow.lg },
@@ -357,6 +369,7 @@ const styles = StyleSheet.create({
   },
   creditLabel: { ...typography.caption, color: colors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   creditValue: { ...typography.h4, color: colors.text.primary, fontWeight: '700', marginTop: 2 },
+  creditLimitContainer: { marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between' },
   creditLimitText: { ...typography.caption, color: colors.text.muted },
 
   // Progress Bar
@@ -435,52 +448,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Shortcuts Grid
-  shortcutsGrid: {
-    flexDirection: 'column',
-    gap: spacing.md,
-  },
-  shortcutRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  shortcutCard: {
-    flex: 1,
-    backgroundColor: colors.bg.card,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
-    ...shadow.sm,
-  },
-  shortcutIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  shortcutText: {
-    ...typography.caption,
-    color: colors.text.primary,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
   desktopRow: {
     flexDirection: 'row',
     gap: spacing.lg,
     marginBottom: spacing.lg,
-  },
-  desktopShortcutsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  shortcutCardDesktop: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.md,
   },
 });

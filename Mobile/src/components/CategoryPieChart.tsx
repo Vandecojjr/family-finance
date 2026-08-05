@@ -51,7 +51,7 @@ export function CategoryPieChart({ data, title, emptyMessage }: CategoryPieChart
               cx={center}
               cy={center}
               r={radiusVal}
-              stroke={colors.bg.elevated}
+              stroke={colors.bg.secondary}
               strokeWidth={strokeWidth}
               fill="transparent"
             />
@@ -92,8 +92,9 @@ export function CategoryPieChart({ data, title, emptyMessage }: CategoryPieChart
         {/* Legend */}
         <ScrollView 
           style={styles.legendContainer}
-          contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.xs, paddingBottom: spacing.sm }}
+          contentContainerStyle={{ gap: spacing.sm, paddingBottom: spacing.sm }}
           showsVerticalScrollIndicator={true}
+          nestedScrollEnabled={true}
         >
           {validData.map((item, index) => {
             const percentage = (item.totalAmount / total) * 100;
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    height: 240,
+    height: 340, // increased height for vertical layout
   },
   title: {
     ...typography.h4,
@@ -135,8 +136,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   chartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column', // Changed to column for better mobile fit
+    alignItems: 'center',
     gap: spacing.md,
     flex: 1,
   },
@@ -165,7 +166,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   legendContainer: {
+    width: '100%',
     flex: 1,
+    marginTop: spacing.sm,
   },
   legendItem: {
     flexDirection: 'row',

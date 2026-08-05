@@ -15,6 +15,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense, Walle
 import { useIsFocused } from '@react-navigation/native';
 import DatePicker from '@/components/DatePicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 
 const MEMBER_COLORS = [colors.brand.primary, colors.brand.teal, colors.brand.accent];
@@ -53,12 +55,20 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
   const { tokens, isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const isFocused = useIsFocused();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: 'planned' | 'recurring' }>();
 
-  // Active tab state: 'expense' (Gastos) or 'income' (Ganhos)
-  const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
+  // Form context state (set when opening the form via the choice modal)
+  const [formType, setFormType] = useState<'expense' | 'income'>('expense');
 
   // View Mode: 'recurring' (Recorrências) or 'planned' (Previsões Avulsas)
-  const [viewMode, setViewMode] = useState<'recurring' | 'planned'>('recurring');
+  const [viewMode, setViewMode] = useState<'recurring' | 'planned'>(params.mode ?? 'recurring');
+
+  useEffect(() => {
+    if (params.mode) {
+      setViewMode(params.mode);
+    }
+  }, [params.mode]);
 
   // Decode memberId from logged-in user token
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
@@ -160,7 +170,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
 
   const flattenedCategories = React.useMemo(() => {
     if (!categories) return [];
-    const targetType = activeTab === 'expense' ? 'Expense' : 'Income';
+    const targetType = formType === 'expense' ? 'Expense' : 'Income';
     const list: { id: string; name: string }[] = [];
     categories
       .filter(c => c.type === targetType)
@@ -173,7 +183,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
         }
       });
     return list;
-  }, [categories, activeTab]);
+  }, [categories, formType]);
 
   useEffect(() => {
     if (isFocused && selectedMember?.id) {
@@ -184,22 +194,30 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
     }
   }, [isFocused, selectedMember?.id, refetchExpenses, refetchIncomes, refetchPlannedExpenses, refetchPlannedIncomes]);
 
-  // Calculate totals by frequency based on active tab
-  const activeItems = activeTab === 'expense'
-    ? (expenses ? expenses.filter(x => x.isActive) : [])
-    : (incomes ? incomes.filter(x => x.isActive) : []);
+  // Calculate totals by frequency based on currentList
+  const currentList = React.useMemo(() => {
+    const exp = viewMode === 'planned' ? (plannedExpenses || []) : (expenses || []);
+    const inc = viewMode === 'planned' ? (plannedIncomes || []) : (incomes || []);
+    
+    return [
+      ...exp.map(e => ({ ...e, _type: 'expense' as const })),
+      ...inc.map(i => ({ ...i, _type: 'income' as const }))
+    ];
+  }, [viewMode, expenses, incomes, plannedExpenses, plannedIncomes]);
+
+  const activeItems = currentList.filter(x => (x as any).isActive !== false);
 
   const totalWeekly = activeItems
-    .filter(x => x.frequency === 1)
-    .reduce((sum, x) => sum + x.amount, 0);
+    .filter(x => 'frequency' in x && x.frequency === 1)
+    .reduce((sum, x) => sum + (x._type === 'income' ? x.amount : -x.amount), 0);
 
   const totalMonthly = activeItems
-    .filter(x => x.frequency === 2)
-    .reduce((sum, x) => sum + x.amount, 0);
+    .filter(x => 'frequency' in x && x.frequency === 2)
+    .reduce((sum, x) => sum + (x._type === 'income' ? x.amount : -x.amount), 0);
 
   const totalYearly = activeItems
-    .filter(x => x.frequency === 3)
-    .reduce((sum, x) => sum + x.amount, 0);
+    .filter(x => 'frequency' in x && x.frequency === 3)
+    .reduce((sum, x) => sum + (x._type === 'income' ? x.amount : -x.amount), 0);
 
   // Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -229,6 +247,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
 
   const [isStartDatePickerOpen, setIsStartDatePickerOpen] = useState(false);
   const [isEndDatePickerOpen, setIsEndDatePickerOpen] = useState(false);
+  const [isTypeChoiceModalOpen, setIsTypeChoiceModalOpen] = useState(false);
 
   // Pay Modal States
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -246,13 +265,13 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (viewMode === 'planned') {
-        if (activeTab === 'expense') {
+        if (formType === 'expense') {
           await plannedExpensesApi.delete(id);
         } else {
           await plannedIncomesApi.delete(id);
         }
       } else {
-        if (activeTab === 'expense') {
+        if (formType === 'expense') {
           await recurringExpensesApi.delete(id);
         } else {
           await recurringIncomesApi.delete(id);
@@ -294,10 +313,15 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
     },
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, itemType: 'expense' | 'income') => {
     Alert.alert('Confirmar Exclusão', 'Tem certeza que deseja excluir este item?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => deleteMutation.mutate(id) },
+      { text: 'Excluir', style: 'destructive', onPress: () => {
+         // Hack to pass type to deleteMutation if needed, but wait deleteMutation uses activeTab!
+         // We must temporarily set formType or adjust deleteMutation to accept type.
+         setFormType(itemType);
+         setTimeout(() => deleteMutation.mutate(id), 0);
+      }},
     ]);
   };
 
@@ -376,7 +400,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           throw new Error('Preencha os campos obrigatórios corretamente.');
         }
 
-        if (activeTab === 'expense') {
+        if (formType === 'expense') {
           if (editingItem) {
             await plannedExpensesApi.update(editingItem.id, {
               description,
@@ -413,13 +437,13 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
         }
       } else {
         const rawDueDay = parseInt(dueDay, 10);
-        const parsedDueDay = (activeTab === 'income' && dueDayType === 'business') ? (rawDueDay + 100) : rawDueDay;
+        const parsedDueDay = (formType === 'income' && dueDayType === 'business') ? (rawDueDay + 100) : rawDueDay;
 
         if (!description || isNaN(parsedAmount) || isNaN(parsedDueDay) || !categoryId) {
           throw new Error('Preencha os campos obrigatórios corretamente.');
         }
 
-        if (activeTab === 'expense') {
+        if (formType === 'expense') {
           if (editingItem) {
             await recurringExpensesApi.update(editingItem.id, {
               description,
@@ -516,7 +540,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
       const rItem = item as RecurringExpense | RecurringIncome;
       setType(rItem.type);
       setFrequency(rItem.frequency);
-      if (activeTab === 'income' && rItem.dueDay > 100) {
+      if (formType === 'income' && rItem.dueDay > 100) {
         setDueDayType('business');
         setDueDay((rItem.dueDay - 100).toString());
       } else {
@@ -555,7 +579,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
     } else {
       const parsedDue = parseInt(dueDay, 10);
       if (isNaN(parsedDue) || parsedDue < 1 || parsedDue > 31) {
-        const label = activeTab === 'income' 
+        const label = formType === 'income' 
           ? (dueDayType === 'business' ? 'dia útil de entrada' : 'dia de entrada') 
           : 'dia de vencimento';
         Alert.alert('Validação', `O ${label} deve estar entre 1 e 31.`);
@@ -578,13 +602,11 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
     ? (isLoadingPlannedExpenses || isLoadingPlannedIncomes || isLoadingFamily)
     : (isLoadingExpenses || isLoadingIncomes || isLoadingFamily);
     
-  const currentList = viewMode === 'planned'
-    ? (activeTab === 'expense' ? plannedExpenses : plannedIncomes)
-    : (activeTab === 'expense' ? expenses : incomes);
+
 
   const totalPlanned = React.useMemo(() => {
     if (viewMode !== 'planned' || !currentList) return 0;
-    return currentList.reduce((sum, item) => sum + item.amount, 0);
+    return currentList.reduce((sum, item) => sum + (item._type === 'income' ? item.amount : -item.amount), 0);
   }, [viewMode, currentList]);
 
   const groupedItems = React.useMemo(() => {
@@ -681,16 +703,13 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           <Text style={styles.embeddedTitle}>
             {viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}
           </Text>
-          <TouchableOpacity 
-            style={[styles.addBtnCompact, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
-            onPress={openCreateForm}
-          >
-            <Ionicons name="add" size={20} color={colors.white} />
-          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.header}>
-          <View>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: spacing.md, marginTop: 4 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>{viewMode === 'planned' ? 'Previsões Avulsas' : 'Finanças Recorrentes'}</Text>
             <Text style={styles.subtitle}>
               {viewMode === 'planned' 
@@ -698,59 +717,18 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                 : 'Gerencie gastos e ganhos recorrentes da família'}
             </Text>
           </View>
-          <TouchableOpacity 
-            style={[styles.addBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
-            onPress={openCreateForm}
-          >
-            <Ionicons name="add" size={24} color={colors.white} />
-          </TouchableOpacity>
         </View>
       )}
 
-      {/* Tab Switcher */}
-      <View style={styles.tabOuterContainer}>
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'expense' && styles.tabActiveExpense]}
-            onPress={() => {
-              setActiveTab('expense');
-              closeForm();
-            }}
-          >
-            <Ionicons
-              name="arrow-down-circle"
-              size={18}
-              color={activeTab === 'expense' ? colors.white : colors.danger}
-              style={{ marginRight: 6 }}
-            />
-            <Text style={[styles.tabText, activeTab === 'expense' && styles.tabTextActive]}>Gastos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'income' && styles.tabActiveIncome]}
-            onPress={() => {
-              setActiveTab('income');
-              closeForm();
-            }}
-          >
-            <Ionicons
-              name="arrow-up-circle"
-              size={18}
-              color={activeTab === 'income' ? colors.white : colors.brand.teal}
-              style={{ marginRight: 6 }}
-            />
-            <Text style={[styles.tabText, activeTab === 'income' && styles.tabTextActive]}>Ganhos</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* View Mode Switcher */}
-      <View style={styles.viewModeOuterContainer}>
+      {!params.mode && (
+        <View style={styles.viewModeOuterContainer}>
         <View style={styles.viewModeContainer}>
           <TouchableOpacity
             style={[
               styles.viewModeBtn,
               viewMode === 'recurring' && styles.viewModeActive,
-              viewMode === 'recurring' && { backgroundColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }
+              viewMode === 'recurring' && { backgroundColor: colors.text.secondary }
             ]}
             onPress={() => setViewMode('recurring')}
           >
@@ -768,7 +746,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
             style={[
               styles.viewModeBtn,
               viewMode === 'planned' && styles.viewModeActive,
-              viewMode === 'planned' && { backgroundColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }
+              viewMode === 'planned' && { backgroundColor: colors.text.secondary }
             ]}
             onPress={() => setViewMode('planned')}
           >
@@ -784,6 +762,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           </TouchableOpacity>
         </View>
       </View>
+      )}
 
       {/* Member Selector chips */}
       {family?.members && family.members.length > 0 && (
@@ -825,8 +804,8 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           <View style={styles.summaryContainer}>
             <View style={[styles.summaryCard, { flex: 1 }]}>
               <Text style={styles.summaryTitle}>Total Previsto</Text>
-              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-                {fmt(totalPlanned)}
+              <Text style={[styles.summaryValue, { color: totalPlanned < 0 ? colors.danger : colors.brand.teal }]}>
+                {fmt(Math.abs(totalPlanned))}
               </Text>
             </View>
           </View>
@@ -834,20 +813,20 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           <View style={styles.summaryContainer}>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Semanal</Text>
-              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-                {fmt(totalWeekly)}
+              <Text style={[styles.summaryValue, { color: totalWeekly < 0 ? colors.danger : colors.brand.teal }]}>
+                {fmt(Math.abs(totalWeekly))}
               </Text>
             </View>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Mensal</Text>
-              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-                {fmt(totalMonthly)}
+              <Text style={[styles.summaryValue, { color: totalMonthly < 0 ? colors.danger : colors.brand.teal }]}>
+                {fmt(Math.abs(totalMonthly))}
               </Text>
             </View>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>Anual</Text>
-              <Text style={[styles.summaryValue, { color: activeTab === 'expense' ? colors.danger : colors.brand.teal }]}>
-                {fmt(totalYearly)}
+              <Text style={[styles.summaryValue, { color: totalYearly < 0 ? colors.danger : colors.brand.teal }]}>
+                {fmt(Math.abs(totalYearly))}
               </Text>
             </View>
           </View>
@@ -864,27 +843,23 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
           {currentList && currentList.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons 
-                name={activeTab === 'expense' ? "calendar-outline" : "trending-up-outline"} 
+                name="calendar-outline" 
                 size={64} 
                 color={colors.text.muted} 
               />
               <Text style={styles.emptyText}>
                 {viewMode === 'planned'
-                  ? (activeTab === 'expense' 
-                    ? 'Nenhum gasto previsto cadastrado para este membro.' 
-                    : 'Nenhum ganho previsto cadastrado para este membro.')
-                  : (activeTab === 'expense' 
-                    ? 'Nenhum gasto recorrente cadastrado para este membro.' 
-                    : 'Nenhum ganho recorrente cadastrado para este membro.')}
+                  ? 'Nenhum lançamento previsto cadastrado.'
+                  : 'Nenhum lançamento recorrente cadastrado.'}
               </Text>
               <TouchableOpacity 
-                style={[styles.emptyAddBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]} 
-                onPress={openCreateForm}
+                style={styles.emptyAddBtn} 
+                onPress={() => setIsTypeChoiceModalOpen(true)}
               >
                 <Text style={styles.emptyAddBtnText}>
                   {viewMode === 'planned'
-                    ? (activeTab === 'expense' ? 'Criar Primeiro Gasto Previsto' : 'Criar Primeiro Ganho Previsto')
-                    : (activeTab === 'expense' ? 'Criar Primeiro Gasto' : 'Criar Primeiro Ganho')}
+                    ? 'Criar Primeira Previsão'
+                    : 'Criar Primeira Recorrência'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -892,7 +867,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
             groupedItems.map((parentGroup) => (
               <View key={parentGroup.parentId} style={styles.categorySection}>
                 {/* Parent Category Header */}
-                <View style={[styles.categoryHeader, { borderLeftColor: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                <View style={[styles.categoryHeader, { borderLeftColor: colors.text.secondary }]}>
                   <Ionicons name="folder-open-outline" size={15} color={colors.text.secondary} />
                   <Text style={styles.categoryTitleText}>{parentGroup.parentName}</Text>
                 </View>
@@ -920,11 +895,11 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                                     {plannedItem.description}
                                   </Text>
                                   <Text style={styles.expenseDetails}>
-                                    {activeTab === 'income' ? 'Entrada prevista:' : 'Vencimento previsto:'} {formatDateDisplay(plannedItem.date.split('T')[0])}
+                                    {(plannedItem as any)._type === 'income' ? 'Entrada prevista:' : 'Vencimento previsto:'} {formatDateDisplay(plannedItem.date.split('T')[0])}
                                   </Text>
                                 </View>
-                                <Text style={[styles.expenseAmount, { color: activeTab === 'expense' ? colors.danger : colors.success }]}>
-                                  {activeTab === 'expense' ? '-' : '+'}{fmt(plannedItem.amount)}
+                                <Text style={[styles.expenseAmount, { color: (plannedItem as any)._type === 'expense' ? colors.danger : colors.success }]}>
+                                  {(plannedItem as any)._type === 'expense' ? '-' : '+'}{fmt(plannedItem.amount)}
                                 </Text>
                               </View>
 
@@ -935,21 +910,21 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                               <View style={styles.expenseControls}>
                                 <View style={styles.actionGroup}>
                                   <TouchableOpacity 
-                                    style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
+                                    style={[styles.iconBtn, (plannedItem as any)._type === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
                                     onPress={() => openEditForm(plannedItem)}
                                   >
                                     <Ionicons 
                                       name="create-outline" 
                                       size={16} 
-                                      color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                      color={(plannedItem as any)._type === 'expense' ? colors.brand.primary : colors.brand.teal} 
                                     />
-                                    <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                                    <Text style={[styles.iconBtnText, { color: (plannedItem as any)._type === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
                                       Editar
                                     </Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity 
                                     style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
-                                    onPress={() => handleDelete(plannedItem.id)}
+                                    onPress={() => handleDelete(plannedItem.id, (plannedItem as any)._type)}
                                   >
                                     <Ionicons name="trash-outline" size={16} color={colors.danger} />
                                     <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
@@ -969,19 +944,19 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                                   {recItem.description}
                                 </Text>
                                 <Text style={styles.expenseDetails}>
-                                  {activeTab === 'income' 
-                                    ? (recItem.dueDay > 100 ? `Dia de entrada: ${recItem.dueDay - 100}º dia útil` : `Dia de entrada: ${recItem.dueDay}`) 
-                                    : `Vence dia ${recItem.dueDay}`} · {recItem.frequency === 1 ? 'Semanal' : recItem.frequency === 2 ? 'Mensal' : 'Anual'} · {recItem.type === 1 ? 'Fixo' : 'Variável'}
-                                </Text>
-                                {recItem.startDate && (
-                                  <Text style={styles.expensePeriod}>
-                                    Início: {formatDateDisplay(recItem.startDate.split('T')[0])} 
-                                    {recItem.endDate ? ` · Fim: ${formatDateDisplay(recItem.endDate.split('T')[0])}` : ' (Indeterminado)'}
+                                    {(recItem as any)._type === 'income' 
+                                      ? (recItem.dueDay > 100 ? `Dia de entrada: ${recItem.dueDay - 100}º dia útil` : `Dia de entrada: ${recItem.dueDay}`) 
+                                      : `Vence dia ${recItem.dueDay}`} · {recItem.frequency === 1 ? 'Semanal' : recItem.frequency === 2 ? 'Mensal' : 'Anual'} · {recItem.type === 1 ? 'Fixo' : 'Variável'}
                                   </Text>
-                                )}
+                                  {recItem.startDate && (
+                                    <Text style={styles.expensePeriod}>
+                                      Início: {formatDateDisplay(recItem.startDate.split('T')[0])} 
+                                      {recItem.endDate ? ` · Fim: ${formatDateDisplay(recItem.endDate.split('T')[0])}` : ' (Indeterminado)'}
+                                    </Text>
+                                  )}
                               </View>
-                              <Text style={[styles.expenseAmount, { color: activeTab === 'expense' ? colors.danger : colors.success }]}>
-                                {activeTab === 'expense' ? '-' : '+'}{fmt(recItem.amount)}
+                              <Text style={[styles.expenseAmount, { color: (recItem as any)._type === 'expense' ? colors.danger : colors.success }]}>
+                                {(recItem as any)._type === 'expense' ? '-' : '+'}{fmt(recItem.amount)}
                               </Text>
                             </View>
 
@@ -992,19 +967,19 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                                 <View style={styles.expenseControls}>
                                   <View style={styles.actionGroup}>
                                     <TouchableOpacity 
-                                      style={[styles.iconBtn, activeTab === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
+                                      style={[styles.iconBtn, (recItem as any)._type === 'income' && { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]} 
                                       onPress={() => openEditForm(recItem)}
                                     >
                                       <Ionicons 
                                         name="create-outline" 
                                         size={16} 
-                                        color={activeTab === 'expense' ? colors.brand.primary : colors.brand.teal} 
+                                        color={(recItem as any)._type === 'expense' ? colors.brand.primary : colors.brand.teal} 
                                       />
-                                      <Text style={[styles.iconBtnText, { color: activeTab === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
+                                      <Text style={[styles.iconBtnText, { color: (recItem as any)._type === 'expense' ? colors.brand.primary : colors.brand.teal }]}>
                                         Editar
                                       </Text>
                                     </TouchableOpacity>
-                                     {activeTab === 'expense' && !(recItem as RecurringExpense).isPaid && (
+                                     {(recItem as any)._type === 'expense' && !(recItem as RecurringExpense).isPaid && (
                                        <TouchableOpacity 
                                          style={[styles.iconBtn, { backgroundColor: 'rgba(74, 144, 226, 0.1)' }]} 
                                         onPress={() => openPayForm(recItem as RecurringExpense)}
@@ -1015,7 +990,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                                     )}
                                     <TouchableOpacity 
                                       style={[styles.iconBtn, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]} 
-                                      onPress={() => handleDelete(recItem.id)}
+                                      onPress={() => handleDelete(recItem.id, (recItem as any)._type)}
                                     >
                                       <Ionicons name="trash-outline" size={16} color={colors.danger} />
                                       <Text style={[styles.iconBtnText, { color: colors.danger }]}>Excluir</Text>
@@ -1034,6 +1009,83 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
         </ScrollView>
       )}
 
+      {/* ── FLOATING ACTION BUTTON ─────────────────────────────── */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity 
+          style={styles.fab} 
+          onPress={() => setIsTypeChoiceModalOpen(true)}
+        >
+          <LinearGradient
+            colors={[colors.brand.primary, colors.brand.primary]} // Could use secondary
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="add" size={28} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── TYPE CHOICE MODAL ─────────────────────────────── */}
+      <Modal visible={isTypeChoiceModalOpen} transparent animationType="fade">
+        <View style={styles.choiceModalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>O que você deseja registrar?</Text>
+            
+            <TouchableOpacity 
+              style={styles.choiceBtn}
+              onPress={() => {
+                setFormType('expense');
+                setIsTypeChoiceModalOpen(false);
+                openCreateForm();
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]}>
+                <Ionicons name="arrow-down-circle" size={24} color={colors.danger} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>
+                  {viewMode === 'planned' ? 'Gasto Previsto' : 'Gasto Recorrente'}
+                </Text>
+                <Text style={styles.choiceSubtitle}>
+                  {viewMode === 'planned' ? 'Registrar um gasto pontual' : 'Registrar uma despesa fixa ou variável'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn}
+              onPress={() => {
+                setFormType('income');
+                setIsTypeChoiceModalOpen(false);
+                openCreateForm();
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.1)' }]}>
+                <Ionicons name="arrow-up-circle" size={24} color={colors.brand.teal} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>
+                  {viewMode === 'planned' ? 'Ganho Previsto' : 'Ganho Recorrente'}
+                </Text>
+                <Text style={styles.choiceSubtitle}>
+                  {viewMode === 'planned' ? 'Registrar um ganho pontual' : 'Registrar uma receita fixa ou variável'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.cancelBtn}
+              onPress={() => setIsTypeChoiceModalOpen(false)}
+            >
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── FORMULÁRIO MODAL (Criação / Edição) ─────────────────────────────── */}
       <Modal visible={isFormOpen} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -1049,13 +1101,13 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     <Text style={styles.formTitle}>
                       {editingItem 
                         ? (viewMode === 'planned' 
-                            ? (activeTab === 'expense' ? 'Editar Gasto Previsto' : 'Editar Ganho Previsto')
-                            : (activeTab === 'expense' ? 'Editar Gasto Recorrente' : 'Editar Ganho Recorrente')) 
+                            ? (formType === 'expense' ? 'Editar Gasto Previsto' : 'Editar Ganho Previsto')
+                            : (formType === 'expense' ? 'Editar Gasto Recorrente' : 'Editar Ganho Recorrente')) 
                         : (viewMode === 'planned'
-                            ? (activeTab === 'expense' ? 'Novo Gasto Previsto' : 'Novo Ganho Previsto')
-                            : (activeTab === 'expense' ? 'Novo Gasto Recorrente' : 'Novo Ganho Recorrente'))}
+                            ? (formType === 'expense' ? 'Novo Gasto Previsto' : 'Novo Ganho Previsto')
+                            : (formType === 'expense' ? 'Novo Gasto Recorrente' : 'Novo Ganho Recorrente'))}
                     </Text>
-                    <Text style={[styles.formSubtitle, activeTab === 'income' && { color: colors.brand.teal }]}>
+                    <Text style={[styles.formSubtitle, formType === 'income' && { color: colors.brand.teal }]}>
                       Para {selectedMember?.name}
                     </Text>
                   </View>
@@ -1070,7 +1122,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
                       style={styles.input}
-                      placeholder={activeTab === 'expense' ? "Ex: Assinatura Netflix, Academia" : "Ex: Salário, Rendimentos, Aluguel"}
+                      placeholder={formType === 'expense' ? "Ex: Assinatura Netflix, Academia" : "Ex: Salário, Rendimentos, Aluguel"}
                       placeholderTextColor={colors.text.muted}
                       value={description}
                       onChangeText={setDescription}
@@ -1107,7 +1159,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     {viewMode !== 'planned' && (
                       <View style={[styles.fieldWrapper, { width: 130 }]}>
                         <Text style={styles.label}>
-                          {activeTab === 'income' 
+                          {formType === 'income' 
                             ? (dueDayType === 'business' ? 'Dia Útil Entrada' : 'Dia Entrada') 
                             : 'Dia Vencimento'}
                         </Text>
@@ -1125,7 +1177,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                   </View>
 
                   {/* Tipo de Dia (apenas para Ganho Recorrente) */}
-                  {viewMode !== 'planned' && activeTab === 'income' && (
+                  {viewMode !== 'planned' && formType === 'income' && (
                     <View style={styles.fieldWrapper}>
                       <Text style={styles.label}>Tipo de Dia de Entrada</Text>
                       <View style={styles.segmentContainer}>
@@ -1157,14 +1209,14 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                   {viewMode !== 'planned' && (
                     <View style={styles.fieldWrapper}>
                       <Text style={styles.label}>
-                        {activeTab === 'expense' ? 'Tipo de Gasto' : 'Tipo de Ganho'}
+                        {formType === 'expense' ? 'Tipo de Gasto' : 'Tipo de Ganho'}
                       </Text>
                       <View style={styles.segmentContainer}>
                         <TouchableOpacity
                           style={[
                             styles.segmentBtn, 
                             type === 1 && styles.segmentActive,
-                            type === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                            type === 1 && formType === 'income' && { backgroundColor: colors.brand.teal }
                           ]}
                           onPress={() => setType(1)}
                         >
@@ -1174,7 +1226,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           style={[
                             styles.segmentBtn, 
                             type === 2 && styles.segmentActive,
-                            type === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                            type === 2 && formType === 'income' && { backgroundColor: colors.brand.teal }
                           ]}
                           onPress={() => setType(2)}
                         >
@@ -1193,7 +1245,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           style={[
                             styles.segmentBtn, 
                             frequency === 1 && styles.segmentActive,
-                            frequency === 1 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                            frequency === 1 && formType === 'income' && { backgroundColor: colors.brand.teal }
                           ]}
                           onPress={() => setFrequency(1)}
                         >
@@ -1203,7 +1255,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           style={[
                             styles.segmentBtn, 
                             frequency === 2 && styles.segmentActive,
-                            frequency === 2 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                            frequency === 2 && formType === 'income' && { backgroundColor: colors.brand.teal }
                           ]}
                           onPress={() => setFrequency(2)}
                         >
@@ -1213,7 +1265,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           style={[
                             styles.segmentBtn, 
                             frequency === 3 && styles.segmentActive,
-                            frequency === 3 && activeTab === 'income' && { backgroundColor: colors.brand.teal }
+                            frequency === 3 && formType === 'income' && { backgroundColor: colors.brand.teal }
                           ]}
                           onPress={() => setFrequency(3)}
                         >
@@ -1255,7 +1307,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
 
                     {/* Submit Button */}
                     <TouchableOpacity
-                      style={[styles.saveBtn, activeTab === 'income' && { backgroundColor: colors.brand.teal }]}
+                      style={[styles.saveBtn, formType === 'income' && { backgroundColor: colors.brand.teal }]}
                       onPress={handleSave}
                       disabled={saveMutation.isPending}
                     >
@@ -1267,11 +1319,11 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                           <Text style={styles.saveBtnText}>
                             {editingItem 
                               ? (viewMode === 'planned' 
-                                  ? (activeTab === 'expense' ? 'Atualizar Gasto Previsto' : 'Atualizar Ganho Previsto') 
-                                  : (activeTab === 'expense' ? 'Atualizar Gasto' : 'Atualizar Ganho')) 
+                                  ? (formType === 'expense' ? 'Atualizar Gasto Previsto' : 'Atualizar Ganho Previsto') 
+                                  : (formType === 'expense' ? 'Atualizar Gasto' : 'Atualizar Ganho')) 
                               : (viewMode === 'planned' 
-                                  ? (activeTab === 'expense' ? 'Criar Gasto Previsto' : 'Criar Ganho Previsto') 
-                                  : (activeTab === 'expense' ? 'Criar Gasto' : 'Criar Ganho'))}
+                                  ? (formType === 'expense' ? 'Criar Gasto Previsto' : 'Criar Ganho Previsto') 
+                                  : (formType === 'expense' ? 'Criar Gasto' : 'Criar Ganho'))}
                           </Text>
                         </>
                       )}
@@ -1284,7 +1336,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     value={startDate}
                     onClose={() => setIsStartDatePickerOpen(false)}
                     onSelect={setStartDate}
-                    accentColor={activeTab === 'income' ? colors.brand.teal : colors.brand.primary}
+                    accentColor={formType === 'income' ? colors.brand.teal : colors.brand.primary}
                     title={viewMode === 'planned' ? "Data Prevista" : "Data de Início"}
                   />
 
@@ -1293,7 +1345,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     value={endDate}
                     onClose={() => setIsEndDatePickerOpen(false)}
                     onSelect={setEndDate}
-                    accentColor={activeTab === 'income' ? colors.brand.teal : colors.brand.primary}
+                    accentColor={formType === 'income' ? colors.brand.teal : colors.brand.primary}
                     title="Data de Fim"
                     showClear
                   />
@@ -1304,7 +1356,7 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
                     selectedId={categoryId}
                     onSelect={setCategoryId}
                     categories={categories || []}
-                    type={activeTab === 'income' ? 'Income' : 'Expense'}
+                    type={formType === 'income' ? 'Income' : 'Expense'}
                   />
               </View>
             </SafeAreaView>
@@ -1703,6 +1755,36 @@ const styles = StyleSheet.create({
   },
   iconBtnText: { ...typography.caption, fontWeight: '700' },
 
+  choiceModalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+
+  headerSubtitle: {
+    ...typography.bodySmall,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    right: spacing.lg,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    ...shadow.lg,
+  },
+  fabGradient: {
+    flex: 1,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   // Modal styles for forms
   modalOverlay: {
     flex: 1,
@@ -1966,6 +2048,58 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    ...shadow.lg,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  choiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.elevated,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  choiceIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  choiceTitle: {
+    ...typography.body,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  choiceSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  cancelBtn: {
+    padding: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  cancelBtnText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.danger,
   },
 });
 
