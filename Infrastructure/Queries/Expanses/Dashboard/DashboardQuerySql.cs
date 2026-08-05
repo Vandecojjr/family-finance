@@ -72,7 +72,7 @@ public static class DashboardQuerySql
                            LEFT JOIN "CreditCards" c ON c."BankAccountId" = b."Id"
                   WHERE w."FamilyId" = @FamilyId) AS "TotalCreditExpensed"
                   
-                  (COALESCE(SUM(b."CreditLimit"), 0) +  COALESCE(SUM(c."RemainingLimit"), 0)
+                  (SELECT COALESCE(SUM(b."CreditLimit"), 0) +  COALESCE(SUM(c."RemainingLimit"), 0)
                   FROM "BankAccounts" b
                            LEFT JOIN "Wallets" w ON b."WalletId" = w."Id"
                            LEFT JOIN "CreditCards" c ON c."BankAccountId" = b."Id"
