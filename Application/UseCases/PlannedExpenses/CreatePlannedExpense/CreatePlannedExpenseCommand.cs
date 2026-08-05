@@ -9,7 +9,6 @@ public sealed record CreatePlannedExpenseCommand(
     string Description,
     decimal Amount,
     DateTime Date,
-    Guid MemberId,
     Guid CategoryId) : ICommand<Result<Guid>>, IAuthorizeableRequest
 {
     public IReadOnlyCollection<Permission> RequiredPermissions => [Permission.RecurringExpenseCreate];

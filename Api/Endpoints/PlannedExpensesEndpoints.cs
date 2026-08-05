@@ -65,31 +65,15 @@ public sealed class PlannedExpensesEndpoints : IEndpointGroup
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
-    public record CreateRequest(
-        string Description,
-        decimal Amount,
-        DateTime Date,
-        Guid? MemberId,
-        Guid CategoryId);
-
     public record UpdateRequest(
         string Description,
         decimal Amount,
         DateTime Date,
         Guid CategoryId);
 
-    private static async Task<HttpResult> Create(
-        [FromBody] CreateRequest request,
-        IMediator mediator,
-        CancellationToken cancellationToken)
+    private static async Task<HttpResult> Create([FromBody] CreatePlannedExpenseCommand request, IMediator mediator, CancellationToken cancellationToken)
     {
-        var command = new CreatePlannedExpenseCommand(
-            request.Description,
-            request.Amount,
-            request.Date,
-            request.MemberId ?? Guid.Empty,
-            request.CategoryId);
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(request, cancellationToken);
         return result.ToResult();
     }
 

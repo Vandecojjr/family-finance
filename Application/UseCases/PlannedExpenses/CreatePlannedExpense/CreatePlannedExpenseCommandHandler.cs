@@ -23,11 +23,11 @@ public sealed class CreatePlannedExpenseCommandHandler(
                 Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
         }
 
-        var targetMember = await familyRepository.GetMemberByIdAsync(command.MemberId, cancellationToken);
+        var targetMember = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
         if (targetMember is null)
         {
             return Result<Guid>.Failure(
-                Error.NotFound("Member.NotFound", $"Membro com ID '{command.MemberId}' não foi encontrado."));
+                Error.NotFound("Member.NotFound", $"Membro com ID '{currentUser.MemberId}' não foi encontrado."));
         }
 
         if (targetMember.FamilyId != currentMember.FamilyId)
@@ -59,7 +59,7 @@ public sealed class CreatePlannedExpenseCommandHandler(
             command.Description,
             command.Amount,
             command.Date,
-            command.MemberId,
+            currentUser.MemberId,
             command.CategoryId);
 
         await expenseRepository.AddAsync(plannedExpense, cancellationToken);
