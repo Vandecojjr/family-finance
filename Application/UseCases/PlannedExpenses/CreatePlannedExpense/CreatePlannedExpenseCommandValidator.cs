@@ -16,9 +16,6 @@ public sealed class CreatePlannedExpenseCommandValidator : AbstractValidator<Cre
         RuleFor(x => x.Date)
             .NotEmpty().WithMessage("A data prevista é obrigatória.");
 
-        RuleFor(x => x.MemberId)
-            .NotEmpty().WithMessage("O ID do membro é obrigatório.");
-
         RuleFor(x => x.CategoryId)
             .NotEmpty().WithMessage("A categoria é obrigatória.");
     }
