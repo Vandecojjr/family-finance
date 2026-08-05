@@ -25,7 +25,8 @@ public sealed class DashboardReposiroty(IDbConnection connection) : IDashboardRe
             new { FamilyId = familyId.Value }
         );
 
-        var general = await multi.ReadFirstOrDefaultAsync<General>() ?? new General(0, 0, 0, 0, 0, 0, 0);
+        var general = await multi.ReadFirstOrDefaultAsync<General>() 
+                      ?? new General(0, 0, 0, 0, 0, 0, 0, 0);
         var projectedIncomes = (await multi.ReadAsync<CategorySummaryDto>()).ToList();
         var projectedExpenses = (await multi.ReadAsync<CategorySummaryDto>()).ToList();
 

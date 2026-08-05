@@ -13,7 +13,8 @@ public sealed record General(
     decimal TotalProjectedIncome,
     decimal TotalBalance,
     decimal TotalCreditLimit,
-    decimal TotalCreditExpensed
+    decimal TotalCreditExpensed,
+    decimal TotalCreditRemainingLimit
     );
 
 public sealed record CategorySummaryDto(

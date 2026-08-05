@@ -78,6 +78,7 @@ export default function DashboardScreen() {
 
   const totalCreditLimit = general?.totalCreditLimit ?? 0;
   const totalCreditExpensed = general?.totalCreditExpensed ?? 0;
+  const totalCreditRemainingLimit = general?.totalCreditRemainingLimit ?? 0;
   const creditUsagePercentage = totalCreditLimit > 0 
     ? Math.min((totalCreditExpensed / totalCreditLimit) * 100, 100) 
     : 0;
@@ -170,7 +171,7 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
                 <Text style={styles.creditLimitText}>
-                  Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'}
+                  Limite: {showBalances ? fmt(totalCreditLimit) : 'R$ ••••••'} • Disponível: {showBalances ? fmt(totalCreditRemainingLimit) : 'R$ ••••••'}
                 </Text>
               </View>
 
