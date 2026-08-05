@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, spacing, radius, typography } from '@/theme';
 import { CategorySummary } from '@/types';
@@ -90,8 +90,12 @@ export function CategoryPieChart({ data, title, emptyMessage }: CategoryPieChart
         </View>
 
         {/* Legend */}
-        <View style={styles.legendContainer}>
-          {validData.slice(0, 5).map((item, index) => {
+        <ScrollView 
+          style={styles.legendContainer}
+          contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.xs, paddingBottom: spacing.sm }}
+          showsVerticalScrollIndicator={true}
+        >
+          {validData.map((item, index) => {
             const percentage = (item.totalAmount / total) * 100;
             const color = colors.chart[index % colors.chart.length];
 
@@ -109,12 +113,7 @@ export function CategoryPieChart({ data, title, emptyMessage }: CategoryPieChart
               </View>
             );
           })}
-          {validData.length > 5 && (
-            <Text style={styles.moreLegendText}>
-              + {validData.length - 5} outras
-            </Text>
-          )}
-        </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -128,6 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    height: 240,
   },
   title: {
     ...typography.h4,
@@ -136,9 +136,9 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
+    flex: 1,
   },
   svgWrapper: {
     position: 'relative',
@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     height: 130,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   centerTextWrap: {
     position: 'absolute',
@@ -165,7 +166,6 @@ const styles = StyleSheet.create({
   },
   legendContainer: {
     flex: 1,
-    gap: spacing.sm,
   },
   legendItem: {
     flexDirection: 'row',
@@ -191,14 +191,8 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 1,
   },
-  moreLegendText: {
-    ...typography.caption,
-    color: colors.text.muted,
-    fontStyle: 'italic',
-    paddingLeft: 18,
-  },
   emptyContainer: {
-    height: 100,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
