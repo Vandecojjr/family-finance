@@ -30,7 +30,7 @@ public class WalletRepository(AppDbContext context) : IWalletRepository
             .Include(x => x.Member)
             .Include(x => x.Accounts)
                 .ThenInclude(x => x.CreditCards)
-                    .ThenInclude(c => c.Invoices)
+                    .ThenInclude(c => c.Invoices.OrderBy(i => i.DueDate))
             .Include(x => x.Transactions)
             .Where(x => x.FamilyId == familyId)
             .ToListAsync(cancellationToken);
