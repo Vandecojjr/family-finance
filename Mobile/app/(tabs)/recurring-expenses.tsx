@@ -31,7 +31,7 @@ import { RecurringExpense, RecurringIncome, PlannedIncome, PlannedExpense, Walle
 import { useIsFocused } from '@react-navigation/native';
 import DatePicker from '@/components/DatePicker';
 import { CategoryPicker } from '@/components/CategoryPicker';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 
 
 const MEMBER_COLORS = [colors.brand.primary, colors.brand.teal, colors.brand.accent];
@@ -69,6 +69,21 @@ export default function RecurringExpensesScreen({ isEmbedded = false }: { isEmbe
       setViewMode(params.mode);
     }
   }, [params.mode]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Handle deep links/params
+      if (params.action === 'new_planned') {
+        setViewMode('planned');
+        setIsTypeChoiceModalOpen(true);
+        router.setParams({ action: '' });
+      } else if (params.action === 'new_recurring') {
+        setViewMode('recurring');
+        setIsTypeChoiceModalOpen(true);
+        router.setParams({ action: '' });
+      }
+    }, [params.action])
+  );
 
   // Decode memberId from logged-in user token
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);

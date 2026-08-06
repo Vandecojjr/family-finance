@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { colors, spacing, radius, typography, shadow } from '@/theme';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
@@ -36,6 +36,8 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export default function TransactionsScreen() {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
+  const params = useLocalSearchParams();
+  const router = useRouter();
 
   // Queries
   const { data: transactions = [], isLoading: isLoadingTransactions, isError: isErrorTransactions, refetch: refetchTransactions } = useQuery({
@@ -59,10 +61,29 @@ export default function TransactionsScreen() {
   // Refetch data every time the tab is focused
   useFocusEffect(
     useCallback(() => {
+      // Handle deep links/params
+      if (params.action) {
+        if (params.action === 'new_expense') {
+          setType(2);
+          setCategoryId('');
+          setModalOpen(true);
+        } else if (params.action === 'new_income') {
+          setType(1);
+          setCategoryId('');
+          setModalOpen(true);
+        } else if (params.action === 'new_transfer') {
+          setType(3);
+          setCategoryId('');
+          setModalOpen(true);
+        }
+        // Clear param so it doesn't re-trigger on subsequent focuses
+        router.setParams({ action: '' });
+      }
+
       if (isAuthenticated) {
         refetchTransactions();
       }
-    }, [refetchTransactions, isAuthenticated])
+    }, [refetchTransactions, isAuthenticated, params.action])
   );
 
   // Calculate Metrics
@@ -104,6 +125,7 @@ export default function TransactionsScreen() {
   }, [transactions]);
 
   // Form State
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -493,20 +515,90 @@ export default function TransactionsScreen() {
         </View>
       )}
 
-      {/* FABs */}
+      {/* ── FLOATING ACTION BUTTON ─────────────────────────────── */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { setType(3); setCategoryId(''); setModalOpen(true); }}>
-          <LinearGradient colors={[colors.brand.primary, colors.brand.primary]} style={styles.fabGradient}>
-            <Ionicons name="swap-horizontal" size={28} color={colors.white} />
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => { setType(2); setCategoryId(''); setModalOpen(true); }}>
-          <LinearGradient colors={colors.gradient.primary} style={styles.fabGradient}>
+        <TouchableOpacity 
+          style={styles.fab} 
+          activeOpacity={0.85}
+          onPress={() => setIsChoiceModalOpen(true)}
+        >
+          <LinearGradient
+            colors={[colors.brand.primary, colors.brand.primary]}
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <Ionicons name="add" size={28} color={colors.white} />
           </LinearGradient>
         </TouchableOpacity>
       </View>
+
+      {/* Choice Modal */}
+      <Modal visible={isChoiceModalOpen} transparent animationType="fade">
+        <View style={styles.choiceModalOverlay}>
+          <View style={styles.choiceModalContent}>
+            <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: spacing.lg }]}>O que deseja registrar?</Text>
+            
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                setType(2); // Despesa
+                setCategoryId('');
+                setModalOpen(true);
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
+                <Ionicons name="trending-down" size={24} color={colors.danger} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Despesa</Text>
+                <Text style={styles.choiceSubtitle}>Registrar um novo gasto</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                setType(1); // Receita
+                setCategoryId('');
+                setModalOpen(true);
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.15)' }]}>
+                <Ionicons name="trending-up" size={24} color={colors.brand.teal} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Receita</Text>
+                <Text style={styles.choiceSubtitle}>Registrar um novo ganho</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                setType(3); // Transferência
+                setCategoryId('');
+                setModalOpen(true);
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Ionicons name="swap-horizontal" size={24} color={colors.brand.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Transferência</Text>
+                <Text style={styles.choiceSubtitle}>Mover saldo entre suas contas</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsChoiceModalOpen(false)}>
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Register Transaction Modal */}
       <Modal visible={modalOpen} animationType="slide" transparent>
@@ -516,38 +608,13 @@ export default function TransactionsScreen() {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nova Movimentação</Text>
+              <Text style={styles.modalTitle}>
+                {type === 1 ? 'Nova Receita' : type === 2 ? 'Nova Despesa' : 'Nova Transferência'}
+              </Text>
               <TouchableOpacity onPress={closeForm}>
                 <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
-
-            {/* Type Switcher */}
-            {type !== 3 && (
-              <View style={styles.typeSelectorContainer}>
-                <TouchableOpacity
-                  style={[styles.typeBtn, type === 2 && styles.typeBtnExpense]}
-                  onPress={() => {
-                    setType(2);
-                    setCategoryId('');
-                  }}
-                >
-                  <Text style={[styles.typeBtnText, type === 2 && styles.typeBtnTextActive]}>Saída</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.typeBtn, type === 1 && styles.typeBtnIncome]}
-                  onPress={() => {
-                    setType(1);
-                    setCategoryId('');
-                    if (selectedOrigin?.useCredit || selectedOrigin?.creditCardId) {
-                      setSelectedOrigin(null);
-                    }
-                  }}
-                >
-                  <Text style={[styles.typeBtnText, type === 1 && styles.typeBtnTextActive]}>Entrada</Text>
-                </TouchableOpacity>
-              </View>
-            )}
 
             <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
               {/* Description */}
@@ -940,9 +1007,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
-  fabContainer: { position: 'absolute', bottom: 32, right: spacing.lg, gap: spacing.md, alignItems: 'center' },
-  fab: { borderRadius: radius.full, overflow: 'hidden', ...shadow.lg },
-  fabGradient: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    right: spacing.lg,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    ...shadow.lg,
+  },
+  fabGradient: {
+    flex: 1,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -957,6 +1038,43 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     maxHeight: '85%',
   },
+  choiceModalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  choiceModalContent: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    ...shadow.lg,
+  },
+  choiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.elevated,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  choiceIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  choiceTitle: { ...typography.body, fontWeight: '700', color: colors.text.primary },
+  choiceSubtitle: { ...typography.caption, color: colors.text.secondary, marginTop: 2 },
+  cancelBtn: { padding: spacing.md, alignItems: 'center', marginTop: spacing.xs },
+  cancelBtnText: { ...typography.body, fontWeight: '600', color: colors.danger },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -10,6 +10,7 @@ public class Family : Entity, IAggregateRoot
 {
     public FamilyName Name { get; private set; } = null!;
     public FamilyStatus Status { get; private set; } = null!;
+    public string Timezone { get; private set; } = "America/Sao_Paulo";
 
     private readonly List<Member> _members = [];
     public virtual IReadOnlyCollection<Member> Members => _members.AsReadOnly();
@@ -29,6 +30,12 @@ public class Family : Entity, IAggregateRoot
     public void UpdateName(string name)
     {
         Name = FamilyName.Create(name);
+        SeUpdate();
+    }
+
+    public void UpdateTimezone(string timezone)
+    {
+        Timezone = timezone;
         SeUpdate();
     }
 

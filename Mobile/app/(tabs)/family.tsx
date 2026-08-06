@@ -61,6 +61,9 @@ export default function FamilyScreen() {
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberPassword, setNewMemberPassword] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<'Admin' | 'Member' | 'Viewer'>('Member');
+  
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [timezoneInput, setTimezoneInput] = useState('');
 
   // Form local states
   const [description, setDescription] = useState('');
@@ -145,6 +148,22 @@ export default function FamilyScreen() {
       setNewMemberRole('Member');
       refetchFamily();
       Alert.alert('Sucesso', 'Membro adicionado à família!');
+    },
+    onError: (err: any) => {
+      Alert.alert('Erro', err.message);
+    }
+  });
+
+  const updateTimezoneMutation = useMutation({
+    mutationFn: async () => {
+      if (!family?.id) throw new Error('Família não carregada.');
+      if (!timezoneInput) throw new Error('Selecione um fuso horário.');
+      await familyApi.updateTimezone(family.id, timezoneInput);
+    },
+    onSuccess: () => {
+      setIsSettingsOpen(false);
+      refetchFamily();
+      Alert.alert('Sucesso', 'Fuso horário atualizado! (Faça login novamente para aplicar nos registros).');
     },
     onError: (err: any) => {
       Alert.alert('Erro', err.message);
@@ -394,6 +413,17 @@ export default function FamilyScreen() {
           <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/categories' as any)}>
             <Ionicons name="pricetags-outline" size={20} color={colors.brand.primary} />
             <Text style={styles.actionText}>Categorias da Família</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionBtn, { marginTop: spacing.sm }]} 
+            onPress={() => {
+              setTimezoneInput(family?.timezone || 'America/Sao_Paulo');
+              setIsSettingsOpen(true);
+            }}
+          >
+            <Ionicons name="time-outline" size={20} color={colors.brand.primary} />
+            <Text style={styles.actionText}>Fuso Horário da Família</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.actionBtn, { marginTop: spacing.sm }]} onPress={logout}>
@@ -981,6 +1011,85 @@ export default function FamilyScreen() {
                   <>
                     <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} />
                     <Text style={styles.saveBtnText}>Confirmar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── MODAL: CONFIGURAÇÕES DA FAMÍLIA (FUSO HORÁRIO) ── */}
+      <Modal visible={isSettingsOpen} animationType="fade" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={[styles.modalOverlay, { justifyContent: 'center', padding: spacing.lg }]}>
+            <View style={{
+                backgroundColor: colors.bg.secondary, 
+                borderRadius: radius.xl, 
+                padding: spacing.lg, 
+                width: '100%',
+                ...shadow.lg
+            }}>
+              <View style={[styles.modalHeader, { paddingHorizontal: 0, paddingTop: 0, borderBottomWidth: 0, paddingBottom: spacing.sm }]}>
+                <View style={styles.modalHeaderInfo}>
+                  <Text style={styles.modalTitle}>Configurações</Text>
+                  <Text style={styles.modalSubtitle}>Fuso Horário da Família</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.closeBtn}
+                  onPress={() => setIsSettingsOpen(false)}
+                >
+                  <Ionicons name="close" size={24} color={colors.text.muted} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={{ marginTop: spacing.sm }}>
+                <Text style={[styles.label, { marginBottom: spacing.xs }]}>Selecione o Fuso Horário (Brasil)</Text>
+                <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.bg.card }}>
+                  {[
+                    { id: 'America/Sao_Paulo', label: 'Brasília (Horário Padrão)' },
+                    { id: 'America/Manaus', label: 'Amazonas' },
+                    { id: 'America/Rio_Branco', label: 'Acre' },
+                    { id: 'America/Cuiaba', label: 'Mato Grosso' },
+                    { id: 'America/Campo_Grande', label: 'Mato Grosso do Sul (Campo Grande)' },
+                    { id: 'America/Fortaleza', label: 'Nordeste (Sem horário de verão)' },
+                    { id: 'America/Noronha', label: 'Fernando de Noronha' }
+                  ].map(tz => (
+                    <TouchableOpacity
+                      key={tz.id}
+                      style={{
+                        padding: spacing.md,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                      onPress={() => setTimezoneInput(tz.id)}
+                    >
+                      <Text style={{ ...typography.body, color: timezoneInput === tz.id ? colors.brand.primary : colors.text.primary }}>
+                        {tz.label}
+                      </Text>
+                      {timezoneInput === tz.id && <Ionicons name="checkmark-circle" size={20} color={colors.brand.primary} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={{ ...typography.caption, color: colors.text.muted, marginTop: spacing.sm }}>
+                  O fuso horário selecionado afetará a criação de transações e regras de datas para todos os membros da família. Requer novo login para aplicar.
+                </Text>
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.saveBtn, { marginTop: spacing.lg }]}
+                onPress={() => updateTimezoneMutation.mutate()}
+                disabled={updateTimezoneMutation.isPending}
+              >
+                {updateTimezoneMutation.isPending ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={20} color={colors.white} />
+                    <Text style={styles.saveBtnText}>Salvar Configuração</Text>
                   </>
                 )}
               </TouchableOpacity>

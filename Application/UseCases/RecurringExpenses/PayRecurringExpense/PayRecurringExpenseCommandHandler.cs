@@ -5,6 +5,8 @@ using Domain.Repositories;
 using Domain.Services;
 using Mediator;
 
+using Application.Shared.Providers;
+
 namespace Application.UseCases.RecurringExpenses.PayRecurringExpense;
 
 public sealed class PayRecurringExpenseCommandHandler(

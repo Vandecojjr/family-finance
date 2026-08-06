@@ -5,6 +5,8 @@ using Domain.Repositories;
 using Domain.Services;
 using Mediator;
 
+using Application.Shared.Providers;
+
 namespace Application.UseCases.RecurringIncomes.ReceiveRecurringIncome;
 
 public sealed class ReceiveRecurringIncomeCommandHandler(

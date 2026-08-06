@@ -10,4 +10,14 @@ export const dashboardApi = {
     }
     return data.value;
   },
+  
+  getCalendarIndicators: async (month: string): Promise<any[]> => {
+    // month format: "YYYY-MM"
+    const { data } = await apiClient.get<ApiResult<any[]>>(`/api/dashboard/calendar-indicators?month=${month}`);
+    if (!data.isSuccess) {
+      const msg = data.errors?.[0]?.description ?? 'Erro ao buscar indicadores do calendário.';
+      throw new Error(msg);
+    }
+    return data.value || [];
+  },
 };

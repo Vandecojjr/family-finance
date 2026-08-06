@@ -18,6 +18,8 @@ public class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUse
 
     public string Email => _user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
 
+    public string? Timezone => _user?.FindFirstValue("timezone");
+
     public IReadOnlyCollection<string> Roles => _user?.FindAll(ClaimTypes.Role)
         .Select(c => c.Value)
         .ToList() ?? [];

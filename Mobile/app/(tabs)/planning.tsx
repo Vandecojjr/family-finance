@@ -24,8 +24,10 @@ import { walletsApi } from '@/api/endpoints/wallets';
 import { recurringExpensesApi } from '@/api/endpoints/recurringExpenses';
 import { recurringIncomesApi } from '@/api/endpoints/recurringIncomes';
 import { decodeJwt } from '@/utils/jwt';
+import { dashboardApi } from '@/api/endpoints/dashboard';
 import { AccountsPayableDto, AccountsReceivableDto } from '@/types';
 import { OriginPicker } from '@/components/OriginPicker';
+import { CustomCalendar } from '@/components/CustomCalendar';
 import { useRouter } from 'expo-router';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -65,6 +67,40 @@ export default function PlanningScreen() {
   const [transactionBankAccountId, setTransactionBankAccountId] = useState('');
   const [transactionCreditCardId, setTransactionCreditCardId] = useState('');
   const [transactionUseCredit, setTransactionUseCredit] = useState(false);
+  
+  // Calendar States
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState<string>(
+    new Date().toISOString().substring(0, 7) // "YYYY-MM"
+  );
+  
+  // Fetch Calendar Indicators
+  const { data: calendarData } = useQuery({
+    queryKey: ['calendarIndicators', calendarMonth],
+    queryFn: () => dashboardApi.getCalendarIndicators(calendarMonth),
+    enabled: isAuthenticated && isCalendarModalOpen,
+  });
+
+  const calendarIndicatorsMap = React.useMemo(() => {
+    const map: Record<string, any> = {};
+    if (calendarData) {
+      calendarData.forEach(item => {
+        map[item.date] = {
+          hasPayable: item.hasPayable,
+          hasReceivable: item.hasReceivable,
+          details: item.details || [],
+        };
+      });
+    }
+    return map;
+  }, [calendarData]);
+
+  const handleDayPress = (date: string) => {
+    setSelectedCalendarDate(date);
+    setIsDayDetailModalOpen(true);
+  };
 
   useEffect(() => {
     if (tokens?.accessToken) {
@@ -321,8 +357,24 @@ export default function PlanningScreen() {
         </ScrollView>
       )}
 
-      {/* ── FLOATING ACTION BUTTON ─────────────────────────────── */}
+      {/* ── FLOATING ACTION BUTTONS ─────────────────────────────── */}
       <View style={styles.fabContainer}>
+        {/* Calendar FAB */}
+        <TouchableOpacity 
+          style={[styles.fab, { marginBottom: spacing.md }]} 
+          onPress={() => setIsCalendarModalOpen(true)}
+        >
+          <LinearGradient
+            colors={[colors.brand.teal, colors.brand.teal]}
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="calendar" size={24} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Add FAB */}
         <TouchableOpacity 
           style={styles.fab} 
           onPress={() => setIsChoiceModalOpen(true)}
@@ -337,6 +389,79 @@ export default function PlanningScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
+
+      {/* ── CALENDAR MODAL ─────────────────────────────── */}
+      <Modal visible={isCalendarModalOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <SafeAreaView style={[styles.formContainer, { justifyContent: 'center', padding: spacing.md }]}>
+            <View style={[styles.formCard, { padding: 0, overflow: 'hidden' }]}>
+              <View style={[styles.formHeader, { backgroundColor: colors.bg.elevated, padding: spacing.md }]}>
+                <View style={styles.formHeaderInfo}>
+                  <Text style={styles.formHeaderTitle}>Calendário de Planejamento</Text>
+                  <Text style={styles.formHeaderSubtitle}>Visualize suas contas no mês</Text>
+                </View>
+                <TouchableOpacity onPress={() => setIsCalendarModalOpen(false)}>
+                  <Ionicons name="close" size={24} color={colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={{ padding: spacing.sm }}>
+                <CustomCalendar 
+                  indicators={calendarIndicatorsMap}
+                  onMonthChange={(y, m) => {
+                    const monthStr = String(m).padStart(2, '0');
+                    setCalendarMonth(`${y}-${monthStr}`);
+                  }}
+                  onDayPress={handleDayPress}
+                />
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
+      </Modal>
+
+      {/* ── DAY DETAILS MODAL ─────────────────────────────── */}
+      <Modal visible={isDayDetailModalOpen} animationType="fade" transparent>
+        <View style={styles.choiceModalOverlay}>
+          <View style={[styles.choiceModalContent, { maxHeight: '80%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+              <Text style={styles.modalTitle}>Detalhes do Dia {selectedCalendarDate ? selectedCalendarDate.split('-').reverse().join('/') : ''}</Text>
+              <TouchableOpacity onPress={() => setIsDayDetailModalOpen(false)}>
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: spacing.md }}>
+              {selectedCalendarDate && calendarIndicatorsMap[selectedCalendarDate]?.details?.length > 0 ? (
+                calendarIndicatorsMap[selectedCalendarDate].details.map((item: any) => (
+                  <View key={item.id} style={[styles.transactionCard, { marginBottom: spacing.sm }]}>
+                    <View style={[styles.transactionIconWrap, { backgroundColor: item.type === 'payable' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(0, 212, 170, 0.1)' }]}>
+                      <Ionicons 
+                        name={item.type === 'payable' ? 'arrow-down' : 'arrow-up'} 
+                        size={20} 
+                        color={item.type === 'payable' ? colors.danger : colors.success} 
+                      />
+                    </View>
+                    <View style={styles.transactionInfo}>
+                      <Text style={styles.transactionTitle}>{item.title}</Text>
+                      <Text style={styles.transactionDate}>{item.isPaid ? 'Pago' : 'Pendente'}</Text>
+                    </View>
+                    <View style={styles.transactionRight}>
+                      <Text style={[styles.transactionAmount, { color: item.type === 'payable' ? colors.danger : colors.success }]}>
+                        {fmt(item.amount)}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={{ padding: spacing.xl, alignItems: 'center' }}>
+                  <Text style={{ ...typography.body, color: colors.text.secondary }}>Nenhuma conta para este dia.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Choice Modal */}
       <Modal visible={isChoiceModalOpen} transparent animationType="fade">

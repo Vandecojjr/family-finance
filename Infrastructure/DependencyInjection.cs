@@ -41,6 +41,7 @@ public static class DependencyInjection
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<Application.Shared.Providers.IDateTimeProvider, Infrastructure.Providers.DateTimeProvider>();
 
         return services;
     }

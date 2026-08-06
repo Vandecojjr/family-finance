@@ -31,6 +31,7 @@ public class ReceiveRecurringIncomeCommandHandlerTests
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _incomePaymentService = new IncomePaymentService();
+        
         _handler = new ReceiveRecurringIncomeCommandHandler(
             _incomeRepositoryMock.Object,
             _walletRepositoryMock.Object,

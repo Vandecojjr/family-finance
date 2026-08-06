@@ -25,7 +25,7 @@ public sealed class JwtAuthTokenService : IAuthTokenService
         _signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
     }
 
-    public (string token, DateTime expiresAt) GenerateAccessToken(Account account)
+    public (string token, DateTime expiresAt) GenerateAccessToken(Account account, string? timezone = null)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(_options.AccessTokenMinutes <= 0 ? 15 : _options.AccessTokenMinutes);
@@ -39,6 +39,9 @@ public sealed class JwtAuthTokenService : IAuthTokenService
 
         if (account.MemberId.HasValue && account.MemberId.Value != Guid.Empty)
             claims.Add(new Claim("memberId", account.MemberId.Value.ToString()));
+
+        if (!string.IsNullOrWhiteSpace(timezone))
+            claims.Add(new Claim("timezone", timezone));
 
         foreach (var role in account.Roles)
         {

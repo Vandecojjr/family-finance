@@ -21,6 +21,10 @@ public class FamilyConfiguration : IEntityTypeConfiguration<Family>
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.Property(x => x.Timezone)
+            .IsRequired()
+            .HasMaxLength(100);
+
         builder.Property(x => x.Status)
             .HasConversion(
                 status => status.IsActive,

@@ -31,6 +31,7 @@ public class PayRecurringExpenseCommandHandlerTests
         _familyRepositoryMock = new Mock<IFamilyRepository>();
         _currentUserMock = new Mock<ICurrentUser>();
         _expensePaymentService = new ExpensePaymentService();
+
         _handler = new PayRecurringExpenseCommandHandler(
             _expenseRepositoryMock.Object,
             _walletRepositoryMock.Object,

@@ -53,6 +53,14 @@ public sealed class FamiliesEndpoints : IEndpointGroup
             .Produces<Result<Guid>>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapPut("/{id:guid}/timezone", UpdateTimezone)
+            .WithName("Families.UpdateTimezone")
+            .WithSummary("Atualiza o fuso horário da família.")
+            .WithTags("Families")
+            .RequireAuthorization()
+            .Produces<Result<bool>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     private static async Task<HttpResult> GetMyFamily(
@@ -96,7 +104,19 @@ public sealed class FamiliesEndpoints : IEndpointGroup
             ? Microsoft.AspNetCore.Http.TypedResults.Created($"/api/families/{id}/members/{result.Value}", result)
             : result.ToResult();
     }
+
+    private static async Task<HttpResult> UpdateTimezone(
+        [FromRoute] Guid id,
+        [FromBody] UpdateFamilyTimezoneRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.UseCases.Families.UpdateTimezone.UpdateFamilyTimezoneCommand(id, request.Timezone);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.ToResult();
+    }
 }
 
 public sealed record AddFamilyMemberRequest(string Name, string Email, string Password, string RoleName);
+public sealed record UpdateFamilyTimezoneRequest(string Timezone);
 

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   useWindowDimensions,
+  Modal,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,16 +23,24 @@ import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { CategoryPieChart } from '@/components/CategoryPieChart';
 import { usePreferenceStore } from '@/stores/preferenceStore';
+import { CustomCalendar } from '@/components/CustomCalendar';
 
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function DashboardScreen() {
-  const { logout, tokens } = useAuthStore();
+  const { logout, tokens, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const isFocused = useIsFocused();
   const { showBalances, toggleBalances } = usePreferenceStore();
   const [memberId, setMemberId] = useState<string | null>(null);
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState<string>(
+    new Date().toISOString().substring(0, 7) // "YYYY-MM"
+  );
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
 
@@ -48,8 +57,34 @@ export default function DashboardScreen() {
   const { data: dashboardData, refetch: refetchDashboard, isLoading: loadingDashboard } = useQuery({
     queryKey: ['dashboardData', memberId],
     queryFn: () => dashboardApi.getInitialDashboard(),
-    enabled: !!memberId,
+    enabled: !!memberId && isAuthenticated,
   });
+
+  // Fetch Calendar Indicators
+  const { data: calendarData } = useQuery({
+    queryKey: ['calendarIndicators', calendarMonth],
+    queryFn: () => dashboardApi.getCalendarIndicators(calendarMonth),
+    enabled: isAuthenticated && isCalendarModalOpen,
+  });
+
+  const calendarIndicatorsMap = React.useMemo(() => {
+    const map: Record<string, any> = {};
+    if (calendarData) {
+      calendarData.forEach(item => {
+        map[item.date] = {
+          hasPayable: item.hasPayable,
+          hasReceivable: item.hasReceivable,
+          details: item.details || [],
+        };
+      });
+    }
+    return map;
+  }, [calendarData]);
+
+  const handleDayPress = (date: string) => {
+    setSelectedCalendarDate(date);
+    setIsDayDetailModalOpen(true);
+  };
 
   // Query family data for member name lookup
   const { data: familyData, refetch: refetchFamily, isLoading: loadingFamily } = useQuery({
@@ -283,6 +318,208 @@ export default function DashboardScreen() {
         </Animated.View>
 
       </ScrollView>
+
+      {/* ── FLOATING ACTION BUTTONS ─────────────────────────────── */}
+      <View style={styles.fabContainer}>
+        {/* Calendar FAB */}
+        <TouchableOpacity 
+          style={[styles.fab, { marginBottom: spacing.md }]} 
+          activeOpacity={0.85}
+          onPress={() => setIsCalendarModalOpen(true)}
+        >
+          <LinearGradient
+            colors={[colors.brand.teal, colors.brand.teal]}
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="calendar" size={24} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Add FAB */}
+        <TouchableOpacity 
+          style={styles.fab} 
+          activeOpacity={0.85}
+          onPress={() => setIsChoiceModalOpen(true)}
+        >
+          <LinearGradient
+            colors={[colors.brand.primary, colors.brand.primary]}
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="add" size={28} color={colors.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
+
+      {/* Choice Modal */}
+      <Modal visible={isChoiceModalOpen} transparent animationType="fade">
+        <View style={styles.choiceModalOverlay}>
+          <View style={styles.choiceModalContent}>
+            <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: spacing.lg }]}>Acesso Rápido</Text>
+            
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                router.navigate({ pathname: '/(tabs)/transactions', params: { action: 'new_expense' } });
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(255, 107, 107, 0.15)' }]}>
+                <Ionicons name="trending-down" size={24} color={colors.danger} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Despesa</Text>
+                <Text style={styles.choiceSubtitle}>Registrar um novo gasto</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                router.navigate({ pathname: '/(tabs)/transactions', params: { action: 'new_income' } });
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(0, 212, 170, 0.15)' }]}>
+                <Ionicons name="trending-up" size={24} color={colors.brand.teal} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Receita</Text>
+                <Text style={styles.choiceSubtitle}>Registrar um novo ganho</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                router.navigate({ pathname: '/(tabs)/transactions', params: { action: 'new_transfer' } });
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Ionicons name="swap-horizontal" size={24} color={colors.brand.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+            <Text style={styles.choiceTitle}>Transferência</Text>
+                <Text style={styles.choiceSubtitle}>Mover saldo entre suas contas</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                router.navigate({ pathname: '/(tabs)/recurring-expenses', params: { action: 'new_planned' } });
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(234, 179, 8, 0.15)' }]}>
+                <Ionicons name="calendar-outline" size={24} color={colors.warning} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Previsão Avulsa</Text>
+                <Text style={styles.choiceSubtitle}>Planejar gasto/ganho pontual futuro</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.choiceBtn} 
+              onPress={() => {
+                setIsChoiceModalOpen(false);
+                router.navigate({ pathname: '/(tabs)/recurring-expenses', params: { action: 'new_recurring' } });
+              }}
+            >
+              <View style={[styles.choiceIconWrap, { backgroundColor: 'rgba(20, 184, 166, 0.15)' }]}>
+                <Ionicons name="repeat" size={24} color={colors.brand.teal} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.choiceTitle}>Conta Recorrente</Text>
+                <Text style={styles.choiceSubtitle}>Despesas ou receitas fixas mensais</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsChoiceModalOpen(false)}>
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── CALENDAR MODAL ─────────────────────────────── */}
+      <Modal visible={isCalendarModalOpen} animationType="slide" transparent>
+        <View style={styles.choiceModalOverlay}>
+          <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: 400, alignSelf: 'center', justifyContent: 'center' }}>
+            <View style={[styles.choiceModalContent, { padding: 0, overflow: 'hidden' }]}>
+              <View style={{ backgroundColor: colors.bg.elevated, padding: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={[styles.modalTitle, { marginBottom: 0 }]}>Calendário</Text>
+                  <Text style={styles.choiceSubtitle}>Visualize suas contas no mês</Text>
+                </View>
+                <TouchableOpacity onPress={() => setIsCalendarModalOpen(false)}>
+                  <Ionicons name="close" size={24} color={colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={{ padding: spacing.sm }}>
+                <CustomCalendar 
+                  indicators={calendarIndicatorsMap}
+                  onMonthChange={(y, m) => {
+                    const monthStr = String(m).padStart(2, '0');
+                    setCalendarMonth(`${y}-${monthStr}`);
+                  }}
+                  onDayPress={handleDayPress}
+                />
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
+      </Modal>
+
+      {/* ── DAY DETAILS MODAL ─────────────────────────────── */}
+      <Modal visible={isDayDetailModalOpen} animationType="fade" transparent>
+        <View style={styles.choiceModalOverlay}>
+          <View style={[styles.choiceModalContent, { maxHeight: '80%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+              <Text style={styles.modalTitle}>Detalhes do Dia {selectedCalendarDate ? selectedCalendarDate.split('-').reverse().join('/') : ''}</Text>
+              <TouchableOpacity onPress={() => setIsDayDetailModalOpen(false)}>
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: spacing.md }}>
+              {selectedCalendarDate && calendarIndicatorsMap[selectedCalendarDate]?.details?.length > 0 ? (
+                calendarIndicatorsMap[selectedCalendarDate].details.map((item: any) => (
+                  <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg.primary, padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.sm }}>
+                    <View style={[{ width: 40, height: 40, borderRadius: radius.sm, justifyContent: 'center', alignItems: 'center', marginRight: spacing.md }, { backgroundColor: item.type === 'payable' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(0, 212, 170, 0.1)' }]}>
+                      <Ionicons 
+                        name={item.type === 'payable' ? 'arrow-down' : 'arrow-up'} 
+                        size={20} 
+                        color={item.type === 'payable' ? colors.danger : colors.success} 
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ ...typography.body, color: colors.text.primary, fontWeight: '600' }}>{item.title}</Text>
+                      <Text style={{ ...typography.caption, color: colors.text.secondary }}>{item.isPaid ? 'Pago' : 'Pendente'}</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ ...typography.body, fontWeight: '700', color: item.type === 'payable' ? colors.danger : colors.success }}>
+                        {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={{ padding: spacing.xl, alignItems: 'center' }}>
+                  <Text style={{ ...typography.body, color: colors.text.secondary }}>Nenhuma conta para este dia.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -453,4 +690,61 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     marginBottom: spacing.lg,
   },
+  
+  // FAB and Choice Modal
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    right: spacing.lg,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    ...shadow.lg,
+  },
+  fabGradient: {
+    flex: 1,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  choiceModalOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  choiceModalContent: {
+    backgroundColor: colors.bg.card,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    ...shadow.lg,
+  },
+  modalTitle: { ...typography.h3, color: colors.text.primary },
+  choiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg.elevated,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  choiceIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  choiceTitle: { ...typography.body, fontWeight: '700', color: colors.text.primary },
+  choiceSubtitle: { ...typography.caption, color: colors.text.secondary, marginTop: 2 },
+  cancelBtn: { padding: spacing.md, alignItems: 'center', marginTop: spacing.xs },
+  cancelBtnText: { ...typography.body, fontWeight: '600', color: colors.danger },
 });

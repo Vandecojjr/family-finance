@@ -9,6 +9,7 @@ public interface ICurrentUser
     string Email { get; }
     IReadOnlyCollection<string> Roles { get; }
     IReadOnlyCollection<Permission> Permissions { get; }
+    string? Timezone { get; }
     bool IsAuthenticated { get; }
     bool HasPermission(Permission permission);
 }

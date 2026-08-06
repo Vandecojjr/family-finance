@@ -9,6 +9,7 @@ namespace Application.UseCases.Accounts.Login;
 
 public sealed class LoginCommandHandler(
     IAccountRepository accountRepository,
+    IFamilyRepository familyRepository,
     IPasswordHasher passwordHasher,
     IAuthTokenService authTokenService)
     : ICommandHandler<LoginCommand, Result<TokenPairResponse>>
@@ -27,7 +28,18 @@ public sealed class LoginCommandHandler(
             return Result<TokenPairResponse>.Failure(
                 Error.Failure("Auth.AccountInactive", "Conta inativa ou bloqueada."));
 
-        var (accessToken, accessTokenExpiresAt) = authTokenService.GenerateAccessToken(account);
+        string? timezone = null;
+        if (account.MemberId.HasValue && account.MemberId.Value != Guid.Empty)
+        {
+            var member = await familyRepository.GetMemberByIdAsync(account.MemberId.Value, cancellationToken);
+            if (member != null)
+            {
+                var family = await familyRepository.GetByIdAsync(member.FamilyId, cancellationToken);
+                timezone = family?.Timezone;
+            }
+        }
+
+        var (accessToken, accessTokenExpiresAt) = authTokenService.GenerateAccessToken(account, timezone);
         var (refreshToken, refreshTokenExpiresAt) = authTokenService.GenerateRefreshToken();
 
         var refreshTokenEntity = new RefreshTokenEntity(account.Id, refreshToken, refreshTokenExpiresAt);
