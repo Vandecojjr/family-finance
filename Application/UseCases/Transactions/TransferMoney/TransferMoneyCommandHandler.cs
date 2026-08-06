@@ -9,7 +9,6 @@ namespace Application.UseCases.Transactions.TransferMoney;
 
 public sealed class TransferMoneyCommandHandler(
     IWalletRepository walletRepository,
-    ICategoryRepository categoryRepository,
     IFamilyRepository familyRepository,
     ICurrentUser currentUser) : ICommandHandler<TransferMoneyCommand, Result<Guid[]>>
 {
@@ -27,16 +26,6 @@ public sealed class TransferMoneyCommandHandler(
         var member = await familyRepository.GetMemberByIdAsync(currentUser.MemberId, cancellationToken);
         if (member is null)
             return Result<Guid[]>.Failure(Error.Failure("User.MemberNotFound", "Membro do usuário logado não foi encontrado."));
-
-        if (command.CategoryId.HasValue)
-        {
-            var category = await categoryRepository.GetByIdAsync(command.CategoryId.Value, cancellationToken);
-            if (category is null)
-                return Result<Guid[]>.Failure(Error.NotFound("Category.NotFound", $"Categoria com ID '{command.CategoryId}' não foi encontrada."));
-
-            if (category.FamilyId != member.FamilyId)
-                return Result<Guid[]>.Failure(Error.Failure("Family.AccessDenied", "Você não tem acesso a esta categoria."));
-        }
 
         var sourceWallet = await walletRepository.GetByIdAsync(command.SourceWalletId.Value, cancellationToken);
         if (sourceWallet == null)
