@@ -1,6 +1,7 @@
 using Application.Shared.Auth;
 using Application.Shared.Results;
 using Domain.Entities.Transactions;
+using Domain.Enums;
 using Domain.Repositories;
 using Domain.Shared.Exceptions;
 using Mediator;
@@ -26,16 +27,10 @@ public sealed class RegisterTransactionCommandHandler(
         }
 
         var category = await categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
-        if (category is null)
+        if (category is null && command.Type != TransactionType.TransferIn)
         {
             return Result<Guid>.Failure(
                 Error.NotFound("Category.NotFound", $"Categoria com ID '{command.CategoryId}' não foi encontrada."));
-        }
-
-        if (category.FamilyId != member.FamilyId)
-        {
-            return Result<Guid>.Failure(
-                Error.Failure("Family.AccessDenied", "Você não tem acesso a esta categoria."));
         }
 
         if (command.WalletId is null)
