@@ -63,16 +63,6 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         int Installments = 1,
         bool? ForceNextInvoice = null);
 
-    public record TransferMoneyRequest(
-        decimal Amount,
-        DateTime Date,
-        Guid CategoryId,
-        Guid SourceWalletId,
-        Guid? SourceBankAccountId,
-        Guid DestinationWalletId,
-        Guid? DestinationBankAccountId,
-        string? Notes);
-
     private static async Task<HttpResult> RegisterTransaction(
         [FromBody] RegisterTransactionRequest request,
         IMediator mediator,
@@ -96,22 +86,9 @@ public sealed class TransactionsEndpoints : IEndpointGroup
         return result.ToResult();
     }
 
-    private static async Task<HttpResult> TransferMoney(
-        [FromBody] TransferMoneyRequest request,
-        IMediator mediator,
-        CancellationToken cancellationToken)
+    private static async Task<HttpResult> TransferMoney([FromBody] TransferMoneyCommand request, IMediator mediator, CancellationToken cancellationToken)
     {
-        var command = new TransferMoneyCommand(
-            request.Amount,
-            request.Date,
-            request.CategoryId,
-            request.SourceWalletId,
-            request.SourceBankAccountId,
-            request.DestinationWalletId,
-            request.DestinationBankAccountId,
-            request.Notes);
-
-        var result = await mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(request, cancellationToken);
         return result.ToResult();
     }
 
